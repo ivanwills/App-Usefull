@@ -1,0 +1,374 @@
+#!/usr/bin/env perl
+
+# Created on: 2009-05-27 20:39:46
+# Create by:  Ivan Wills
+# $Id$
+# $Revision$, $HeadURL$, $Date$
+# $Revision$, $Source$, $Date$
+
+use strict;
+use warnings;
+use version;
+use Getopt::Long;
+use Pod::Usage;
+use List::Util qw/max/;
+use Data::Dumper qw/Dumper/;
+use English qw/ -no_match_vars /;
+use FindBin qw/$Bin/;
+use File::Find qw/find/;
+use File::Slurp qw/slurp/;
+use Path::Class;
+use Module::CoreList;
+use Perl::MinimumVersion;
+use Term::ANSIColor qw/colored/;
+
+our $VERSION = version->new('0.0.1');
+my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+
+my %option = (
+    verbose => 0,
+    man     => 0,
+    help    => 0,
+    VERSION => 0,
+);
+
+main();
+exit 0;
+
+sub main {
+
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,
+        'name|n',
+        'uses|u',
+        'decending|d',
+        'verbose|v+',
+        'man',
+        'help',
+        'VERSION!',
+    ) or pod2usage(2);
+    my @dirs = @ARGV;
+
+    if ( $option{'VERSION'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
+
+    # do stuff here
+    if (!@dirs) {
+        push @dirs, '.';
+    }
+
+    my %used;
+    my %versions;
+    for my $dir (@dirs) {
+        if ( -f $dir ) {
+            process_file($dir, \%used, \%versions);
+        }
+        else {
+            find(
+                sub {
+                    return if -d $_;
+                    return if !/ [.] (?: pm | pl | cgi | t ) $/xms && /[.]/xms;
+                    return if $File::Find::name =~ m{/ (?: blib | _build ) /}xms;
+
+                    if (!/[.]/xms) {
+                        return if slurp($_) !~ /\A.*perl/;
+                    }
+
+                    process_file($_, \%used, \%versions);
+                },
+                $dir
+            );
+        }
+    }
+
+    # remove modules that available from the maximum of the minum versions of perl required for these files
+    my $max_ver = max keys %versions;
+    for my $module (keys %used) {
+        my $rel_ver = Module::CoreList->first_release($module);
+        if ( $rel_ver && $rel_ver <= $max_ver ) {
+            my $value = delete $used{$module};
+            if ( $option{verbose} > 1 ) {
+                $used{$module} = { count => $value, colour => 'blue' };
+            }
+        }
+    }
+
+    # remove any modules defined in the local lib directory
+    my @files = eval { dir('lib')->children };
+    while (my $file = shift @files) {
+        if ( -d $file ) {
+            push @files, $file->children;
+        }
+        elsif ( $file =~ /[.]pm$/ ) {
+            my $mod = "$file";
+            $mod =~ s{^lib/}{}xms;
+            $mod =~ s{/}{::}gxms;
+            $mod =~ s{[.]pm$}{}xms;
+            my $value = delete $used{$mod};
+            if ( $option{verbose} > 1 ) {
+                $used{$mod} = { count => $value, colour => 'bold' };
+            }
+        }
+    }
+
+    for my $module (keys %used) {
+        $used{$module} = { count => $used{$module}, colour => '' } if !ref $used{$module};
+    }
+
+    # Check what modules have been already required
+    my %specified = pre_specified();
+
+    show_results( $max_ver, \%used, \%specified );
+    return;
+}
+
+sub show_results {
+    my ( $max_ver, $used, $specified ) = @_;
+    my %notes;
+
+    # start the out put
+    my $star = ' ';
+    if ( $specified->{perl} && $max_ver > $specified->{perl} ) {
+        $star = '⁑';
+        $notes{$star} = 'The specified minimum perl version is less than some used features require';
+    }
+    print "Perl$star $max_ver\n";
+    delete $specified->{perl};
+
+    if ( $option{verbose} ) {
+        for my $defined ( keys %$specified ) {
+            $used->{$defined} = { count => 0, build_only => 1 } if defined $specified->{$defined} && !exists $used->{$defined};
+            warn $defined if defined $specified->{$defined} && !exists $used->{$defined};
+        }
+    }
+
+    my $max = max map { length $_ } keys %$used;
+
+    my @keys
+        = $option{uses} ? sort { $used->{$a}{count} <=> $used->{$b}{count} || uc $a cmp uc $b } keys %$used
+        :                 sort { uc $a cmp uc $b } keys %$used;
+
+    if ( $option{decending} ) {
+        @keys = reverse @keys;
+    }
+
+    for my $module (@keys) {
+        my $version = '';
+        my $star    = '';
+
+        if ( $option{verbose} ) {
+            my $num;
+            my $file = "$module.pm";
+            $file =~ s{::}{/}gxms;
+
+            eval { require $file };
+
+            {
+                no strict qw/refs/;
+                $version .=
+                     $EVAL_ERROR                       ? '0?0'
+                    : defined ${$module . '::VERSION'} ? ${$module . '::VERSION'}
+                    :                                    'undef';
+                $num =
+                     $EVAL_ERROR                       ? 0
+                    : defined ${$module . '::VERSION'} ? ${$module . '::VERSION'}
+                    :                                    0;
+            }
+            my $spec = defined $specified->{$module} ? " ($specified->{$module})" : '';
+            $version .= ' ' x (8 - length $version) . $spec;
+            $version = ' ' x ($max + 1 - length $module) . $version;
+
+            $star =
+                  ! exists $specified->{$module}  ? '†'
+                : ! defined $specified->{$module} ? ' '
+                : $num < $specified->{$module}    ? '‡'
+                : $used->{$module}{build_only}    ? '⁎'
+                : $used->{$module}{build_only}    ? '⁂'
+                :                                   ' ';
+        }
+        else {
+            $star = exists $specified->{$module} ? ' ' : '†';
+        }
+        if ( $star ne ' ' && !exists $notes{$star} ) {
+            $notes{$star} =
+                $star eq '‡' ? 'The version specified in Build.PL greater that the currently installed version'
+                : $star eq '⁎' ? 'The module is specified in Build.PL but doesn\'t appear to be used'
+                : $star eq '⁂' ? 'The module is specified in Build.PL but doesn\'t appear to be used'
+                :                'This module is not specified in Build.PL';
+        }
+
+        $used->{$module}{count} ||= 0;
+        printf "%4d %s$star$version\n", $used->{$module}{count}, colored($module, $used->{$module}{colour});
+        if ( $used->{$module}{colour} && !$notes{ colored( $used->{$module}{colour}, $used->{$module}{colour} ) } ) {
+            $notes{ colored( $used->{$module}{colour}, $used->{$module}{colour} ) }
+                = $used->{$module}{colour} eq 'blue' ? "Core module"
+                : $used->{$module}{colour} eq 'bold' ? 'Local module'
+                :                                      'Update the code for this colour';
+        }
+    }
+
+    print "\n";
+    $max = 1;
+    for my $key ( keys %notes ) {
+        $max = 4 if length $key > 4;
+    }
+    for my $note (sort keys %notes) {
+        print $note . ( ' ' x ( $max + 1 - ( length $note > 4 ? 4 : 1 ) ) ) . "$notes{$note}\n";
+    }
+
+    return;
+}
+
+sub process_file {
+    my ($file, $used, $versions) = @_;
+
+    my $contents = slurp $file;
+
+    $contents =~ s{^__DATA__\n.*\Z}{}xms;
+
+    my @modules = grep { $_ ne 'ok' } $contents =~ m{^ \s* (?: use | require ) \s+ ( [\w:]+ ) }gxms;
+    push @modules, $contents =~ m{^ \s* (?: use | require ) \s+ ok \s+ ['"]( [\w:]+ )['"] }gxms;
+
+    for my $module (@modules) {
+        $used->{$module}++;
+    }
+
+    my ($cat_plugins) = $contents =~ m{^ \s* use \s+ Catalyst \s* qw/ \s* ( [^/]+ ) \s* /}xms;
+    if ($cat_plugins) {
+        my @cat_plugins = split /\s+/, $cat_plugins;
+
+        for my $plugin (@cat_plugins) {
+            next if $plugin =~ /^\W/;
+            $used->{"Catalyst::Plugin::$plugin"}++;
+        }
+    }
+
+    my $minver = Perl::MinimumVersion->new($file);
+    if (!$minver) {
+        warn "Could not get the minimum version of $file!\n";
+        return;
+    }
+
+    push @{ $versions->{ $minver->minimum_version } }, $file;
+
+    return;
+}
+
+# finds modules prespecified in the Build.PL file
+sub pre_specified {
+    return if !-f 'Build.PL';
+    my $build = slurp 'Build.PL';
+
+    my ($required, $test_required) = $build =~ /requires \s* (?: => | , ) \s* ( { [^}]*? } )/gxms;
+    $required = eval $required;
+    $test_required = eval $test_required;
+    my %requires = ( %$required, %$test_required );
+
+    $requires{'Module::Build'} ||= 0;
+
+    get_libraries(\%requires);
+
+    if ( $option{verbose} > 2 ) {
+        print join "\n", sort keys %requires;
+        print "\n\n";
+    }
+
+    return %requires;
+}
+
+sub get_libraries {
+    my ($requires) = @_;
+
+    my $dir = 'lib';
+    my @files = glob "$dir/*";
+
+    while (my $file = shift @files) {
+        if (-d $file ) {
+            push @files, glob "$file/*";
+        }
+        elsif ($file =~ /[.]pm$/) {
+            my $module = $file;
+            $module =~ s{^$dir/}{}xms;
+            $module =~ s{[.]pm$}{}xms;
+            $module =~ s{/}{::}gxms;
+            $requires->{$module} = undef;
+        }
+    }
+
+    return;
+}
+
+__DATA__
+
+=head1 NAME
+
+used - Find modules used or required in perl files or directories of perl files
+
+=head1 VERSION
+
+This documentation refers to used version 0.1.
+
+=head1 SYNOPSIS
+
+   used [option]
+
+ OPTIONS:
+  -n --name       Order by module name (Default order)
+  -u --used       Order by the number of times a module is used/required
+  -d --decending  Reverse the sort order
+
+  -v --verbose    Show more detailed option
+                    Specified once shows module verion numbers verses required
+                    versions.
+                    Specified twice also shows modules that are local to the
+                    project and modules that are part of the default perl
+                    version.
+     --version    Prints the version information
+     --help       Prints this help information
+     --man        Prints the full documentation for used
+
+=head1 DESCRIPTION
+
+=head1 SUBROUTINES/METHODS
+
+=head1 DIAGNOSTICS
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+=head1 DEPENDENCIES
+
+=head1 INCOMPATIBILITIES
+
+=head1 BUGS AND LIMITATIONS
+
+There are no known bugs in this module.
+
+Please report problems to Ivan Wills (ivan.wills@gmail.com).
+
+Patches are welcome.
+
+=head1 AUTHOR
+
+Ivan Wills - (ivan.wills@gmail.com)
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2009 Ivan Wills (14 Mullion Close, Hornsby Heights, NSW Australia 2077).
+All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself. See L<perlartistic>.  This program is
+distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+=cut

@@ -1,0 +1,15 @@
+.*.sw[ponx]
+Debian_CPANTS.txt
+.vimtagsdisplay
+tags
+Build
+MYMETA.yml
+_build*
+blib*
+Makefile
+pm_to_blib*
+.lwpcookies
+cover_db
+nytprof*
+tmp*
+*~

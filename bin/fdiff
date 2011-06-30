@@ -1,0 +1,202 @@
+#!/usr/bin/env perl
+
+# Created on: 2008-08-26 16:28:06
+# Create by:  iwills
+# $Id$
+# $Revision$, $HeadURL$, $Date$
+# $Revision$, $Source$, $Date$
+
+use strict;
+use warnings;
+use version;
+use Scalar::Util;
+use List::Util;
+#use List::MoreUtils;
+use Getopt::Long;
+use Pod::Usage;
+use Data::Dumper qw/Dumper/;
+use English qw/ -no_match_vars /;
+use FindBin qw/$Bin/;
+use File::Spec::Functions qw/splitpath/;
+
+our $VERSION = version->new('0.0.1');
+my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+
+my %option = (
+	diff    => 'diff',
+	verbose => 0,
+	man     => 0,
+	help    => 0,
+	VERSION => 0,
+);
+
+if ( !@ARGV ) {
+	pod2usage( -verbose => 1 );
+}
+
+main();
+exit 0;
+
+sub main {
+
+	Getopt::Long::Configure('bundling');
+	GetOptions(
+		\%option,
+		'function|f=s@',
+		'diff|d=s',
+		'vimdiff|v',
+		'diffargs|a=s',
+		'verbose+',
+		'man',
+		'help',
+		'VERSION!',
+	) or pod2usage(2);
+
+	if ( $option{'VERSION'} ) {
+		print "$name Version = $VERSION\n";
+		exit 1;
+	}
+	elsif ( $option{'man'} ) {
+		pod2usage( -verbose => 2 );
+	}
+	elsif ( $option{'help'} ) {
+		pod2usage( -verbose => 1 );
+	}
+
+	# do stuff here
+	if (!$option{function})
+	{
+		$option{function} = [ split /,/, shift @ARGV ];
+	}
+
+	my (@files) = @ARGV;
+	my @names;
+	my $function = shift @{ $option{function} };
+
+	for my $file (@files) {
+		push @names, extract_function($function, $file);
+		$function = shift @{ $option{function} } if @{ $option{function} };
+	}
+
+	my $diff = $option{vimdiff} ? 'vimdiff' : $option{diff};
+
+	if (!$option{diffargs} && $diff eq 'diff') {
+		$option{diffargs} = '-uN';
+	}
+
+	system $diff, grep {defined $_} $option{diffargs}, @names;
+
+	return;
+}
+
+{
+	my $count = 0;
+	sub extract_function {
+		my ($fn, $file) = @_;
+
+		open my $fh, '<', $file or die "Could not open '$file': $!\n";
+		my $text = join '', <$fh>;
+		close $fh;
+
+		my $perm      = qr/private | protected | public/xms;
+		my $type      = qr/static (?: \s+ $perm )? | $perm (?: \s+ static )?/xms;
+		my $prefix    = qr/(?: $type \s+ )? function/xms;
+		my $func      = qr/ $prefix (?: \s+ (?: & \s* )? | & \s+ ) /xms;
+		my $sub       = qr/ sub \s+ /xms;
+		my $sub_or_fn = qr/$sub | $func/xms;
+		my $subfn_dec = qr/^ \s* $sub_or_fn /xms;
+
+		my @functions = split /($subfn_dec \w+ [^\n]* \n)/xms, $text;
+		my $functions = '';
+		my $count = 0;
+
+		for ( my $i = 1; $i < @functions; $i += 2 ) {
+			next if !$functions[$i];
+			my ($name) = $functions[$i] =~ /$subfn_dec (\w+) /xms;
+			next if !$name || $name ne $fn;
+			$functions .= $functions[$i].$functions[$i+1];
+			$count++;
+		}
+		warn "The function was declared $count times in the file '$file'\n" if $count > 1;
+
+#		$text =~ s/.*(^\s*sub\s+$fn\s*[{]?$)/$1/xms;
+#		$text =~ s/^[}]\s+\n.*/}\n/xms;
+
+		my (undef, undef, $file_name) = splitpath($file);
+
+		$count++;
+		my $new_file = "/tmp/$$.$count.$file_name";
+
+		open $fh, '>', $new_file or die "Could not write to '$new_file': $!\n";
+		print {$fh} $functions;
+		close $fh;
+
+		return $new_file;
+	}
+}
+
+__DATA__
+
+=head1 NAME
+
+fdiff - Diff functions/subs etc from within two different files which may have many other (large) differences
+
+=head1 VERSION
+
+This documentation refers to fdiff version 0.1.
+
+=head1 SYNOPSIS
+
+   fdiff [option] function file1 file2
+   fdiff [option] -f function1 file1 -f function2 file2
+
+ OPTIONS:
+  -f --function=func The name of the function or subroutine to find. If
+                     specifed more than once the function name is found in
+                     the respective file.
+  -d --diff=str      Alternate diff command (Default 'diff')
+  -a --diffargs=str  Other arguments to pass along to diff (Default -uN)
+  -v -vimdiff        Use vimdiff instead of diff, equivalent to --diff=vimdiff
+
+     --verbose       Show more detailed option
+     --version       Prints the version information
+     --help          Prints this help information
+     --man           Prints the full documentation for fdiff
+
+=head1 DESCRIPTION
+
+
+=head1 SUBROUTINES/METHODS
+
+=head1 DIAGNOSTICS
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+=head1 DEPENDENCIES
+
+=head1 INCOMPATIBILITIES
+
+=head1 BUGS AND LIMITATIONS
+
+There are no known bugs in this module.
+
+Please report problems to Ivan Wills (ivan.wills@gmail.com).
+
+Patches are welcome.
+
+=head1 AUTHOR
+
+Ivan Wills - (ivan.wills@gmail.com)
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2008 Ivan Wills (120 Terry St Tempe NSW Australia 2044).
+All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself. See L<perlartistic>.  This program is
+distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+=cut

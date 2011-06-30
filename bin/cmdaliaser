@@ -1,0 +1,316 @@
+#!/usr/bin/env perl
+
+# Created on: 2009-10-23 11:09:25
+# Create by:  iwills
+# $Id$
+# $Revision$, $HeadURL$, $Date$
+# $Revision$, $Source$, $Date$
+
+use strict;
+use warnings;
+use version;
+use Scalar::Util;
+use List::Util;
+#use List::MoreUtils;
+use Getopt::Long;
+use Pod::Usage;
+use Data::Dumper qw/Dumper/;
+use English qw/ -no_match_vars /;
+use FindBin qw/$Bin/;
+use Config::General;
+
+our $VERSION = version->new('0.0.1');
+my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+
+my %option = (
+	verbose => 0,
+	man     => 0,
+	help    => 0,
+	VERSION => 0,
+);
+
+if ( !@ARGV ) {
+	pod2usage( -verbose => 1 );
+}
+
+main();
+exit 0;
+
+sub main {
+	my (@cmd_args, @prog_args);
+	# get this program's arguments from the supplied arguments
+	while (@ARGV) {
+		my $arg = shift @ARGV;
+		if (@cmd_args || $arg !~ /^-/) {
+			push @cmd_args, $arg;
+		}
+		else {
+			push @prog_args, $arg;
+		}
+	}
+	my $name    = shift @cmd_args;
+	my $sub_cmd = shift @cmd_args;
+	@ARGV = @prog_args;
+
+	Getopt::Long::Configure('bundling');
+	GetOptions(
+		\%option,
+		'test|t!',
+		'verbose|v+',
+		'man',
+		'help',
+		'VERSION!',
+	) or pod2usage(2);
+
+	if ( $option{'VERSION'} ) {
+		print "$name Version = $VERSION\n";
+		exit 1;
+	}
+	elsif ( $option{'man'} ) {
+		pod2usage( -verbose => 2 );
+	}
+	elsif ( $option{'help'} ) {
+		pod2usage( -verbose => 1 );
+	}
+
+	# do stuff here
+	my $conf_file = "$ENV{HOME}/.cmdaliaser/$name.conf";
+	if (!-f $conf_file || !-s $conf_file) {
+		`mkdir "$ENV{HOME}/.cmdaliaser"` if !-d "$ENV{HOME}/.cmdaliaser";
+
+		my $cmd = $sub_cmd ? $sub_cmd : 'eg';
+		warn "Unknown command $name\n";
+		warn "Create the file $conf_file and put you alias info in there\nE.g.\n";
+		open my $fh, '>', $conf_file or die "Could not create the config file '$conf_file': $!\n";
+
+		print {$fh} <<"EXAMPLE";
+# Aliases for the $name command
+
+# optional name of program
+command = $name
+
+# The default pager settings
+pager = yes
+
+# Use $cmd as an alias for a longer command
+<alias $cmd>
+
+#	The command alias
+	sub = $cmd
+
+#	This specifies post processing commands placed after the pipe (|)
+#	post = grep blah
+
+#	Any pre processing commands, placed before an and (&&)
+#	pre = time
+
+#	This specifies that the output should be checked for length and if it is
+#	more than one page then the pager supplied is uesd if set to yes \$PAGER is used
+#	pager = yes | more | less
+
+</alias>
+EXAMPLE
+	}
+
+	my $conf = Config::General->new($conf_file);
+	my %conf = $conf->getall();
+
+	my $alias = join ' ', $sub_cmd, map {shell_quote($_)} @cmd_args;
+	my $pre;
+	my $pre_perl;
+	my $post;
+	my $pager;
+	my %found;
+
+	if ( exists $conf{dir} ) {
+		# get the first file/dir from the arguments or the current directory
+		my ($dir) = grep {-e $_} @cmd_args, '.';
+		$dir = -f $dir ? file($dir)->parent : dir($dir);
+		$dir = $dir->absolute->resolve;
+		my $found;
+		for my $conf_dir (keys %{ $conf{dir} } ) {
+			if ( $dir =~ /^$conf_dir/ ) {
+				$found = length $found < length $conf_dir ? $conf_dir : $found;
+			}
+		}
+		if ($found) {
+			# overright any defaul configs with directory specific configs
+			%conf = ( %conf, %{ $conf{dir}{$found} } );
+		}
+	}
+
+	while (exists $conf{alias}{$sub_cmd} && !$found{$sub_cmd}) {
+		if (ref $conf{alias}{$sub_cmd} eq 'ARRAY') {
+			warn "You have specified $sub_cmd too many times in your config file!\n";
+			return;
+		}
+		$found{$sub_cmd} = 1;
+		my $aliased = $conf{alias}{$sub_cmd}{sub} || $sub_cmd;
+		$alias =~ s/^\s*$sub_cmd/$aliased /xms;
+
+
+		if ($conf{alias}{$sub_cmd}{pre}) {
+			$pre &&= "$pre | ";
+			$pre  .= $conf{alias}{$sub_cmd}{pre};
+		}
+		if ($conf{alias}{$sub_cmd}{post}) {
+			$post &&= "$post | ";
+			$post  .= $conf{alias}{$sub_cmd}{post};
+		}
+		$pre_perl ||= $conf{alias}{$sub_cmd}{pre_perl};
+		$pager    ||= $conf{alias}{$sub_cmd}{pager};
+
+		($sub_cmd) = $alias =~ /^\s*(\S+)\s/xms;
+	}
+
+	$name = $conf{command} || $name;
+
+	if ($pre_perl) {
+		my $pre_sub = eval("sub { $pre_perl }");
+		if ($pre_sub && ref $pre_sub eq 'CODE') {
+			return if !$pre_sub->();
+			die "pre returned " . $pre_sub->() . "\n" if $option{test};
+		}
+		else {
+			warn "Error in evaluating:\n$pre_perl";
+		}
+	}
+
+	my $cmd = join ' ', $name, $alias;
+	$cmd .= " | $post" if $post;
+
+	$pager ||= $conf{pager};
+	$pager = $ENV{PAGER} if $pager && $pager eq 'yes';
+	print "$cmd\n" if $option{verbose} || $option{test};
+
+	if ($pager && !$option{test}) {
+		my ($lines, $cols) = split /\s+/, `stty size`;
+		open my $ch, '-|', "$cmd 2>&1" or die "Could not run the command $cmd: $!\n";
+		my $out = '';
+		my $i = 1;
+		my $ph;
+		while (my $line = <$ch>) {
+			if ($i < $lines) {
+				$out .= $line;
+			}
+			elsif ($i == $lines) {
+				$pager .= ' -R' if $pager =~ m{/?less$};
+				open $ph, '|-', $pager or die "Could not open pager $pager: $!\n";
+				print {$ph} $out;
+				print {$ph} $line;
+			}
+			else {
+				print {$ph} $line;
+			}
+			$i++;
+		}
+		close $ch;
+		if ($ph) {
+			close $ch;
+		}
+		else {
+			print $out;
+		}
+	}
+	else {
+		system $cmd if !$option{test};
+	}
+
+	return;
+}
+
+sub shell_quote {
+	my ($text) = @_;
+
+	if ($text =~ /[\s$|><;#]/xms) {
+		$text =~ s/'/'\\''/gxms;
+		$text = "'$text'";
+	}
+
+	return $text;
+}
+
+__DATA__
+
+=head1 NAME
+
+cmdaliaser - Allows the creating of aliases for sub commands of other programs (eg svn, cvs, net, etc)
+
+=head1 VERSION
+
+This documentation refers to cmdaliaser version 0.1.
+
+=head1 SYNOPSIS
+
+   cmdaliaser [option] cmd [cmd options]
+
+ OPTIONS:
+  cmd                This is the name of the alias file to use (and usually the program it is baised on eg svn)
+  -t --test          Test what would happen if the command was run (shows the command as would be executed)
+
+  -v --verbose       Show more detailed option
+     --version       Prints the version information
+     --help          Prints this help information
+     --man           Prints the full documentation for cmdaliaser
+
+=head1 DESCRIPTION
+
+=head2 Config files
+
+The config files are stored in the directory C<~/.cmdaliaser/>. There is one config file per program to be aliased named I<program>.conf eg for svn it would be C<svn.conf>
+
+=over 4
+
+=item command
+
+The name of the executable to run
+
+=item <alias I<alias>>
+
+An alias command name (I<alias>). This may contain the following sub parameters
+
+=over 4
+
+=item sub
+
+=item post
+
+=item pre
+
+=item pager
+
+
+=head1 SUBROUTINES/METHODS
+
+=head1 DIAGNOSTICS
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+=head1 DEPENDENCIES
+
+=head1 INCOMPATIBILITIES
+
+=head1 BUGS AND LIMITATIONS
+
+There are no known bugs in this module.
+
+Please report problems to iwills (iwills@localhost).
+
+Patches are welcome.
+
+=head1 AUTHOR
+
+iwills - (iwills@localhost)
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2009 iwills (123 Timbuc Too).
+All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself. See L<perlartistic>.  This program is
+distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+=cut

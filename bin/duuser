@@ -1,0 +1,232 @@
+#!/usr/bin/env perl
+
+# Created on: 2008-02-08 20:35:22
+# Create by:  ivan
+# $Id$
+# $Revision$, $HeadURL$, $Date$
+# $Revision$, $Source$, $Date$
+
+use strict;
+use warnings;
+use version;
+use Scalar::Util;
+use List::Util;
+#use List::MoreUtils;
+use Getopt::Long;
+use Pod::Usage;
+use Data::Dumper qw/Dumper/;
+use English qw/ -no_match_vars /;
+use FindBin qw/$Bin/;
+use Text::Table;
+use Number::Bytes::Human;
+use File::Find;
+use File::stat qw/stat/;
+use User::pwent;
+
+our $VERSION = version->new('0.0.1');
+my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+my $table;
+my $bytes;
+
+my %option = (
+	out     => undef,
+	verbose => 0,
+	man     => 0,
+	help    => 0,
+	VERSION => 0,
+);
+
+main();
+exit 0;
+
+sub main {
+
+	Getopt::Long::Configure('bundling');
+	GetOptions(
+		\%option,
+		'human|h!',
+		'byte|b!',
+		'kilobyte|k!',
+		'megabyte|m!',
+		'gigabyte|g!',
+		'terabyte|t!',
+		'verbose|v+',
+		'man',
+		'help',
+		'VERSION!',
+	) or pod2usage(2);
+	my @files = @ARGV;
+
+	if ( $option{'VERSION'} ) {
+		print "$name Version = $VERSION\n";
+		exit 1;
+	}
+	elsif ( $option{'man'} ) {
+		pod2usage( -verbose => 2 );
+	}
+	elsif ( $option{'help'} ) {
+		pod2usage( -verbose => 1 );
+	}
+
+	# do stuff here
+	$table = Text::Table->new( 'User', \'   ', 'Size' );
+	$bytes = Number::Bytes::Human->new( suffixes => 'si_1024' );
+
+	if (!@files) {
+		$files[0] = '.';
+	}
+
+	for my $file (@files) {
+		my $size = {};
+
+		get_usage($file, $size);
+		display_usage($file, $size);
+	}
+
+	return;
+}
+
+sub display_usage {
+
+	my ($file, $usage) = @_;
+
+	my $users = keys %{ $usage };
+
+	if ( $users == 0 ) {
+		print "0\t$file\n";
+		return;
+	}
+	elsif ( $users == 1 ) {
+		my ($uid) = keys %{ $usage };
+		my $user  = getpwuid $uid;
+		my $size  = pretty_size($usage->{$uid});
+
+		$user = $user ? $user->name : $uid;
+		print "$size\t$file\n";
+		return;
+	}
+
+	$table->clear;
+	print "Dir: $file\n";
+
+	for my $uid ( sort { $usage->{$a} <=> $usage->{$b} } keys %{ $usage } ) {
+		my $user = getpwuid $uid;
+		my $size = pretty_size($usage->{$uid});
+
+		$user = $user ? $user->name : $uid;
+
+		$table->add( "  $user", $size );
+	}
+	print $table->body;
+
+	return;
+}
+
+sub pretty_size {
+
+	my $size = shift;
+
+	return
+		  $option{'human'}    ? $bytes->format($size)
+		: $option{'byte'}     ? $size
+		: $option{'kilobyte'} ? sprintf "%.1fKiB", $size / 1024
+		: $option{'megabyte'} ? sprintf "%.1fMiB", $size / 1024 / 1024
+		: $option{'gigabyte'} ? sprintf "%.1fGiB", $size / 102 / 10244 / 1024
+		: $option{'terabyte'} ? sprintf "%.1fGiB", $size / 102 / 10244 / 1024 / 1024
+		:                       $size;
+}
+
+sub get_file_usage {
+
+	my ($file, $usage) = @_;
+	my $stat = stat $file;
+
+	if ( !$stat ) {
+		warn "Could not stat $File::Find::name: $OS_ERROR\n" if !-l $file;
+		return $usage;
+	}
+	return $usage if !$stat->uid;
+
+	$usage->{ $stat->uid } ||= 0;
+	$usage->{ $stat->uid } += $stat->size;
+
+	return $usage;
+}
+
+sub get_usage {
+
+	my ($dir, $usage) = @_;
+
+	# check weather we have a directory for file
+	if ( !-d $dir ) {
+		# return file usages directly
+		return get_file_usage( $dir, $usage );
+	}
+
+	local $SIG{__WARN__} = sub { print {*STDERR} "$File::Find::name: $OS_ERROR\n" };
+	find( sub { get_file_usage( $_, $usage ) if -f $_ && !-l $_ && !-d $_; }, $dir );
+
+	return $usage;
+}
+
+__DATA__
+
+=head1 NAME
+
+duuser - Gets directory usage by user
+
+=head1 VERSION
+
+This documentation refers to duuser version 0.1.
+
+=head1 SYNOPSIS
+
+   duuser [option]
+
+ OPTIONS:
+  -h --human    Show usage in human readable form
+  -b --byte     Show usage in bytes
+  -k --kilobyte Show usage in kilobytes
+  -m --megabyte Show usage in megabytes
+  -g --gigabyte Show usage in gigabytes
+  -t --terabyte Show usage in terabytes
+
+  -v --verbose  Show more detailed option
+     --version  Prints the version information
+     --help     Prints this help information
+     --man      Prints the full documentation for duuser
+
+=head1 DESCRIPTION
+
+=head1 SUBROUTINES/METHODS
+
+=head1 DIAGNOSTICS
+
+=head1 DEPENDENCIES
+
+=head1 INCOMPATIBILITIES
+
+=head1 BUGS AND LIMITATIONS
+
+There are no known bugs in this module.
+
+Please report problems to Ivan Wills (ivan.wills@gmail.com).
+
+Patches are welcome.
+
+=head1 AUTHOR
+
+Ivan Wills - (ivan.wills@gmail.com)
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2008 Ivan Wills (101 Miles St Bald Hills QLD Australia 4036).
+All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself. See L<perlartistic>.  This program is
+distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+=cut

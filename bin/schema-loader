@@ -1,0 +1,176 @@
+#!/usr/bin/env perl
+
+# Created on: 2010-09-23 10:06:03
+# Create by:  Ivan Wills
+# $Id$
+# $Revision$, $HeadURL$, $Date$
+# $Revision$, $Source$, $Date$
+
+use strict;
+use warnings;
+use version;
+use Getopt::Long;
+use Pod::Usage;
+use Data::Dumper qw/Dumper/;
+use English qw/ -no_match_vars /;
+use Path::Class;
+use DBIx::Class::Schema::Loader qw/ make_schema_at /;
+
+our $VERSION = version->new('0.0.1');
+my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+
+my %option = (
+    dir     => dir('lib')->absolute . '',
+    verbose => 0,
+    man     => 0,
+    help    => 0,
+    VERSION => 0,
+);
+
+if ( !@ARGV ) {
+    pod2usage( -verbose => 1 );
+}
+
+main();
+exit 0;
+
+sub main {
+
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,
+        'dir|d=s',
+        'name|n=s',
+        'connect|c=s',
+        'user|u=s',
+        'password|p=s',
+        'exclude|e=s',
+        'include|i=s',
+        'component|c=s@',
+        'verbose|v+',
+        'man',
+        'help',
+        'VERSION!',
+    ) or pod2usage(2);
+
+    if ( $option{'VERSION'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
+
+    # do stuff here
+    $option{name}     ||= shift @ARGV;
+    $option{connect}  ||= shift @ARGV;
+    $option{user}     ||= shift @ARGV;
+    $option{password} ||= shift @ARGV;
+
+    my %options = (
+        debug          => $option{verbose},
+        dump_directory => $option{dir},
+    );
+    if ( $option{exclude} ) {
+        $options{exclude} = qr/$option{exclude}/;
+    }
+    if ( $option{include} ) {
+        $options{constraint} = qr/$option{include}/;
+    }
+    if ( $option{component} ) {
+        $options{components} = $option{component};
+    }
+
+    if ( $option{verbose} ) {
+        print "Parameters passed to make_schema_at:\n" . Dumper [
+            $option{name},
+            \%options,
+            [ map { defined $_ && $_ ne '' ? $_ : () } ( $option{connect}, $option{user}, $option{password} ) ],
+        ];
+    }
+
+    make_schema_at(
+        $option{name},
+        \%options,
+        [ map { defined $_ && $_ ne '' ? $_ : () } ( $option{connect}, $option{user}, $option{password} ) ],
+    );
+
+    return;
+}
+
+__DATA__
+
+=head1 NAME
+
+schema-loader - Creates a DBIx::Class schema files by inspecting the prospective database
+
+=head1 VERSION
+
+This documentation refers to schema-loader version 0.1.
+
+=head1 SYNOPSIS
+
+   schema-loader -d ./lib MyProject::Schema dbi:Pg:dbname=foo postgres secret123 \
+                 -c InflateColumn::DateTime
+   schema-loader --dir ./lib --name MyProject::Schema --connect dbi:Pg:dbname=foo --user postgres --password secret123
+
+ OPTIONS:
+  -d --dir       The directory to put the loaded schema
+  -n --name      The package name that should take
+  -c --connect   The DBI connection string
+  -u --user      The user to connect to the database as
+  -p --password  The password the user needs to connect
+  -c --component=str
+                 Specify an additional component that should be used for all
+                 classes. You can set multiple components with by specifying
+                 --component more than once.
+  -e --exclude=RE
+                 A regular expression to exclude found tables from the schema
+  -i --include=RE
+                 A regular expression to choose which tables are loaded from
+                 the schema
+
+  -v --verbose   Show more detailed option
+     --version   Prints the version information
+     --help      Prints this help information
+     --man       Prints the full documentation for schema-loader
+
+=head1 DESCRIPTION
+
+=head1 SUBROUTINES/METHODS
+
+=head1 DIAGNOSTICS
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+=head1 DEPENDENCIES
+
+=head1 INCOMPATIBILITIES
+
+=head1 BUGS AND LIMITATIONS
+
+There are no known bugs in this module.
+
+Please report problems to Ivan Wills (ivan.wills@gmail.com).
+
+Patches are welcome.
+
+=head1 AUTHOR
+
+Ivan Wills - (ivan.wills@gmail.com)
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2010 Ivan Wills (14 Mullion Close, Hornsby Heights, NSW, Australia).
+All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself. See L<perlartistic>.  This program is
+distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+=cut

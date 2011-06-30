@@ -1,0 +1,245 @@
+#!/usr/bin/env perl
+
+# Created on: 2010-09-30 14:21:26
+# Create by:  Ivan Wills
+# $Id$
+# $Revision$, $HeadURL$, $Date$
+# $Revision$, $Source$, $Date$
+
+use strict;
+use warnings;
+use version;
+use Scalar::Util;
+use List::Util;
+#use List::MoreUtils;
+use Getopt::Long;
+use Pod::Usage;
+use Data::Dumper qw/Dumper/;
+use English qw/ -no_match_vars /;
+use FindBin qw/$Bin/;
+use MIME::Base64 qw/encode_base64 decode_base64/;
+use MIME::QuotedPrint qw/encode_qp decode_qp/;
+
+our $VERSION = version->new('0.0.1');
+my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+
+my %option = (
+    level   => 1,
+    verbose => 0,
+    man     => 0,
+    help    => 0,
+    VERSION => 0,
+);
+
+if ( !@ARGV ) {
+    pod2usage( -verbose => 1 );
+}
+
+main();
+exit 0;
+
+sub main {
+
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,
+        'code|C=s',
+        'direction|D=s',
+        'level|l=i',
+        'verbose|v+',
+        'man',
+        'help',
+        'VERSION!',
+    ) or pod2usage(2);
+
+    if ( $option{'VERSION'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
+
+    # do stuff here
+    $option{code}      ||= shift @ARGV;
+    $option{direction} ||= $0 =~ /(?: ^ | \/ ) (?:en)? coder/xms ? 'encode' : 'decode';
+
+    my %coders = get_coders();
+    my $sub    = $coders{$option{code}}{$option{direction}};
+    my $style  = $coders{$option{code}}{$option{direction} . '_on'};
+    warn Dumper $option{code}, $option{direction}, $sub, $style if $option{verbose};
+
+    if (@ARGV) {
+        my @lines = $style eq 'word' ? @ARGV : ( join ' ', @ARGV );
+        for my $line (@lines) {
+            print "$line\n";
+            local $_ = $line;
+            print $sub->($line) . "\n";
+        }
+    }
+    else {
+        my $text = '';
+        while (my $line = <>) {
+            if ( $style ne 'whole' || $line eq "-\n" ) {
+                print $sub->($text);
+                $text = '';
+            }
+            else {
+                $text .= $line;
+            }
+        }
+    }
+
+
+    return;
+}
+
+sub get_coders {
+    return (
+        base64 => {
+            encode    => \&encode_base64,
+            encode_on => 'whole',
+            decode    => \&decode_base64,
+            decode_on => 'line',
+        },
+        quoted_printable => {
+            encode    => \&encode_qp,
+            encode_on => 'whole',
+            decode    => \&decode_qp,
+            decode_on => 'line',
+        },
+        html => {
+            encode    => sub { $_[0] =~ s/([^\w])/sprintf "&#%x;", ord $1/egxms; return $_[0] },
+            encode_on => 'line',
+            decode    => sub { $_[0] =~ s/&#([\da-fA-F]+);/chr hex $1/egxms; return $_[0] },
+            decode_on => 'line',
+        },
+        http => {
+            encode    => sub { $_[0] =~ s/([^\w])/sprintf "%%%x", ord $1/egxms; return $_[0] },
+            encode_on => 'word',
+            decode    => sub { $_[0] =~ s/%([\da-fA-F]{2})/chr hex $1/egxms; return $_[0] },
+            decode_on => 'word',
+        },
+        url => {
+            encode    => sub {
+                my $matcher =
+                      $option{level} == 3 ? qr{  .     }xms
+                    : $option{level} == 2 ? qr{  \W    }xms
+                    : $option{level} == 1 ? qr{ [\W/:] }xms
+                    : $option{level} == 0 ? qr{ [\W]   }xms
+                    :                       qr{ [\W]   }xms;
+                s/($matcher)/sprintf('%%%x',ord($1))/eg;
+                $_;
+            },
+            encode_on => 'word',
+            decode    => sub {
+                my $count = 0;
+                while ( /%/ && $count++ < 10 ) {
+                    s/%([\da-fA-F][\da-fA-F])/sprintf('%c',(hex($1)))/eg;
+                }
+                $_;
+            },
+            decode_on => 'word',
+        },
+    );
+}
+
+__DATA__
+
+=head1 NAME
+
+coder - Encode/Decode various formats
+
+=head1 VERSION
+
+This documentation refers to coder version 0.1.
+
+=head1 SYNOPSIS
+
+   coder [option] CODE [string1 ...]
+   decoder [option] CODE [string1 ...]
+
+ OPTIONS:
+  CODE           The type of coding/decoding to do currently supported:
+                    base64
+                    quoted_printable
+                    html
+                    http
+                    url
+  -D --direction=str
+                 Direction for codeing (encode|decode) if called as coder the
+                 default is encode if called as decoder the default is decode
+  -C --code=str  Alternate method of specifying CODE
+  -l --level=int Some CODEs (eg url) allow the setting of a level encoding
+                 via this parameter
+
+  -v --verbose   Show more detailed option
+     --version   Prints the version information
+     --help      Prints this help information
+     --man       Prints the full documentation for coder
+
+=head1 DESCRIPTION
+
+=head2 CODE types
+
+=over 4
+
+=item base64
+
+Does Base64 encoding and decoding
+
+=item quoted_printable
+
+Does (en|de)coding of the MIME Quoted Printable format
+
+=item html
+
+Does (en|de)coding of HTML/XML characters
+
+=item http
+
+Simple URL encoding
+
+=item url
+
+More sofisticated (en|de)coding of URL characters
+
+=back
+
+=head1 SUBROUTINES/METHODS
+
+=head1 DIAGNOSTICS
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+=head1 DEPENDENCIES
+
+=head1 INCOMPATIBILITIES
+
+=head1 BUGS AND LIMITATIONS
+
+There are no known bugs in this module.
+
+Please report problems to Ivan Wills (ivan.wills@gmail.com).
+
+Patches are welcome.
+
+=head1 AUTHOR
+
+Ivan Wills - (ivan.wills@gmail.com)
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2010 Ivan Wills (123 Timbuc Too).
+All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself. See L<perlartistic>.  This program is
+distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+=cut
