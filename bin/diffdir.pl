@@ -26,6 +26,7 @@ my %option = (
     exclude => '(?:[.]bzr|[.]svn|CVS|RCS|,v|[~-]$|[.]rpmnew|[.]git|[.]sw[op]$|[.]netrwhist$)|/(?:blib|_build)/|/(?:tags|Build|MYMETA.yml|Debian_CPANTS.txt|[.]vimtagsdisplay)$',
     cmd     => 'diff',
     cp      => 0,
+    rm      => 0,
     join    => 0,
     script  => 0,
     link    => 0,
@@ -51,6 +52,7 @@ sub main {
         'cmd|command|c=s',
         'script|s!',
         'cp|cp-missing|m!',
+        'rm|remove-extra|r!',
         'same|same-files|S',
         'link|symlink|l!',
         'join|j',
@@ -104,7 +106,10 @@ sub main {
         for my $dir ( keys %files ) {
             if ( !exists $files{$dir}{$file} ) {
                 if ( $option{'script'} || $option{'cp'} ) {
-                    my $cmd = $option{'cp'} ? 'cp' : $option{'cmd'};
+                    my $cmd
+                        = $option{'rm'} ? 'rm'
+                        : $option{'cp'} ? 'cp'
+                        :                 $option{'cmd'};
                     if (!@found) {
                         for my $found (keys %files) {
                             next if !-e "$found/$file";
@@ -113,7 +118,10 @@ sub main {
                     }
                     for my $found (@found) {
                         file($dir,$file)->parent->mkpath if $option{missing_dirs};
-                        push @mesg, "$cmd $found/$file $dir/$file";
+                        my $msg
+                            = $option{'rm'} ? "$cmd $found/$file"
+                            :                 "$cmd $found/$file $dir/$file";
+                        push @mesg, $msg;
                     }
                 }
                 else {
@@ -153,8 +161,12 @@ sub main {
                                 my $dest = $dir_start ? "$dir_start/$dir_end\_$found_end" : "$dir_end\_$found_end";
 
                                 system "mkdir $dest" if !-d $dest;
-                                system "cp $dir/$file   $dest/$file1" if -d $dest;
-                                system "cp $found/$file $dest/$file2" if -d $dest;
+                                if ( $option{rm} ) {
+                                }
+                                else {
+                                    system "cp $dir/$file   $dest/$file1" if -d $dest;
+                                    system "cp $found/$file $dest/$file2" if -d $dest;
+                                }
                             }
                         }
                         $ok = 0;
