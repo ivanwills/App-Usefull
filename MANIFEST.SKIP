@@ -61,3 +61,4 @@ Debian_CPANTS.txt
 
 # Avoid archives of this distribution
 \bApp-Usefull-[\d\.\_]+
+tags
