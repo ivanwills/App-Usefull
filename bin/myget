@@ -87,7 +87,8 @@ sub main {
         }
     }
     if ($@) {
-        print $@;
+        #print $@;
+        print "Error " . ( $option{content} ? 'PUT' : 'GET' ) . 'ing ' . $mech->uri . ': ' . $mech->res->code . ' ' . $mech->res->message . "\n";
     }
     print "Content:\n" if $option{verbose};
     print defined $mech->content ? $mech->content : '(No content)';
