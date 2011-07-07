@@ -188,12 +188,12 @@ sub show_results {
             $version = ' ' x ($max + 1 - length $module) . $version;
 
             $star =
-                  ! exists $specified->{$module}  ? '†'
-                : ! defined $specified->{$module} ? ' '
-                : $num < $specified->{$module}    ? '‡'
-                : $used->{$module}{build_only}    ? '⁎'
-                : $used->{$module}{build_only}    ? '⁂'
-                :                                   ' ';
+                  ! exists $specified->{$module}                           ? '†'
+                : ! defined $specified->{$module}                          ? ' '
+                : version->new($num) < version->new($specified->{$module}) ? '‡'
+                : $used->{$module}{build_only}                             ? '⁎'
+                : $used->{$module}{build_only}                             ? '⁂'
+                :                                                            ' ';
         }
         else {
             $star = exists $specified->{$module} ? ' ' : '†';
