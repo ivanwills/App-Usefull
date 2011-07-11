@@ -29,6 +29,40 @@ my %option = (
     help    => 0,
     VERSION => 0,
 );
+my %ERROR = (
+    COULD_NOT_LAUNCH_SCREEN => {
+        message => "Unable to launch screen %s\n",
+        code    => 10,
+    },
+    COULD_NOT_LAUNCH_SCREEN_PROTECTION => {
+        message => "Unable to run protection screen '%s': %s\n",
+        code    => 12,
+    },
+    COULD_NOT_WIPE_SESSION => {
+        message => "Unable to launch screen to wipe '%s': %s\n",
+        code    => 14,
+    },
+    COULD_NOT_REATTACH => {
+        message => "Unable to launch screen to re-attach to '%s': %s\n",
+        code    => 16,
+    },
+    COULD_NOT_FIND_SESSION => {
+        message => "Could not find the screen session '%s'\n",
+        code    => 18,
+    },
+    COULD_NOT_FIND_CONFIG => {
+        message => "No config exists for %s\nTo create from template Use:\n \$ %s %s --create\n",
+        code    => 20,
+    },
+    COULD_NOT_LAUNCH_SCREEN_TASK => {
+        message => "Unable to launch screen for '%s': %s\n",
+        code    => 30,
+    },
+    COULD_NOT_CREATE_CONFIG => {
+        message => "Could not create '%s' config from template: %s\n",
+        code    => 40,
+    },
+);
 
 if (!@ARGV) {
     pod2usage(-verbose => 1);
@@ -36,6 +70,12 @@ if (!@ARGV) {
 
 main();
 exit 0;
+
+sub error {
+    my ( $name, @args ) = @_;
+    print {*STDERR} sprintf $ERROR{$name}{message}, @args;
+    exit $ERROR{$name}{code};
+}
 
 sub main {
     Getopt::Long::Configure('bundling');
@@ -47,6 +87,7 @@ sub main {
         'exists|e!',
         'create|c+',
         'chdir|d',
+        'reconnect|r!',
         'force_title|force-title|f',
         'title_bar|title-bar|b=s',
         'protect|p',
@@ -73,7 +114,7 @@ sub main {
     my %session = ();
 
     # run screen to read in all the sessions
-    open my $screen, "-|", "/usr/bin/screen -ls" or die "Unable to launch screen $OS_ERROR";
+    open my $screen, "-|", "/usr/bin/screen -ls" or error( COULD_NOT_LAUNCH_SCREEN => $OS_ERROR);
 
     # read each running session
     while ( my $session = <$screen> ) {
@@ -126,14 +167,14 @@ sub main {
         }
         elsif ( $session{$uc_task}{state} eq 'DEAD' ) {
             warn "A previous session for '$task' was detected as dead, wiping and starting a new session\n";
-            system "/usr/bin/screen -wipe $uc_task > /dev/null 2>&1" or die "Unable to launch screen to wipe '$task': $OS_ERROR";
+            system "/usr/bin/screen -wipe $uc_task > /dev/null 2>&1" or error( COULD_NOT_WIPE_SESSION => $task, $OS_ERROR );
         }
         else {
-            exec "/usr/bin/screen -d -R $uc_task" or die "Unable to launch screen to re-attach to '$task': $OS_ERROR";
+            exec "/usr/bin/screen -d -R $uc_task" or error( COULD_NOT_REATTACH => $task, $OS_ERROR );
         }
     }
-    if ( $option{kill} ) {
-        die "Could not find a screen session of $lc_task!\n";
+    elsif ( $option{reconnect} || $option{kill} ) {
+        error( COULD_NOT_FIND_SESSION => $task );
     }
 
     my @screen_opts = (
@@ -172,6 +213,7 @@ sub main {
         }
     }
     elsif ( $option{exits} ) {
+        error( COULD_NOT_FIND_CONFIG => $task, $0, $task );
         die "No config exists for $task\nTo create from template Use:\n \$ $0 $task --create\n";
     }
 
@@ -196,7 +238,7 @@ sub main {
         warn $cmd;
         exit 0;
     }
-    exec $cmd or die "Unable to launch screen for '$task': $OS_ERROR\n";
+    exec $cmd or error( COULD_NOT_LAUNCH_SCREEN_TASK => $task, $OS_ERROR );
 }
 
 # runs a ssh-agent protecting screen session
@@ -220,7 +262,7 @@ sub protect {
         warn $cmd;
         exit 0;
     }
-    exec $cmd or die "Unable to run protection screen '$cmd': $OS_ERROR\n";
+    exec $cmd or error( COULD_NOT_LAUNCH_SCREEN_PROTECTION => $cmd, $OS_ERROR );
 }
 
 sub force_title {
@@ -254,7 +296,7 @@ sub create_task {
         task    => $task,
     );
 
-    $tt->process( $template, \%data, lc $task ) or die $tt->error();
+    $tt->process( $template, \%data, lc $task ) or error( COULD_NOT_CREATE_CONFIG => $tt->error() );
 
     return "$out_dir/$task";
 }
