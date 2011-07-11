@@ -357,6 +357,68 @@ sub install {
     }
 }
 
+{
+    sub rebuild {
+        my ($vcs, $dir) = @_;
+
+        if ( $dir =~ m{/www/} ) {
+            print "Skipping $dir\n";
+            return;
+        }
+
+        chdir $dir;
+        print "Building $dir\n";
+        print {*STDERR} "  Pulling ...";
+        $vcs->pull($dir);
+        if ( -x 'Build' ) {
+            `./Build distclean >/dev/null 2>/dev/null`;
+        }
+        elsif ( -e 'Makefile' ) {
+            `make distclean >/dev/null 2>/dev/null`;
+        }
+
+        print {*STDERR} "\n  Building ...";
+        if ( -e 'Build.PL' ) {
+            `perl Build.PL distclean >/dev/null 2>/dev/null`;
+        }
+        elsif ( -e 'Makefile.PL' ) {
+            `perl Makefile.PL >/dev/null 2>/dev/null`;
+        }
+
+        print {*STDERR} "\n  Building ...";
+        if ( -x 'Build' ) {
+            `./Build >/dev/null 2>/dev/null`;
+        }
+        elsif ( -e 'Makefile' ) {
+            `make >/dev/null 2>/dev/null`;
+        }
+
+        if ( defined $option{test} && !$option{test} ) {
+            print {*STDERR} "\n  Testing ...";
+            my $failed;
+            if ( -x 'Build' ) {
+                $failed = system "./Build test >/dev/null 2>/dev/null";
+            }
+            elsif ( -e 'Makefile' ) {
+                $failed = system "make test >/dev/null 2>/dev/null";
+            }
+            if ($failed) {
+                print {*STDERR} " Failed!\n";
+                return;
+            }
+        }
+
+        print {*STDERR} "\n  Installing ...";
+        if ( -x 'Build' ) {
+            `sudo ./Build install >/dev/null 2>/dev/null`;
+        }
+        elsif ( -e 'Makefile' ) {
+            `sudo make install >/dev/null 2>/dev/null`;
+        }
+
+    }
+}
+
 __DATA__
 
 =head1 NAME
