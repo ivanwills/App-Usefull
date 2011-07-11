@@ -95,7 +95,7 @@ sub list {
 
     if ( -d $args{file} ) {
         #my @files = grep { $files->file_ok($_) } $args{file}->children;
-        my @files = $args{file}->children;
+        my @files = grep {ok_files($_)} $args{file}->children;
 
         if ( $option{dirfirst} ) {
             @files = sort {
@@ -140,6 +140,14 @@ sub list {
 
         say $args{line_start}. '- '. $args{file};
     }
+}
+
+sub ok_files {
+    my ($file) = @_;
+
+    return 0 if $option{exclude} && $file =~ /$option{exclude}/ms;
+    return 0 if $option{include} && $file !~ /$option{include}/ms;
+    return $files->file_ok($file);
 }
 
 sub say {
