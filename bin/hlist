@@ -18,6 +18,7 @@ use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use Path::Class;
 use File::CodeSearch::Files;
+use File::chdir qw/$CWD/;
 
 our $VERSION = version->new('0.0.1');
 my ($name) = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -48,6 +49,7 @@ sub main {
         \%option,
         'all|a!',
         'dirfirst|d!',
+        'depth|D=i',
         'files!',
         'symlinks|follow|l!',
         'exclude|e=s@',
@@ -86,7 +88,7 @@ sub main {
 
     for my $file (@files) {
         my $start = start($file);
-        list( file => dir($file), line_start => $start );
+        list( file => dir($file), line_start => $start, depth => 1 );
     }
 }
 
@@ -126,13 +128,15 @@ sub list {
 
             if ( -d $file && ($option{follow} || !-l $file) ) {
                 say $args{line_start} . $join{start} . ( $option{verbose} ? $file : $file->dir_list(-1) );
+                next if $option{depth} && $option{depth} <= $args{depth};
                 list(
                     file       => $file,
                     line_start => $args{line_start} . ( $i == @files - 1 ? ' ' : '|' ) . ( $option{narrow} ? '' : ' ' ),
+                    depth      => $args{depth} + 1,
                 );
             }
             else {
-                say $args{line_start} . '|' . ( $i == @files - 1 ? $join{end} : $join{mid} ) . ' ' . ( $option{verbose} ? $file : $file->basename );
+                say $args{line_start} . '|' . ( $i == @files - 1 ? $join{end} : $join{mid} ) . ' ' . colour_file($file);
             }
         }
     }
@@ -140,6 +144,22 @@ sub list {
 
         say $args{line_start}. '- '. $args{file};
     }
+}
+
+sub colour_file {
+    my ($file) = @_;
+    my $colour;
+
+    if ( $option{verbose} ) {
+        $colour = `/bin/ls -F --color=yes $file`;
+    }
+    else {
+        my $name = $file->basename;
+        local $CWD = $file->parent;
+        $colour = `/bin/ls -F --color=yes $name`;
+    }
+    chomp $colour;
+    return $colour;
 }
 
 sub ok_files {
@@ -191,9 +211,19 @@ This documentation refers to hlist version 0.1.
   -a --all       Show all files including files starting with a dot (.)
   -d --dirsfirst Shows directories first
      --nofiles   Show only the directory structure
+  -D --depth=int Set the maximum directory depth to decend to
+  -n --narrow    Format display to be narrower
   -l --follow    Follow sim-links
   -e --exclude=regex
                  Exclude files & directories matching the regex
+  -i --include=regex
+                 Include files & directories matching the regex
+  -E --exclude-type=str
+                 Exclude files of this type (see L<File::CodeSearch::Files>
+                 for details)
+  -I --include-type=str
+                 Include files of this type (see L<File::CodeSearch::Files>
+                 for details)
 
   -v --verbose   Show more detailed option
      --VERSION   Prints the version information
