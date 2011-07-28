@@ -19,6 +19,7 @@ use VCS::Which;
 use File::Slurp qw/slurp/;
 use File::chdir;
 use Term::ANSIColor qw/:constants colored/;
+use Path::Class;
 
 our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -416,6 +417,18 @@ sub install {
             `sudo make install >/dev/null 2>/dev/null`;
         }
 
+    }
+}
+
+sub stashed {
+    my ($vcs, $dir, $max) = @_;
+    if ( -d dir($dir, '.git') ) {
+        chdir $dir;
+        my @stash = `git stash list`;
+        printf "\t%-${max}s - %2i\n", $dir, scalar @stash;
+    }
+    else {
+        print "\t$dir - not git\n";
     }
 }
 
