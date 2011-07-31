@@ -452,6 +452,9 @@ This documentation refers to pull-everything version 0.1.
   stats          Get version controll stats (ie commits) for each repo
   test           Run all test
   status         Check the status of each repo
+  install        Build and install all projects
+  rebuild        Pull in any changes and rebuild and install all projects
+  stashed        Find all projects with stashed changes
 
  OPTIONS:
   -a --author    Run the author tests when used with the test command
