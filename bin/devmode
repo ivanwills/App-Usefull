@@ -133,7 +133,7 @@ sub main {
         my $count = 0;
 
         if ( $option{verbose} ) {
-        my @modes = grep { -f $_ && $_->basename !~ /^[.]/xms } dir("$ENV{HOME}", ".devmode")->children;
+            my @modes = grep { -f $_ && $_->basename !~ /^[.]|[.]rc$/xms } dir("$ENV{HOME}", ".devmode")->children;
             for my $mode (@modes) {
                 my $base = $mode->basename;
                 $session{uc $base} ||= { state => 'Not Started' };
@@ -142,7 +142,7 @@ sub main {
 
         SESSION:
         for my $session ( sort keys %session ) {
-            next SESSION if $session =~ /^\d+$/ && $session == $session{$session}{pid};
+            next SESSION if $session{$session}{pid} && $session =~ /^\d+$/ && $session == $session{$session}{pid};
             print ucfirst lc $session{$session}{state}, ' ' x (14 - length $session{$session}{state}), lc $session, "\n";
             $count++;
         }
