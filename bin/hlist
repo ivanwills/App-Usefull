@@ -26,6 +26,7 @@ my ($name) = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 my %option = (
     files   => 1,
     follow  => 0,
+    narrow  => 0,
     verbose => 0,
     man     => 0,
     help    => 0,
@@ -154,11 +155,11 @@ sub colour_file {
         $colour = `/bin/ls -F --color=yes $file`;
     }
     else {
-        my $name = $file->basename;
+        my $name = -d $file ? $file->dir_list(-1) : $file->basename;
         local $CWD = $file->parent;
         $colour = `/bin/ls -F --color=yes $name`;
     }
-    chomp $colour;
+    $colour =~ s/\n+//;
     return $colour;
 }
 
