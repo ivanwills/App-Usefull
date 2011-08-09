@@ -29,6 +29,7 @@ my $builder = Module::Build->new(
         'Net::DBus::Reactor'              => 0,
         'Number::Bytes::Human'            => 0,
         'Path::Class'                     => 0,
+        'Perl::Critic::Bangs'             => 0,
         'Perl::MinimumVersion'            => 0,
         'Proc::ProcessTable'              => 0,
         'Syntax::Highlight::Engine::Kate' => 0,
