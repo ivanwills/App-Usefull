@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use version;
 use Scalar::Util;
-use List::Util;
+use List::Util qw/sum/;
 #use List::MoreUtils;
 use Getopt::Long;
 use Pod::Usage;
@@ -33,7 +33,7 @@ my %option = (
     VERSION => 0,
 );
 
-my $proxy_loglevels = (
+my %proxy_loglevels = (
     NONE    => 2 ** 0,
     PROXY   => 2 ** 1,
     STATUS  => 2 ** 2,
