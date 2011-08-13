@@ -25,7 +25,7 @@ our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
-    port    => 3218,
+    port    => 3128,
     record  => 1,
     verbose => 0,
     man     => 0,
@@ -45,6 +45,7 @@ my %proxy_loglevels = (
     CONNECT => 2 ** 8,
     ENGINE  => 2 ** 9,
     ALL     => 2 ** 10,
+    A       => sum map { 2 ** $_ } 0 .. 10,
 );
 
 if ( !@ARGV ) {
