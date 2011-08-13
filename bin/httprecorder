@@ -66,7 +66,7 @@ sub main {
 
     # do stuff here
     my $proxy = HTTP::Proxy->new( port => $option{port} );
-    print "Running proxy on port $option{port} (Proxy $HTTP::Proxy::VERSION Recorder $HTTP::Recorder::VERSION)\n";
+    print "Running proxy on localhost:$option{port} (Proxy $HTTP::Proxy::VERSION Recorder $HTTP::Recorder::VERSION)\n";
 
     # create a new HTTP::Recorder object
     my $agent = new HTTP::Recorder;
@@ -75,6 +75,14 @@ sub main {
         # set the log file (optional)
         $agent->file($option{out});
         print "Logging to $option{out}\n";
+    }
+    else {
+        print "Logging to '/tmp/scriptfile'\n";
+    }
+
+    # set the proxy port
+    if ( $option{port} ) {
+        $proxy->port($option{port});
     }
 
     # set HTTP::Recorder as the agent for the proxy
@@ -102,7 +110,8 @@ This documentation refers to httprecorder version 0.1.
    httprecorder [option]
 
  OPTIONS:
-  -o --out=string    The file that will contain all the recorded HTTP actions.
+  -o --out[=]string  The file that will contain all the recorded HTTP actions.
+  -p --port[=]int    The port to listen on (Default 3128)
 
   -v --verbose       Show more detailed option
      --version       Prints the version information
