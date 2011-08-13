@@ -45,6 +45,7 @@ sub main {
         \%option,
         'out|o=s',
         'content|c=s',
+        'proxy|p=s%',
         'verbose|v+',
         'man',
         'help',
@@ -65,6 +66,12 @@ sub main {
     # do stuff here
     my $url  = shift @ARGV;
     my $mech = WWW::Mechanize->new;
+
+    if ( $option{proxy} ) {
+        for my $protocol ( keys %{ $option{proxy} } ) {
+            $mech->proxy( $protocol => $option{proxy}{$protocol} );
+        }
+    }
 
     if ( $option{content} ) {
         my $content
