@@ -33,6 +33,20 @@ my %option = (
     VERSION => 0,
 );
 
+my $proxy_loglevels = (
+    NONE    => 2 ** 0,
+    PROXY   => 2 ** 1,
+    STATUS  => 2 ** 2,
+    PROCESS => 2 ** 3,
+    SOCKET  => 2 ** 4,
+    HEADERS => 2 ** 5,
+    FILTERS => 2 ** 6,
+    DATA    => 2 ** 7,
+    CONNECT => 2 ** 8,
+    ENGINE  => 2 ** 9,
+    ALL     => 2 ** 10,
+);
+
 if ( !@ARGV ) {
     pod2usage( -verbose => 1 );
 }
@@ -47,6 +61,7 @@ sub main {
         \%option,
         'out|o=s',
         'port|p=i',
+        'log|l=s@',
         'record|r!',
         'verbose|v+',
         'man',
@@ -91,6 +106,11 @@ sub main {
     # set the proxy port
     if ( $option{port} ) {
         $proxy->port($option{port});
+    }
+
+    # set log level if required
+    if ( $option{log} ) {
+        $proxy->logmask( sum map { exists $proxy_loglevels{$_} ? $proxy_loglevels{$_} : $_ } @{ $option{log} } );
     }
 
     # start the proxy
