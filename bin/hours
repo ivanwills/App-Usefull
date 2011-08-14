@@ -515,8 +515,10 @@ sub raw_stats {
             $total += $end - $start;
         }
 
+        # TODO Get this to allow any number of gaps in a day (currently 2 gaps don't seem to be correct)
         my $lunch
-            = @fields == 4 || @fields == 3   ? int ( (round(Class::Date->new("$date $fields[2]"), 1) - round(Class::Date->new("$date $fields[1]")) ) / MINUTE )
+            = @fields == 6 || @fields == 5   ? int ( ( round(Class::Date->new("$date $fields[2]"), 1) - round(Class::Date->new("$date $fields[1]")) ) / MINUTE + ( round(Class::Date->new("$date $fields[4]"), 1) - round(Class::Date->new("$date $fields[3]")) ) / MINUTE )
+            : @fields == 4 || @fields == 3   ? int ( ( round(Class::Date->new("$date $fields[2]"), 1) - round(Class::Date->new("$date $fields[1]")) ) / MINUTE )
             : @fields == 2 && $day ne $today ? 'N/A'
             : @fields == 2                   ? int ( (round(now(), 1) - round(Class::Date->new("$date $fields[1]"))) / MINUTE )
             :                                  undef;
