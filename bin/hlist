@@ -120,7 +120,7 @@ sub list {
 
         # remove non directories unless requested to keep them
         if ( !$option{files} ) {
-            @files = grep { -d "$args{file}/$_" } @files;
+            @files = grep { -d $_ } @files;
         }
 
         FILE:
@@ -212,7 +212,7 @@ This documentation refers to hlist version 0.1.
   -a --all       Show all files including files starting with a dot (.)
   -d --dirsfirst Shows directories first
      --nofiles   Show only the directory structure
-  -D --depth=int Set the maximum directory depth to decend to
+  -D --depth=int Set the maximum directory depth to decend to (starts from the supplied level)
   -n --narrow    Format display to be narrower
   -l --follow    Follow sim-links
   -e --exclude=regex
