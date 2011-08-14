@@ -120,7 +120,10 @@ This documentation refers to myget version 0.1.
    myget [option] URL
 
  OPTIONS:
-  -o --other         other option
+  -o --out=file      Write output to 'file' (Default is to write to STDOUT)
+  -p --proxy protocol=proxy_url
+                     Configure to use proxy on the protocol with the url
+                     eg http=http://localhost:3128
 
   -v --verbose       Show more detailed option
      --version       Prints the version information
