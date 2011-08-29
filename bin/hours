@@ -504,28 +504,37 @@ sub raw_stats {
         next RECORD if $end   && $day > $end;
 
         my $total = Class::Date::Rel->new(0);
+        my $last;
+        my $lunch = 0;
 
         for ( my $i = 0; $i < @fields; $i += 2 ) {
             last RECORD if $option{full} && !$fields[$i + 1];
             my $start = round( Class::Date->new("$date " . $fields[$i]), 0 );
-            my $end = round( defined $fields[$i + 1] ? Class::Date->new("$date " . $fields[$i + 1]) : $now, 1 );
+            my $end;
+            if ( defined $fields[$i + 1] ) {
+                $end = round(Class::Date->new("$date " . $fields[$i + 1]), 1 );
+            }
+            else {
+                $end = round($now, 1 );
+                $fields[$i + 1] = $now->hms;
+            }
             $fields[$i  ] = $start->strftime('%H:%M');
             $fields[$i+1] = $end->strftime('%H:%M');
 
             $total += $end - $start;
+            if ( $last ) {
+                $lunch += int ( ( round(Class::Date->new($start), 1) - round(Class::Date->new($last)) ) / MINUTE );
+            }
+            $last = $end;
         }
 
-        my $lunch
-            = @fields == 4 || @fields == 3   ? int ( (round(Class::Date->new("$date $fields[2]"), 1) - round(Class::Date->new("$date $fields[1]")) ) / MINUTE )
-            : @fields == 2 && $day ne $today ? 'N/A'
-            : @fields == 2                   ? int ( (round(now(), 1) - round(Class::Date->new("$date $fields[1]"))) / MINUTE )
-            :                                  undef;
+        $lunch ||= 'N/A';
 
         push @stats, {
             day   => $day,
             total => $total,
             start => $fields[0],
-            end   => @fields == 2 && $day ne $today ? $fields[1] : $fields[3],
+            end   => $fields[-1],
             lunch => $lunch,
         };
 
