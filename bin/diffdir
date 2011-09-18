@@ -54,7 +54,6 @@ sub main {
         'cp|cp-missing|m!',
         'rm|remove-extra|r!',
         'same|same-files|S',
-        'link|symlink|l!',
         'join|j',
         'follow|f!',
         'ignore-space-change|b',
@@ -205,7 +204,7 @@ sub main {
 
     for my $msg ( @messages ) {
         print $msg->{file} . ' ' x ($length - length $msg->{file});
-        print join "\t", @{ $msg->{'messages'} };
+        print join "\n" . (' ' x $length), @{ $msg->{'messages'} };
         print "\n";
     }
 
@@ -215,7 +214,7 @@ sub main {
 sub diff {
     my ($file1, $file2) = @_;
 
-    return if !$option{link} && (-l $file1 || -l $file2);
+    return if !$option{follow} && (-l $file1 || -l $file2);
 
     $file1 =~ s/'/'\\''/gxms;
     $file1 = "'$file1'";
@@ -281,14 +280,19 @@ This documentation refers to diffdir version 0.1.
   -e --exclude=re Elclude any file or directory that matches this regular
                   expression
   -s --script     Produce a script of actions
-  -c --cmd=string Use this command instead of diff in the listing.
+  -c --command=string
+                  Use this command instead of diff in the listing.
   -m --cp-missing Create a copy statement for missing files rather than
                   telling which directory it was missing from
+  -r --remove-extra
+                  Remove extra files
   -S --same-files Show the same files instead of different files
   -j --join       Combines the file into a thrid baised on the original directory names.
-  -b  --ignore-space-change
+  -f --follow     Follow symlinks directories and diff symlink files.
+     --no-follow  Don't follow symlinked directories or diff symlinked files.
+  -b --ignore-space-change
                   Ignore changes in the amount of white space.
-  -w  --ignore-all-space
+  -w --ignore-all-space
                   Ignore all white space.
   -d --missing-dirs
                   Create directories that are missing (makes copying of missing files simpler)
@@ -324,7 +328,7 @@ Ivan Wills - (ivanw@benon.com)
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2008 Ivan Wills (101 Miles St Bald Hills QLD Australia 4036).
+Copyright (c) 2008-2011 Ivan Wills (14 Mullion Cl Hornsby Heights, Australia 2077).
 All rights reserved.
 
 This module is free software; you can redistribute it and/or modify it under
