@@ -12,7 +12,7 @@ use version;
 use Getopt::Long;
 use Pod::Usage;
 use Data::Dumper qw/Dumper/;
-use DDS;
+use Data::Dump::Streamer qw/Dump/;
 use English qw/ -no_match_vars /;
 
 our $VERSION = version->new('0.0.1');
