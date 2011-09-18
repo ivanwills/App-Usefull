@@ -1,0 +1,330 @@
+#!/usr/bin/env perl
+
+# Created on: 2010-03-25 08:01:49
+# Create by:  Ivan Wills
+# $Id$
+# $Revision$, $HeadURL$, $Date$
+# $Revision$, $Source$, $Date$
+
+use strict;
+use warnings;
+use version;
+use Scalar::Util;
+use List::Util qw/sum/;
+#use List::MoreUtils;
+use Getopt::Long;
+use Pod::Usage;
+use Data::Dumper qw/Dumper/;
+use English qw/ -no_match_vars /;
+use FindBin qw/$Bin/;
+use File::Slurp qw/slurp/;
+
+our $VERSION = version->new('0.0.1');
+my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+
+my %option = (
+    out        => undef,
+    auto_close => [],
+    xhtml      => 1,
+    verbose    => 0,
+    man        => 0,
+    help       => 0,
+    VERSION    => 0,
+);
+my @auto_close = qw{
+    input
+    br
+    meta
+    img
+    link
+    param
+};
+my %known = get_known();
+
+if ( !@ARGV ) {
+    pod2usage( -verbose => 1 );
+}
+
+main();
+exit 0;
+
+sub main {
+
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,
+        'out|o=s',
+        'auto_close|auto-close|a=s@',
+        'known|k=s',
+        'simple|s!',
+        'xhtml|x!',
+        'clean|c!',
+        'strict|S!',
+        'test|t!',
+        'quiet|q!',
+        'verbose|v+',
+        'man',
+        'help',
+        'VERSION!',
+    ) or pod2usage(2);
+
+    if ( $option{'VERSION'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
+    my $auto_close = '(?:' . ( join '|', @auto_close, @{$option{auto_close}} ) . ')';
+
+    my $max = 0;
+    for my $file (@ARGV) {
+        $max = length $file if length $file > $max;
+    }
+
+    # do stuff here
+    FILE:
+    for my $file (@ARGV) {
+        my $html = do { local $/; $file eq '-' ? join '', <> : slurp $file };
+        my $clean;
+        my $depth = 0;
+        my $line  = 1;
+
+        if ( $option{simple} ) {
+
+            # Remove any html comments and CDATA sections
+            my @comments = $html =~ /(<!--        (?:.*?)   -->)/gxms;
+            my @cdata    = $html =~ /(<!\[CDATA\[ (?:.*?) \]\]>)/gxms;
+            my @lines = sum map { ( my @j = split /\n/, $_ ) - 1 } @comments, @cdata;
+            $line += @lines;
+
+            $html =~ s/\s+<[!#]--     (.*?)   -->\s+/ /gxms;
+            $html =~ s/\s+<!\[CDATA\[ (.*?) \]\]>\s+/ /gxms;
+
+            if ( $option{verbose} ) {
+                warn join "\n------\n\n", @comments,'' if $option{verbose} > 2 && @comments;
+                warn join "\n======\n\n", @cdata,''    if $option{verbose} > 2 && @cdata;
+            }
+        }
+
+        # split up html into tags
+        my $type  = $option{strict} ? qr/[a-zA-Z!\/]/ : '';
+        my @parts = split /(<$type[^>]+>|<!--.*?-->)/, $html;
+
+        if ( $option{test} ) {
+            my @built;
+            my $current = \@built;
+            my $parent  = '';
+            my $tag;
+
+            for my $part (@parts) {
+                my @lines = split /\n/, $part;
+                $line += @lines - 1;
+                if ( $part =~ m{^\s*$} ) {
+                    next;
+                }
+                elsif ( ($tag) = $part =~ m{^</([^>]+)>$} ) {
+                    # close
+                    if (!$parent ) {
+                        warn $file, ' ' x ($max - length $file), " <$tag> closed without being opened! (~line $line)\n";
+                        next FILE;
+                    }
+                    elsif ( !$parent || $parent->[-1]{start} !~ m{^<$tag[\s>]} ) {
+                        warn $file, ' ' x ($max - length $file), "   <$tag>   not closed correctly! (~line $line)\n";
+                        warn "last closed tag :\t $current->[-1]{start}\n" if $option{verbose} && $current && @$current;
+                        warn "non matching tag:\t $parent->[-1]{start}\n"  if $option{verbose} && $parent && @$parent;
+                        warn Dumper \@built if $option{verbose} > 1 || ( $option{verbose} && !$current );
+                        next FILE;
+                    }
+                    $current = $parent;
+                    $parent  = $current->[-1]{parent};
+                    push @{ $current }, {
+                        start    => $part,
+                    };
+                }
+                elsif ( ($tag) = $part =~ m{^<(\S+)} && ( !$option{known} || ( $tag && grep { $tag eq $_ } @{$known{ $option{known} }} ) ) ) {
+                    # open
+                    push @{ $current }, {
+                        start    => $part,
+                        parent   => $parent,
+                        children => [],
+                    };
+                    if ( $part =~ m{^<! | />$ | ^<\W--.*-->}xms || ( !$option{xhtml} && $part =~ m{<$auto_close} ) ) {
+                    }
+                    else {
+                        $parent  = $current;
+                        $current = $current->[-1]{children};
+                    }
+                }
+                else {
+                    # data
+                    warn "Unknown tag <$tag>\n" if $option{verbose} && $tag;
+                    push @{ $current }, {
+                        start    => $part,
+                    };
+                }
+            }
+            print $file , ' ' x ($max - length $file), " Good (lines $line)\n" if !$option{quiet};
+        }
+        else {
+            for my $part (@parts) {
+                $part =~ s/^\s+//xms;
+                $part =~ s/\s+$//xms;
+
+                if ($part =~ m{^</\w}) {
+                    # closing a tag
+                    print "\t" x --$depth, $part, "\n";
+                }
+                elsif ($part =~ m{^<[!]}) {
+                    # SGML thingie don't change depth
+                    #print "\t" x $depth, $part, "\n";
+                }
+                elsif ($part =~ m{^<\w}) {
+                    print "\t" x $depth++, $part, "\n";
+
+                    if ( $option{xhtml} ) {
+                        $depth-- if $part =~ m{^<(?: img | [abi] | !-- [^>]* | input | br | [^>]+ / )>}xmsi;
+                    }
+                    else {
+                        $depth-- if $part =~ m{^<(?: $auto_close [^>]+ /? )>}xmsi;
+                    }
+                }
+                elsif ($part !~ /^\s*$/xms) {
+                    #print "\t" x $depth, $part, "\n" if !$option{clean};
+                }
+            }
+        }
+    }
+
+    return;
+}
+
+sub get_known {
+    return (
+        html => [qw/
+            a b i p
+            img
+            html head title link meta style script
+            body
+            div span heading footer
+            table thead tbody tfoot tr td th
+            h1 h2 h3 h4 h5
+        /],
+    );
+}
+__DATA__
+
+=head1 NAME
+
+html-cleaner - cleans and reformats html files
+
+=head1 VERSION
+
+This documentation refers to html-cleaner version 0.1.
+
+=head1 SYNOPSIS
+
+   html-cleaner [option] file.html ...
+
+ OPTIONS:
+  -o --out           Where to put cleaned out put
+  -a --auto-close[=]str
+                     Add tag to auto close (default tag are input, br, meta and link)
+  -s --simple        Simplify the file by removing comments and CDATA sections
+  -x --xhtml         Make sure that tags are closed
+     --no-xhtml      Auto close tags that don't need to be closed in html
+  -c --clean         clean
+  -S --strict        strict
+  -t --test          Test the files to see if their tags are auto closed
+  -q --quiet         In test mode don't show files that are ok.
+
+  -v --verbose       Show more detailed option
+     --version       Prints the version information
+     --help          Prints this help information
+     --man           Prints the full documentation for html-cleaner
+
+=head1 DESCRIPTION
+
+A full description of the module and its features.
+
+May include numerous subsections (i.e., =head2, =head3, etc.).
+
+
+=head1 SUBROUTINES/METHODS
+
+A separate section listing the public components of the module's interface.
+
+These normally consist of either subroutines that may be exported, or methods
+that may be called on objects belonging to the classes that the module
+provides.
+
+Name the section accordingly.
+
+In an object-oriented module, this section should begin with a sentence (of the
+form "An object of this class represents ...") to give the reader a high-level
+context to help them understand the methods that are subsequently described.
+
+=head1 DIAGNOSTICS
+
+A list of every error and warning message that the module can generate (even
+the ones that will "never happen"), with a full explanation of each problem,
+one or more likely causes, and any suggested remedies.
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+A full explanation of any configuration system(s) used by the module, including
+the names and locations of any configuration files, and the meaning of any
+environment variables or properties that can be set. These descriptions must
+also include details of any configuration language used.
+
+=head1 DEPENDENCIES
+
+A list of all of the other modules that this module relies upon, including any
+restrictions on versions, and an indication of whether these required modules
+are part of the standard Perl distribution, part of the module's distribution,
+or must be installed separately.
+
+=head1 INCOMPATIBILITIES
+
+A list of any modules that this module cannot be used in conjunction with.
+This may be due to name conflicts in the interface, or competition for system
+or program resources, or due to internal limitations of Perl (for example, many
+modules that use source code filters are mutually incompatible).
+
+=head1 BUGS AND LIMITATIONS
+
+A list of known problems with the module, together with some indication of
+whether they are likely to be fixed in an upcoming release.
+
+Also, a list of restrictions on the features the module does provide: data types
+that cannot be handled, performance issues and the circumstances in which they
+may arise, practical limitations on the size of data sets, special cases that
+are not (yet) handled, etc.
+
+The initial template usually just has:
+
+There are no known bugs in this module.
+
+Please report problems to Ivan Wills (ivan.wills@gmail.com).
+
+Patches are welcome.
+
+=head1 AUTHOR
+
+Ivan Wills - (ivan.wills@gmail.com)
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2010 Ivan Wills (14 Mullion Close, Hornsby Heights, NSW Australia 2077).
+All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself. See L<perlartistic>.  This program is
+distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+=cut
