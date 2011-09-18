@@ -90,24 +90,31 @@ sub main {
 # optional name of program
 command = $name
 
-# The default pager settings
+# This specifies that the output should be checked for length and if it is more
+# than one screen length long then the pager supplied is uesd. If the value is
+# set to 'yes' the environment variable \$PAGER is used
+#pager = yes | more | less
+# to turn off the pager use no
+#pager = no
 pager = yes
 
 # Use $cmd as an alias for a longer command
+# Note: cmdaliser will recurse sub commands (if aliases exist) but only once
+#       for any particular sub command
 <alias $cmd>
 
-#	The command alias
+#   The command alias
     sub = $cmd
 
-#	This specifies post processing commands placed after the pipe (|)
-#	post = grep blah
+#   This specifies post processing commands placed after the pipe (|)
+#   post = grep blah
 
-#	Any pre processing commands, placed before an and (&&)
-#	pre = time
+#   Any pre processing commands, placed before an and (&&)
+#   pre = time
 
-#	This specifies that the output should be checked for length and if it is
-#	more than one page then the pager supplied is uesd if set to yes \$PAGER is used
-#	pager = yes | more | less
+#   This allows the overriding of pager on a per alias basis the values that
+#   it takes are the same as for the global pager setting.
+#   pager = no
 
 </alias>
 EXAMPLE
@@ -140,13 +147,14 @@ EXAMPLE
         }
     }
 
-    while (exists $conf{alias}{$sub_cmd} && !$found{$sub_cmd}) {
+    my $command;
+    while ($sub_cmd && exists $conf{alias}{$sub_cmd} && !$found{$sub_cmd}) {
         if (ref $conf{alias}{$sub_cmd} eq 'ARRAY') {
             warn "You have specified $sub_cmd too many times in your config file!\n";
             return;
         }
         $found{$sub_cmd} = 1;
-        my $aliased = $conf{alias}{$sub_cmd}{sub} || $sub_cmd;
+        my $aliased = exists $conf{alias}{$sub_cmd}{sub} ? $conf{alias}{$sub_cmd}{sub} : $sub_cmd;
         $alias =~ s/^\s*$sub_cmd/$aliased /xms;
 
 
@@ -160,11 +168,14 @@ EXAMPLE
         }
         $pre_perl ||= $conf{alias}{$sub_cmd}{pre_perl};
         $pager    ||= $conf{alias}{$sub_cmd}{pager};
+        $command  ||= $conf{alias}{$sub_cmd}{command};
 
-        ($sub_cmd) = $alias =~ /^\s*(\S+)\s/xms;
+        if ($sub_cmd) {
+            ($sub_cmd) = $alias =~ /^\s*(\S+)\s/xms;
+        }
     }
 
-    $name = $conf{command} || $name;
+    $name = $command || $conf{command} || $name;
 
     if ($pre_perl) {
         my $pre_sub = eval("sub { $pre_perl }");
@@ -182,6 +193,7 @@ EXAMPLE
 
     $pager ||= $conf{pager};
     $pager = $ENV{PAGER} if $pager && $pager eq 'yes';
+    undef $pager if $pager && $pager eq 'no';
     print "$cmd\n" if $option{verbose} || $option{test};
 
     if ( !$option{test} ) {
@@ -215,7 +227,7 @@ EXAMPLE
             }
         }
         else {
-            system $cmd;
+            exec $cmd;
         }
     }
 
