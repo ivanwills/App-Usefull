@@ -26,6 +26,8 @@ my %option = (
     out        => undef,
     auto_close => [],
     xhtml      => 1,
+    last       => 10,
+    force      => 0,
     verbose    => 0,
     man        => 0,
     help       => 0,
@@ -60,7 +62,9 @@ sub main {
         'xhtml|x!',
         'clean|c!',
         'strict|S!',
+        'last|l=i',
         'test|t!',
+        'force|f+',
         'quiet|q!',
         'verbose|v+',
         'man',
@@ -96,13 +100,13 @@ sub main {
         if ( $option{simple} ) {
 
             # Remove any html comments and CDATA sections
-            my @comments = $html =~ /(<!--        (?:.*?)   -->)/gxms;
+            my @comments = $html =~ /(<[!#]--     (?:.*?)   -->)/gxms;
             my @cdata    = $html =~ /(<!\[CDATA\[ (?:.*?) \]\]>)/gxms;
             my @lines = sum map { ( my @j = split /\n/, $_ ) - 1 } @comments, @cdata;
             $line += @lines;
 
-            $html =~ s/\s+<[!#]--     (.*?)   -->\s+/ /gxms;
-            $html =~ s/\s+<!\[CDATA\[ (.*?) \]\]>\s+/ /gxms;
+            $html =~ s/\s*<[!#]--     (.*?)   -->\s*/ /gxms;
+            $html =~ s/\s*<!\[CDATA\[ (.*?) \]\]>\s*/ /gxms;
 
             if ( $option{verbose} ) {
                 warn join "\n------\n\n", @comments,'' if $option{verbose} > 2 && @comments;
@@ -119,25 +123,38 @@ sub main {
             my $current = \@built;
             my $parent  = '';
             my $tag;
+            my @last;
 
             for my $part (@parts) {
+                push @last, $part;
+                shift @last if @last > 10;
                 my @lines = split /\n/, $part;
                 $line += @lines - 1;
                 if ( $part =~ m{^\s*$} ) {
                     next;
                 }
-                elsif ( ($tag) = $part =~ m{^</([^>]+)>$} ) {
+                elsif ( ( ($tag) = $part =~ m{^</([^>]+)>$} ) && is_known($tag) ) {
                     # close
                     if (!$parent ) {
                         warn $file, ' ' x ($max - length $file), " <$tag> closed without being opened! (~line $line)\n";
-                        next FILE;
+                        next FILE if !$option{force};
+                        warn $option{force}--;
                     }
-                    elsif ( !$parent || $parent->[-1]{start} !~ m{^<$tag[\s>]} ) {
+                    elsif ( $parent->[-1]{start} !~ m{^<$tag[\s/>]} ) {
                         warn $file, ' ' x ($max - length $file), "   <$tag>   not closed correctly! (~line $line)\n";
                         warn "last closed tag :\t $current->[-1]{start}\n" if $option{verbose} && $current && @$current;
                         warn "non matching tag:\t $parent->[-1]{start}\n"  if $option{verbose} && $parent && @$parent;
                         warn Dumper \@built if $option{verbose} > 1 || ( $option{verbose} && !$current );
-                        next FILE;
+                        warn Dumper $parent if $option{verbose} > 1 || ( $option{verbose} && !$current );
+                        warn Dumper $current if $option{verbose} > 1 || ( $option{verbose} && !$current );
+                        warn show_current($parent) if $option{verbose} > 1;
+                        warn "=====\n", (join "\n", @last), "\n=====\n" if $option{verbose};
+                        next FILE if !$option{force};
+                        push @{ $parent }, {
+                            start  => "<$tag>",
+                            parent => $parent->[-1]{parent},
+                        };
+                        warn $option{force}--;
                     }
                     $current = $parent;
                     $parent  = $current->[-1]{parent};
@@ -145,7 +162,12 @@ sub main {
                         start    => $part,
                     };
                 }
-                elsif ( ($tag) = $part =~ m{^<(\S+)} && ( !$option{known} || ( $tag && grep { $tag eq $_ } @{$known{ $option{known} }} ) ) ) {
+                else {
+                    #warn "$tag" if ($tag) = $part =~ m{^<([^\s/<>]+)};
+                    #warn "knwon" if $tag && $option{known};
+                    #warn join "\t", grep { $tag eq $_ } @{$known{ $option{known} }} if is_known($tag);
+
+                    if ( ( ($tag) = $part =~ m{^<([^\s/<>]+)} ) && is_known($tag) ) {
                     # open
                     push @{ $current }, {
                         start    => $part,
@@ -161,10 +183,11 @@ sub main {
                 }
                 else {
                     # data
-                    warn "Unknown tag <$tag>\n" if $option{verbose} && $tag;
+                    $part =~ s{^\s+|\s+$}{}g;
                     push @{ $current }, {
                         start    => $part,
                     };
+                }
                 }
             }
             print $file , ' ' x ($max - length $file), " Good (lines $line)\n" if !$option{quiet};
@@ -202,6 +225,34 @@ sub main {
     return;
 }
 
+sub show_current {
+    my ($current, $indent) = @_;
+    $indent ||= '';
+    my $out   = '';
+
+    for my $item ( @{$current} ) {
+        $out .= "$indent$item->{start}\n";
+        $out .= show_current( $item->{children}, "$indent    " );
+    }
+
+    return $out;
+}
+
+my %seen;
+sub is_known {
+    my ($tag) = @_;
+    $tag =~ s{^/}{};
+    $tag =~ s{[.].*}{};
+
+    return 0 if !$tag;
+    return 1 if !$option{known};
+    for my $known ( @{$known{ $option{known} }} ) {
+        return 1 if $known eq $tag;
+    }
+    warn "$tag didn't match any tags known for $option{known}!\n" if ! $seen{$tag}++ && $option{verbose};
+    return 0;
+}
+
 sub get_known {
     return (
         html => [qw/
@@ -212,6 +263,11 @@ sub get_known {
             div span heading footer
             table thead tbody tfoot tr td th
             h1 h2 h3 h4 h5
+            ul ol li dl dt dd
+            form input select option label
+            object param
+            font br
+            !--
         /],
     );
 }
