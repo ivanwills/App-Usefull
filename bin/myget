@@ -45,6 +45,8 @@ sub main {
         \%option,
         'out|o=s',
         'content|c=s',
+        'header|h=s%',
+        'header_file|header-file|f=s',
         'proxy|p=s%',
         'verbose|v+',
         'man',
@@ -66,6 +68,14 @@ sub main {
     # do stuff here
     my $url  = shift @ARGV;
     my $mech = WWW::Mechanize->new;
+
+    if ( $option{header_file} ) {
+        my $headers = file($option{header_file})->slurp;
+        my %headers = map { split /\s*=\s*/, $_, 2 } grep {!/^#/ && !/^\s*$/ } split /\s*\r?\n/, $headers;
+        $mech->add_header( %headers );
+    }
+
+    $mech->add_header(%{ $option{header} }) if $option{header};
 
     if ( $option{proxy} ) {
         for my $protocol ( keys %{ $option{proxy} } ) {
