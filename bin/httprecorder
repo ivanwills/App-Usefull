@@ -26,6 +26,7 @@ my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
     port    => 3128,
+    host    => 'localhost',
     record  => 1,
     verbose => 0,
     man     => 0,
@@ -66,6 +67,7 @@ sub main {
         'record|r!',
         'header_file|header-file|f=s',
         'header|h=s%',
+        'host|H=s',
         'verbose|v+',
         'man',
         'help',
@@ -86,9 +88,17 @@ sub main {
 
     # do stuff here
     my $proxy = HTTP::Proxy->new( port => $option{port} );
-    print "Running proxy on localhost:$option{port} (Proxy $HTTP::Proxy::VERSION Recorder $HTTP::Recorder::VERSION)\n";
+    print "Running proxy on $option{host}:$option{port} (Proxy $HTTP::Proxy::VERSION Recorder $HTTP::Recorder::VERSION)\n";
 
     if ( $option{header} || $option{header_file} ) {
+        my $filter = Recorder::HeaderFilter->new();
+        $filter->filename( $option{header_file} );
+        $filter->headers(  $option{header} );
+        $filter->verbose(  $option{verbose} );
+        $proxy->push_filter(
+            mime    => 'text/html',
+            request => $filter,
+        );
         $proxy->push_filter(
             mime     => 'text/html',
             response => Recorder::HeaderFilter->new( file => $option{header_file}, headers => $option{header} ),
@@ -117,6 +127,9 @@ sub main {
     if ( $option{port} ) {
         $proxy->port($option{port});
     }
+    if ( defined $option{host} ) {
+        $proxy->port($option{host});
+    }
 
     # set log level if required
     if ( $option{log} ) {
@@ -135,19 +148,35 @@ package Recorder::HeaderFilter;
 use strict;
 use warnings;
 use Path::Class;
-use base qw/HTTP::Proxy::HeaderFilter Class::Accessor::Fast/;
+use Data::Dumper qw/Dumper/;
+use base qw/HTTP::Proxy::HeaderFilter/;
 
-__PACKAGE__->mk_accessors( qw{file file_date file_headers headers} );
+sub verbose      {@_ == 2 ? $_[0]{verbose     } = $_[1] : $_[0]{verbose     } }
+sub filename     {@_ == 2 ? $_[0]{filename    } = $_[1] : $_[0]{filename    } }
+sub file_date    {@_ == 2 ? $_[0]{file_date   } = $_[1] : $_[0]{file_date   } }
+sub file_headers {@_ == 2 ? $_[0]{file_headers} = $_[1] : $_[0]{file_headers} }
+sub headers      {@_ == 2 ? $_[0]{headers     } = $_[1] : $_[0]{headers     } }
 
 sub filter {
     my ( $self, $headers, $message) = @_;
-    warn 'filtering headers';
 
     my %headers = $self->get_headers();
+    warn "-------------------------\n" if $self->verbose;
+    show_headers($message->headers) if $self->verbose;
 
     for my $header ( keys %headers ) {
         $message->headers->header( $header => $headers{$header} );
     }
+    warn "=========================\n" if $self->verbose;
+    show_headers($message->headers) if $self->verbose;
+}
+
+sub show_headers {
+    my ($headers) = @_;
+    my %headers = %$headers;
+    my $max = 0;
+    map { $max = length $_ if length $_ > $max } keys %headers;
+    warn join "\n", ( map { $_ . ' ' x ($max + 1 - length $_) . $headers{$_} } sort keys %headers ), '';
 }
 
 sub get_headers {
@@ -157,16 +186,31 @@ sub get_headers {
     $self->file_headers({}) if !$self->file_headers;
     $self->headers({})      if !$self->headers;
 
-    if ( $self->file ) {
-        my @stat = stat $self->file;
+    if ( $self->filename && -f $self->filename ) {
+        my @stat = stat $self->filename;
         if ( $stat[9] > $self->file_date ) {
-            my $headers = file($self->file)->slurp;
+            my $headers = file($self->filename)->slurp;
             my %headers = map { split /\s*=\s*/, $_, 2 } grep {!/^#/ && !/^\s*$/ } split /\s*\r?\n/, $headers;
             $self->file_headers(\%headers);
         }
     }
 
     return ( %{ $self->file_headers }, %{ $self->headers } );
+}
+
+1;
+
+# filter to stop redirecting to localhost:8080 in links etc
+package Recorder::BodyFilter;
+
+use strict;
+use warnings;
+use base qw/HTTP::Proxy::BodyFilter/;
+
+sub filter {
+    my ( $self, $dataref, $message, $protocol, $buffer ) = @_;
+
+    $$dataref =~ s{https?://localhost:\d{2,4}}{}g;
 }
 
 1;
@@ -194,6 +238,7 @@ This documentation refers to httprecorder version 0.1.
                      Specify headers to add to requests
   -f --file str      Use this file which contains key=val paris on new lines
                      (blank lines and lines starting with # are ignored)
+  -l --log[=]str     Turn on logging, may be specified may times see HTTP::Proxy for values
 
   -v --verbose       Show more detailed option
      --version       Prints the version information
