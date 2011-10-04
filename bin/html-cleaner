@@ -271,6 +271,7 @@ sub get_known {
         /],
     );
 }
+
 __DATA__
 
 =head1 NAME
@@ -304,10 +305,7 @@ This documentation refers to html-cleaner version 0.1.
 
 =head1 DESCRIPTION
 
-A full description of the module and its features.
-
-May include numerous subsections (i.e., =head2, =head3, etc.).
-
+ html-cleaner -q --no-xhtml WEB-INF/ftl/signup.ftl -t -k html -s
 
 =head1 SUBROUTINES/METHODS
 
