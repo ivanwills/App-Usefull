@@ -59,6 +59,7 @@ sub main {
         'ignore-space-change|b',
         'ignore-all-space|w',
         'missing_dirs|missing-dirs|d!',
+        'exec|E!',
         'verbose|v+',
         'man',
         'help',
@@ -97,6 +98,7 @@ sub main {
     }
 
     my @messages;
+    my @diffs;
     for my $file ( sort keys %uniq ) {
         warn "diff $dirs[0]/$file $dirs[1]/$file\n" if $option{verbose};
         my $ok = 1;
@@ -135,6 +137,7 @@ sub main {
 
                     if ($diff) {
                         push @mesg, $diff;
+                        push @diffs, $diff;
                         if ($option{join}) {
                             my $file1 = $file;
                             $file1 =~ s/([.]\w+)$/.1$1/xms;
@@ -206,6 +209,12 @@ sub main {
     for my $msg ( @messages ) {
         print $msg->{file} . ' ' x ($length - length $msg->{file});
         print join "\n" . (' ' x $length), @{ $msg->{'messages'} };
+        print "\n";
+    }
+
+    if ($option{exec}) {
+        #sleep 1;
+        print join '; ', @diffs;
         print "\n";
     }
 
