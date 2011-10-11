@@ -198,33 +198,7 @@ EXAMPLE
 
     if ( !$option{test} ) {
         if ($pager) {
-            my ($lines, $cols) = split /\s+/, `stty size`;
-            open my $ch, '-|', "$cmd 2>&1" or die "Could not run the command $cmd: $!\n";
-            my $out = '';
-            my $i = 1;
-            my $ph;
-            while (my $line = <$ch>) {
-                if ($i < $lines) {
-                    $out .= $line;
-                }
-                elsif ($i == $lines) {
-                    $pager .= ' -R' if $pager =~ m{/?less$};
-                    open $ph, '|-', $pager or die "Could not open pager $pager: $!\n";
-                    print {$ph} $out;
-                    print {$ph} $line;
-                }
-                else {
-                    print {$ph} $line;
-                }
-                $i++;
-            }
-            close $ch;
-            if ($ph) {
-                close $ch;
-            }
-            else {
-                print $out;
-            }
+            exec "$cmd | $pager";
         }
         else {
             exec $cmd;
