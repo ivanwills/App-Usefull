@@ -56,6 +56,7 @@ sub main {
         'same|same-files|S',
         'join|j',
         'follow|f!',
+        'fast|F!',
         'ignore-space-change|b',
         'ignore-all-space|w',
         'missing_dirs|missing-dirs|d!',
@@ -121,8 +122,8 @@ sub main {
                         file($dir,$file)->parent->mkpath if $option{missing_dirs};
                         next if "$found/$file" eq "$dir/$file";
                         my $msg
-                            = $option{'rm'} ? "$cmd $found/$file"
-                            :                 "$cmd $found/$file $dir/$file";
+                            = $option{'rm'} ? "$cmd " . shell_quote("$found/$file")
+                            :                 "$cmd " . shell_quote("$found/$file") . ' ' . shell_quote("$dir/$file");
                         push @mesg, $msg;
                     }
                 }
@@ -133,7 +134,7 @@ sub main {
             }
             else {
                 for my $found (@found) {
-                    my $diff = diff("$dir/$file", "$found/$file");
+                    my $diff = diff("$found/$file", "$dir/$file");
 
                     if ($diff) {
                         push @mesg, $diff;
@@ -226,10 +227,8 @@ sub diff {
 
     return if !$option{follow} && (-l $file1 || -l $file2);
 
-    $file1 =~ s/'/'\\''/gxms;
-    $file1 = "'$file1'";
-    $file2 =~ s/'/'\\''/gxms;
-    $file2 = "'$file2'";
+    my $file1_q = shell_quote($file1);
+    my $file2_q = shell_quote($file2);
 
     my $cmd  = '/usr/bin/diff';
     if ( $option{'ignore-space-change'} ) {
@@ -238,12 +237,15 @@ sub diff {
     if ( $option{'ignore-all-space'} ) {
         $cmd .= ' --ignore-all-space';
     }
-    $cmd  .= " $file1 $file2";
-    my $diff = `$cmd`;
+    $cmd  .= " $file1_q $file2_q";
+    my $diff
+        = -s $file1 != -s $file2 ? 1
+        : $option{fast}          ? 0
+        :                          `$cmd`;
 
     if ($diff) {
-        warn "$option{cmd} $file1 $file2\n" if $option{verbose};
-        return "$option{cmd} $file1 $file2";
+        warn "$option{cmd} $file1_q $file2_q\n" if $option{verbose};
+        return "$option{cmd} $file1_q $file2_q";
     }
 
     return;
@@ -272,6 +274,17 @@ sub get_files {
     return @found;
 }
 
+sub shell_quote {
+    my ($text) = @_;
+
+    if ($text =~ /[\s$|><;#]/xms) {
+        $text =~ s/'/'\\''/gxms;
+        $text = "'$text'";
+    }
+
+    return $text;
+}
+
 __DATA__
 
 =head1 NAME
@@ -284,33 +297,38 @@ This documentation refers to diffdir version 0.1.
 
 =head1 SYNOPSIS
 
-   diffdir [option]
+   diffdir [option] dir1 dir2 [dir3 ...]
 
  OPTIONS:
-  -e --exclude=re Elclude any file or directory that matches this regular
-                  expression
-  -s --script     Produce a script of actions
-  -c --command=string
-                  Use this command instead of diff in the listing.
+  -e --exclude[=]re
+                Elclude any file or directory that matches this regular
+                expression
+  -s --script   Produce a script of actions
+  -c --command[=]string
+                The diff command you wish to use for viewing the
+                differences in the files
   -m --cp-missing Create a copy statement for missing files rather than
-                  telling which directory it was missing from
+                telling which directory it was missing from
   -r --remove-extra
-                  Remove extra files
-  -S --same-files Show the same files instead of different files
-  -j --join       Combines the file into a thrid baised on the original directory names.
-  -f --follow     Follow symlinks directories and diff symlink files.
-     --no-follow  Don't follow symlinked directories or diff symlinked files.
+                Remove extra files
+  -S --same-files
+                Show the same files instead of different files
+  -j --join     Combines the file into a thrid baised on the original directory names.
+  -f --follow   Follow symlinks directories and diff symlink files.
+     --no-follow
+                Don't follow symlinked directories or diff symlinked files.
+  -F --fast     Use file sizees to tell if files are different
   -b --ignore-space-change
-                  Ignore changes in the amount of white space.
+                Ignore changes in the amount of white space.
   -w --ignore-all-space
-                  Ignore all white space.
+                Ignore all white space.
   -d --missing-dirs
-                  Create directories that are missing (makes copying of missing files simpler)
+                Create directories that are missing (makes copying of missing files simpler)
 
-  -v --verbose    Show more detailed option
-     --version    Prints the version information
-     --help       Prints this help information
-     --man        Prints the full documentation for diffdir
+  -v --verbose  Show more detailed option
+     --version  Prints the version information
+     --help     Prints this help information
+     --man      Prints the full documentation for diffdir
 
 =head1 DESCRIPTION
 
