@@ -127,6 +127,7 @@ EXAMPLE
     my $pre;
     my $pre_perl;
     my $post;
+    my $post_cmd = '';
     my $pager;
     my %found;
 
@@ -157,7 +158,12 @@ EXAMPLE
         my $aliased = exists $conf{alias}{$sub_cmd}{sub} ? $conf{alias}{$sub_cmd}{sub} : $sub_cmd;
         $alias =~ s/^\s*$sub_cmd/$aliased /xms;
 
-
+        if ($conf{alias}{$sub_cmd}{pre_cmd}) {
+            system $conf{alias}{$sub_cmd}{pre_cmd};
+        }
+        if ($conf{alias}{$sub_cmd}{post_cmd}) {
+            $post_cmd .= "; $conf{alias}{$sub_cmd}{post_cmd}"
+        }
         if ($conf{alias}{$sub_cmd}{pre}) {
             $pre &&= "$pre | ";
             $pre  .= $conf{alias}{$sub_cmd}{pre};
@@ -190,6 +196,7 @@ EXAMPLE
 
     my $cmd = join ' ', $name, $alias;
     $cmd .= " | $post" if $post;
+    $cmd .= $post_cmd  if $post_cmd;
 
     $pager ||= $conf{pager};
     $pager = $ENV{PAGER} if $pager && $pager eq 'yes';
