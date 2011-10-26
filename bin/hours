@@ -628,26 +628,35 @@ This documentation refers to hours version 0.1.
 
 =head1 SYNOPSIS
 
+   hours stats ...
    hours list [--history=... | --all [--all] || ]
    hours add [--now=...]
 
  OPTIONS:
-  -h --history=int Count of the number days in to the past to go to
-  -a --all         Show the last month if specified once if specified twice shows all dates
-  -n --now=date    Use this date if
-  -f --full        When listing only count full days/completed days
-  -b --between=[date1][:date2]
-                   Show hours worked between the dates specified
-                   if no second date specified shows dates after that date
-                   if no first date (ie :date) show only entries before that date
-  -r --round=int   Round to int minutes for start and finish times
-  -m --format=str  Sets the format for displaying the data, see --man for details
-                   (Default '%10day %6start %3lunch %6end %12avg %10total')
+  -h --history[=]int
+                 Count of the number days in to the past to go to
+  -a --all       Show the last month if specified once if specified twice
+                 shows all dates
+  -n --now[=]date
+                 Use this date if
+  -f --full      When listing only count full days/completed days
+  -b --between[=][date1][:date2]
+                 Show hours worked between the dates specified
+                 if no second date specified shows dates after that date
+                 if no first date (ie :date) show only entries before that date
+  -r --round[=]int
+                 Round to int minutes for start and finish times
+  -m --format[=]str
+                 Sets the format for displaying the data, see --man for details
+                 (Default '%10day %6start %3lunch %6end %12avg %10total')
+  -i --bin[=]int When very verbose is used the number of days works for a
+                 particular length of time is shown, this option sets the
+                 grouping size of hours worked in minutes (Default is 15 minutes)
 
-  -v --verbose     Show more detailed option
-     --version     Prints the version information
-     --help        Prints this help information
-     --man         Prints the full documentation for hours
+  -v --verbose   Show more detailed option
+     --version   Prints the version information
+     --help      Prints this help information
+     --man       Prints the full documentation for hours
 
 =head1 DESCRIPTION
 
