@@ -324,6 +324,7 @@ This documentation refers to diffdir version 0.1.
                 Ignore all white space.
   -d --missing-dirs
                 Create directories that are missing (makes copying of missing files simpler)
+  -E --exec     Show all diff action in one line
 
   -v --verbose  Show more detailed option
      --version  Prints the version information
