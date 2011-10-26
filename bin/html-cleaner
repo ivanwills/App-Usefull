@@ -256,18 +256,78 @@ sub is_known {
 sub get_known {
     return (
         html => [qw/
-            a b i p
-            img
-            html head title link meta style script
-            body
-            div span heading footer
-            table thead tbody tfoot tr td th
-            h1 h2 h3 h4 h5
-            ul ol li dl dt dd
-            form input select option label
-            object param
-            font br
-            !--
+a
+area
+b
+body
+boolean
+br
+button
+campaign
+campaigns
+category
+center
+chaff
+channel
+dd
+description
+device
+div
+dl
+dt
+em
+embed
+enclosure
+fieldset
+font
+form
+h1
+h2
+h3
+h4
+h5
+head
+hr
+html
+iframe
+img
+input
+label
+language
+legend
+li
+link
+map
+meta
+noscript
+object
+ol
+optgroup
+option
+p
+param
+pre
+script
+select
+small
+source
+span
+strong
+style
+sup
+table
+tbody
+td
+text
+textarea
+tfoot
+th
+thead
+title
+tr
+tt
+u
+ul
         /],
     );
 }
