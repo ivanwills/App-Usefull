@@ -126,12 +126,12 @@ use Text::CSV_XS;
 our $VERSION = 0.1;
 
 my %option = (
-	indent  => "\t",
-	level   => 0,
-	man     => 0,
-	help    => 0,
-	verbose => 0,
-	VERSION => 0,
+    indent  => "\t",
+    level   => 0,
+    man     => 0,
+    help    => 0,
+    verbose => 0,
+    VERSION => 0,
 );
 
 pod2usage( -verbose => 1 ) unless @ARGV;
@@ -140,45 +140,45 @@ main();
 exit(0);
 
 sub main {
-	my $file;
-	$file = pop @ARGV if -f $ARGV[-1] or $ARGV[-1] eq '-';
+    my $file;
+    $file = pop @ARGV if -f $ARGV[-1] or $ARGV[-1] eq '-';
 
-	Getopt::Long::Configure("bundling");
-	GetOptions(
-		\%option,
-		'indent|i=s',
-		'level|l=i',
-		'man|m',
-		'help|h',
-		'verbose|v!',
-		'VERSION|V'
-	) or pod2usage(2);
+    Getopt::Long::Configure("bundling");
+    GetOptions(
+        \%option,
+        'indent|i=s',
+        'level|l=i',
+        'man|m',
+        'help|h',
+        'verbose|v!',
+        'VERSION|V'
+    ) or pod2usage(2);
 
-	print "csv2html-table Version = $VERSION" and exit(1) if $option{VERSION};
-	pod2usage( -verbose => 2 ) if $option{man};
-	pod2usage( -verbose => 1 ) if $option{help} or not $file;
+    print "csv2html-table Version = $VERSION" and exit(1) if $option{VERSION};
+    pod2usage( -verbose => 2 ) if $option{man};
+    pod2usage( -verbose => 1 ) if $option{help} or not $file;
 
-	# do stuff here
-	my $cgi = new CGI();
-	my $csv = new Text::CSV_XS();
-	open my $file_h, '<', $file or die "Could not open the file $file: $!";
+    # do stuff here
+    my $cgi = new CGI();
+    my $csv = new Text::CSV_XS();
+    open my $file_h, '<', $file or die "Could not open the file $file: $!";
 
-	print $option{indent} x $option{level}, $cgi->start_table(), "\n";
+    print $option{indent} x $option{level}, $cgi->start_table(), "\n";
 
-	while ( my $line = <$file_h> ) {
-		if ( $csv->parse($line) ) {
-			print $option{indent} x ( $option{level} + 1 ), $cgi->start_Tr(), "\n";
-			for my $column ( $csv->fields() ) {
-				$column =~ s{&}{&amp;}gxs;
-				$column =~ s{<}{&lt;}gxs;
-				$column =~ s{>}{&gt;}gxs;
-				print $option{indent} x ( $option{level} + 2 ), $cgi->td($column), "\n";
-			}
-			print $option{indent} x ( $option{level} + 1 ), $cgi->end_Tr(), "\n";
-		}
-	}
+    while ( my $line = <$file_h> ) {
+        if ( $csv->parse($line) ) {
+            print $option{indent} x ( $option{level} + 1 ), $cgi->start_Tr(), "\n";
+            for my $column ( $csv->fields() ) {
+                $column =~ s{&}{&amp;}gxs;
+                $column =~ s{<}{&lt;}gxs;
+                $column =~ s{>}{&gt;}gxs;
+                print $option{indent} x ( $option{level} + 2 ), $cgi->td($column), "\n";
+            }
+            print $option{indent} x ( $option{level} + 1 ), $cgi->end_Tr(), "\n";
+        }
+    }
 
-	print $option{indent} x $option{level}, $cgi->end_table(), "\n";
+    print $option{indent} x $option{level}, $cgi->end_table(), "\n";
 }
 
 __DATA__
