@@ -24,12 +24,13 @@ our $VERSION = version->new('0.1.0');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
-    install => 'sudo ',
-    perl    => $EXECUTABLE_NAME,
-    verbose => 0,
-    man     => 0,
-    help    => 0,
-    VERSION => 0,
+    install  => 'sudo ',
+    perl     => $EXECUTABLE_NAME,
+    parallel => 2,
+    verbose  => 0,
+    man      => 0,
+    help     => 0,
+    VERSION  => 0,
 );
 my %alt_opt = (
     "dist-clean"   => 'clean',
@@ -77,6 +78,7 @@ sub main {
         \%option,
         'clean|dist-clean|c',
         'author|author-tests|a!',
+        'parallel|parallel-tests|j=i',
         'install|i=s',
         'lib|I=s@',
         'tags|t!',
@@ -120,6 +122,7 @@ sub main {
     system builder();
 
     $ENV{TEST_AUTHOR} = $option{author};
+    $ENV{HARNESS_OPTIONS} = "j$option{parallel}";
 
     if ( $level eq 'dist' ) {
         # turn on author tests before making a distribution
