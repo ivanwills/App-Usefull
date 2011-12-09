@@ -3,7 +3,7 @@ use warnings;
 use Module::Build;
 
 my $builder = Module::Build->new(
-    module_name       => 'App::Usefull',
+    module_name       => 'App::Useful',
     license           => 'perl',
     dist_author       => 'Ivan Wills <ivan.wills@gmail.com>',
     dist_version      => '0.001',
@@ -50,15 +50,16 @@ my $builder = Module::Build->new(
         'Test::More'       => 0,
         'Test::NoWarnings' => 0,
     },
-    add_to_cleanup     => [ 'App-Usefull-*' ],
+    add_to_cleanup     => [ 'App-Useful-*' ],
     create_makefile_pl => 'traditional',
     create_license     => 1,
     meta_merge         => {
         resources => {
-            repository => 'git://github.com/ivanwills/App-Usefull.git',
-            bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=App::Usefull',
+            repository => 'git://github.com/ivanwills/App-Useful.git',
+            bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=App::Useful',
         },
     },
+    dist_abstract => 'A bunch of useful scripts'
 );
 
 $builder->create_build_script();
