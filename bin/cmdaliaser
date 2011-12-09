@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 # Created on: 2009-10-23 11:09:25
-# Create by:  iwills
+# Create by:  Ivan Wills
 # $Id$
 # $Revision$, $HeadURL$, $Date$
 # $Revision$, $Source$, $Date$
@@ -290,17 +290,17 @@ An alias command name (I<alias>). This may contain the following sub parameters
 
 There are no known bugs in this module.
 
-Please report problems to iwills (iwills@localhost).
+Please report problems to Ivan Wills (ivan.wills@gmail.com).
 
 Patches are welcome.
 
 =head1 AUTHOR
 
-iwills - (iwills@localhost)
+Ivan Wills - (ivan.wills@gmail.com)
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2009 iwills (123 Timbuc Too).
+Copyright (c) 2009 Ivan Wills (14 Mullion Close, Hornsby Heights, NSW Australia 2077).
 All rights reserved.
 
 This module is free software; you can redistribute it and/or modify it under

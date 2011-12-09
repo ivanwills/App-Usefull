@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 # Created on: 2009-11-27 11:38:06
-# Create by:  iwills
+# Create by:  Ivan Wills
 # $Id$
 # $Revision$, $HeadURL$, $Date$
 # $Revision$, $Source$, $Date$
@@ -262,12 +262,12 @@ This documentation refers to chkfacl version 0.1.
 
 There are no known bugs in this module.
 
-Please report problems to iwills (iwills@localhost).
+Please report problems to Ivan Wills (ivan.wills@gmail.com).
 
 Patches are welcome.
 
 =head1 AUTHOR
 
-iwills - (iwills@localhost)
+Ivan Wills - (ivan.wills@gmail.com)
 
 =cut
