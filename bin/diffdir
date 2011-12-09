@@ -88,7 +88,7 @@ sub main {
 
         # get the list of all files in the dir
         my @files    = get_files($dir);
-        $files{$dir} = { map { s{^$dir/}{}; $_ => 1 } sort @files };
+        $files{$dir} = { map { s{^$dir/}{}; $_ => 1 } sort @files };  ## no critic
     }
 
     my %uniq;

@@ -112,7 +112,9 @@ sub main {
 		}
 
 		# trim leading and trailing spaces
-		map {s/^\s*(.*?)\s*$/$1/} @columns;
+		for (@columns) {
+			s/^\s*(.*?)\s*$/$1/;
+		}
 
 		my $status = $csv->combine(@columns);
 		unless ($status) {

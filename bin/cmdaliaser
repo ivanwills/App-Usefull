@@ -184,7 +184,7 @@ EXAMPLE
     $name = $command || $conf{command} || $name;
 
     if ($pre_perl) {
-        my $pre_sub = eval("sub { $pre_perl }");
+        my $pre_sub = eval("sub { $pre_perl }");  ## no critic
         if ($pre_sub && ref $pre_sub eq 'CODE') {
             return if !$pre_sub->();
             die "pre returned " . $pre_sub->() . "\n" if $option{test};

@@ -191,7 +191,7 @@ sub main {
 
     # task defaults
     if ( -e "$HOME/.devmode/$lc_task.rc" ) {
-        my $config = eval file("$HOME/.devmode/$lc_task.rc")->slurp;
+        my $config = eval file("$HOME/.devmode/$lc_task.rc")->slurp;  ## no critic
         for my $key ( keys %{ $config } ) {
             if ( !exists $option{$key} ) {
                 $option{$key} = $config->{$key};

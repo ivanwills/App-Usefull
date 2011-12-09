@@ -61,7 +61,7 @@ sub main {
 	my $test_dir    = '';
 
 	if (!@found_tests) {
-		@found_tests = map {s{t/(?:\d\d-?)?}{}xms; $_} glob "t/*.t";
+		@found_tests = map {s{t/(?:\d\d-?)?}{}xms; $_} glob "t/*.t";  ## no critic
 		$test_dir    = "t/";
 	}
 
@@ -85,7 +85,7 @@ sub get_tests {
 	my @tests = `templatecmd list perl/test/`;
 	@tests = map { split /\s+/, $_ } @tests;
 
-	return map { s{perl/test/}{}; $_ } @tests;
+	return map { s{perl/test/}{}; $_ } @tests;  ## no critic
 }
 
 

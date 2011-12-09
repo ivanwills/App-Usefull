@@ -98,7 +98,7 @@ sub main {
         next if !-d $dir;
 
         eval {
-            no strict qw/refs/;
+            no strict qw/refs/;  ## no critic
             $cmd->($vcs, $dir, $max);
         };
         if ($@ && $option{verbose}) {
@@ -109,7 +109,7 @@ sub main {
 
     $cmd .= '_post';
     if (main->can($cmd)) {
-        no strict qw/refs/;
+        no strict qw/refs/;  ## no critic
         $cmd->($max);
     }
 
