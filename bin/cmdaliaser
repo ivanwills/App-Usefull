@@ -241,7 +241,7 @@ This documentation refers to cmdaliaser version 0.1.
    cmdaliaser [option] cmd [cmd options]
 
  OPTIONS:
-  cmd                This is the name of the alias file to use (and usually the program it is baised on eg svn)
+  cmd                This is the name of the alias file to use (and usually the program it is based on eg svn)
   -t --test          Test what would happen if the command was run (shows the command as would be executed)
 
   -v --verbose       Show more detailed option

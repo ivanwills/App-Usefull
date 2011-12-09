@@ -144,7 +144,7 @@ sub resize_image {
     die "New image height was not calculated!\n" if !$new_height;
     die "New image width  was not calculated!\n" if !$new_width;
 
-    # resize the image baised on the supplied width
+    # resize the image based on the supplied width
     my $gd = $ir->resize( $new_width, $new_height );
     #<image xlink:href="01.jpg" x="11.88" y="59.0391990778516" height="157.484192634561" width="273.24"/>
 

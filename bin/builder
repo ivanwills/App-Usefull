@@ -299,7 +299,7 @@ __DATA__
 
 =head1 NAME
 
-builder - Builds perl packages to specifed point
+builder - Builds perl packages to specified point
 
 =head1 VERSION
 

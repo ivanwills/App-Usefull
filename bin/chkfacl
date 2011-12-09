@@ -224,7 +224,7 @@ __DATA__
 
 =head1 NAME
 
-chkfacl - Uses the whole hirachy of a file to check that it can be read by thie specified user or group
+chkfacl - Uses the whole hierarchy of a file to check that it can be read by the specified user or group
 
 =head1 VERSION
 

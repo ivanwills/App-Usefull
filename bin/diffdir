@@ -313,7 +313,7 @@ This documentation refers to diffdir version 0.1.
                 Remove extra files
   -S --same-files
                 Show the same files instead of different files
-  -j --join     Combines the file into a thrid baised on the original directory names.
+  -j --join     Combines the file into a thrid based on the original directory names.
   -f --follow   Follow symlinks directories and diff symlink files.
      --no-follow
                 Don't follow symlinked directories or diff symlinked files.

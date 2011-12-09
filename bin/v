@@ -227,7 +227,7 @@ __DATA__
 
 =head1 NAME
 
-v - Opens files in vim baised on type and standard perl project directory hirachy
+v - Opens files in vim based on type and standard perl project directory hierarchy
 
 =head1 VERSION
 

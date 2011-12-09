@@ -220,7 +220,7 @@ __DATA__
 =head1 NAME
 
 httprecorder - Starts a proxy that is able to record all the actions you
-perform in the broswer.
+perform in the browser.
 
 =head1 VERSION
 

@@ -152,7 +152,7 @@ This documentation refers to fdiff version 0.1.
 
  OPTIONS:
   -f --function=func The name of the function or subroutine to find. If
-                     specifed more than once the function name is found in
+                     specified more than once the function name is found in
                      the respective file.
   -d --diff=str      Alternate diff command (Default 'diff')
   -a --diffargs=str  Other arguments to pass along to diff (Default -uN)

@@ -104,7 +104,7 @@ __DATA__
 =head1 NAME
 
 gitrev - Reverts a file in a git repository to the last unmodified version of
-htat file.
+that file.
 
 =head1 VERSION
 

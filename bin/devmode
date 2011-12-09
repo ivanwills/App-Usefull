@@ -362,17 +362,18 @@ perl packages.
 
 There are no known bugs in this module.
 
-Please report problems to Shannon Wynter (http://fremnet.net/contact).
+Please report problems to Ivan Wills (ivan.wills@gmail.com)
 
 Patches are welcome.
 
 =head1 AUTHOR
 
-Shannon Wynter - (http://fremnet.net/contact)
+Shannon Wynter - (http://fremnet.net/contact) (original)
+Ivan Wills (ivan.wills@gmail.com)
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2007 Shannon Wynter.
+Copyright (c) 2007 Shannon Wynter, 2007-2011 Ivan Wills.
 All rights reserved.
 
 =cut

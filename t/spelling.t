@@ -28,5 +28,42 @@ plan skip_all => "spell command required for testing POD spelling" if !$found;
 add_stopwords(qw/
     NSW
     Hornsby
+    avg
+    bigfiles
+    chkfacl
+    cmdaliaser
+    conf
+    configs
+    csv
+    ctrl
+    cvs
+    devmode
+    devremote
+    Diff
+    diffdir
+    duuser
+    eg
+    fdiff
+    gitrev
+    hlist
+    html
+    http
+    httprecorder
+    img
+    iwills
+    myget
+    ossh
+    pingfind
+    PostgreSQL
+    pre
+    psqlout
+    rhymbox
+    stddev
+    STDOUT
+    svn
+    svntouch
+    url
+    vims
+    Wynter
 /);
 all_pod_files_spelling_ok();

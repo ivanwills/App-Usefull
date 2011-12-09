@@ -464,7 +464,7 @@ This documentation refers to pull-everything version 0.1.
                  Use "file" for the configuration file rather than ~/.everything.rc
   -o --ordered   Show the projects in order from smallest to largets
   -n --natural=float
-                 Decide on small and large sizes baised on float standard deviations
+                 Decide on small and large sizes based on float standard deviations
 
   -v --verbose   Show more detailed option
      --version   Prints the version information

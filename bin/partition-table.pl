@@ -253,7 +253,7 @@ one or more likely causes, and any suggested remedies.
 =head1 DEPENDENCIES
 
 There may be issues with different versions of DBD::Pg in the way that it
-handels COPY.
+handles COPY.
 
 =head1 INCOMPATIBILITIES
 
@@ -269,15 +269,15 @@ modules that use source code filters are mutually incompatible).
 =item *
 
 Currently this script leaves indexes on the parent table (which the child
-tables inherit) but for more efficency these should removed and created for
+tables inherit) but for more efficiency these should removed and created for
 each child table.
 
 =item *
 
 This script also does not try to deal with the problems that occur with
-foregin keys to this table. It is recomended that all foregin constraints keys
-to the table to be partitioned be droped before running this script. Not doing
-so will almost certainatly stop this script from working.
+foreign keys to this table. It is recommended that all foreign constraints keys
+to the table to be partitioned be dropped before running this script. Not doing
+so will almost certainly stop this script from working.
 
 =back
 

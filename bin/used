@@ -174,7 +174,7 @@ sub show_results {
             eval { require $file };
 
             {
-                no strict qw/refs/;
+                no strict qw/refs/;   ## no critic
                 $version .=
                      $EVAL_ERROR                       ? '0?0'
                     : defined ${$module . '::VERSION'} ? ${$module . '::VERSION'}
@@ -275,9 +275,9 @@ sub pre_specified {
     my ($recommends)    = $build =~ /recommends \s* (?: => | , ) \s* ( { [^}]*? } )/xms;
     my ($test_required) = $build =~ /build_requires \s* (?: => | , ) \s* ( { [^}]*? } )/xms;
 
-    $required      = eval $required;
-    $recommends    = eval $recommends;
-    $test_required = eval $test_required;
+    $required      = eval $required;        ## no critic
+    $recommends    = eval $recommends;      ## no critic
+    $test_required = eval $test_required;   ## no critic
 
     my %requires = map { $_ => { version => $required->{$_} } } keys %$required;
     for my $module ( keys %$recommends ) {
@@ -337,7 +337,7 @@ sub get_libraries {
             for my $ignore_file (qw/ .gitignore .bzrignore .csvignore /) {
                 next if !-f $ignore_file;
                 push @skips, qr/$ignore_file$/;
-                push @skips, map {chomp; s/[.]/\\./g; s/[*]/.*/g; s/[?]/.?/g; qr/$_/} file($ignore_file)->slurp;
+                push @skips, map {chomp; s/[.]/\\./g; s/[*]/.*/g; s/[?]/.?/g; qr/$_/} file($ignore_file)->slurp;   ## no critic
             }
         }
 
