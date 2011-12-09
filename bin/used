@@ -76,8 +76,8 @@ sub main {
             find(
                 sub {
                     return if -d $_;
-                    return if !/ [.] (?: pm | pl | cgi | t ) $/xms && /[.]/xms;
-                    return if $File::Find::name =~ m{/ (?: blib | _build ) /}xms;
+                    return if $File::Find::name =~ m{/ (?: blib | _build | [.](?: git | svn | bzr) | CVS | RCS ) /}xms;
+                    return if skip($File::Find::name);
 
                     if (!/[.]/xms) {
                         return if slurp($_) !~ /\A.*perl/;
@@ -137,7 +137,7 @@ sub show_results {
 
     # start the out put
     my $star = ' ';
-    if ( $specified->{perl} && $max_ver > $specified->{perl} ) {
+    if ( $specified->{perl} && $max_ver > $specified->{perl}{version} ) {
         $star = '⁑';
         $notes{$star} = 'The specified minimum perl version is less than some used features require';
     }
@@ -146,7 +146,8 @@ sub show_results {
 
     if ( $option{verbose} ) {
         for my $defined ( keys %$specified ) {
-            $used->{$defined} = { count => 0, build_only => 1 } if defined $specified->{$defined} && !exists $used->{$defined};
+            $used->{$defined} = { count => 0, build_only => $specified->{$defined}{build_only}, recommended => $specified->{$defined}{recommended} }
+                if defined $specified->{$defined} && !exists $used->{$defined};
             warn $defined if defined $specified->{$defined} && !exists $used->{$defined};
         }
     }
@@ -183,17 +184,17 @@ sub show_results {
                     : defined ${$module . '::VERSION'} ? ${$module . '::VERSION'}
                     :                                    0;
             }
-            my $spec = defined $specified->{$module} ? " ($specified->{$module})" : '';
+            my $spec = defined $specified->{$module} ? " ($specified->{$module}{version})" : '';
             $version .= ' ' x (8 - length $version) . $spec;
             $version = ' ' x ($max + 1 - length $module) . $version;
 
             $star =
-                  ! exists $specified->{$module}                           ? '†'
-                : ! defined $specified->{$module}                          ? ' '
-                : version->new($num) < version->new($specified->{$module}) ? '‡'
-                : $used->{$module}{build_only}                             ? '⁎'
-                : $used->{$module}{build_only}                             ? '⁂'
-                :                                                            ' ';
+                  ! exists $specified->{$module}                                    ? '†'
+                : ! defined $specified->{$module}                                   ? ' '
+                : version->new($num) < version->new($specified->{$module}{version}) ? '‡'
+                : $used->{$module}{build_only}                                      ? '⁎'
+                : $used->{$module}{recommended}                                     ? '⁂'
+                :                                                                     ' ';
         }
         else {
             $star = exists $specified->{$module} ? ' ' : '†';
@@ -202,13 +203,15 @@ sub show_results {
             $notes{$star} =
                 $star eq '‡' ? 'The version specified in Build.PL greater that the currently installed version'
                 : $star eq '⁎' ? 'The module is specified in Build.PL but doesn\'t appear to be used'
-                : $star eq '⁂' ? 'The module is specified in Build.PL but doesn\'t appear to be used'
+                : $star eq '⁂' ? 'The module is recommended in Build.PL but doesn\'t appear to be used'
                 :                'This module is not specified in Build.PL';
         }
 
-        $used->{$module}{count} ||= 0;
-        printf "%4d %s$star$version\n", $used->{$module}{count}, colored($module, $used->{$module}{colour});
-        if ( $used->{$module}{colour} && !$notes{ colored( $used->{$module}{colour}, $used->{$module}{colour} ) } ) {
+        $used->{$module}{count}  ||= 0;
+        $used->{$module}{colour} ||= '';
+
+        printf "%4d %s$star$version\n", $used->{$module}{count}, $used->{$module}{colour} ? colored($module, $used->{$module}{colour} ) : $module;
+        if ( $used->{$module}{colour} && $used->{$module}{colour} ne '' && !$notes{ colored( $used->{$module}{colour}, $used->{$module}{colour} ) } ) {
             $notes{ colored( $used->{$module}{colour}, $used->{$module}{colour} ) }
                 = $used->{$module}{colour} eq 'blue' ? "Core module"
                 : $used->{$module}{colour} eq 'bold' ? 'Local module'
@@ -235,7 +238,7 @@ sub process_file {
 
     $contents =~ s{^__DATA__\n.*\Z}{}xms;
 
-    my @modules = grep { $_ ne 'ok' } $contents =~ m{^ \s* (?: use | require ) \s+ ( [\w:]+ ) }gxms;
+    my @modules = grep { $_ ne 'ok' } $contents =~ m{ (?: use | require ) \s+ ( [\w:]+ ) }gxms;
     push @modules, $contents =~ m{^ \s* (?: use | require ) \s+ ok \s+ ['"]( [\w:]+ )['"] }gxms;
 
     for my $module (@modules) {
@@ -268,12 +271,25 @@ sub pre_specified {
     return if !-f 'Build.PL';
     my $build = slurp 'Build.PL';
 
-    my ($required, $test_required) = $build =~ /requires \s* (?: => | , ) \s* ( { [^}]*? } )/gxms;
-    $required = eval $required;
-    $test_required = eval $test_required;
-    my %requires = ( %$required, %$test_required );
+    my ($required)      = $build =~ /\brequires \s* (?: => | , ) \s* ( { [^}]*? } )/xms;
+    my ($recommends)    = $build =~ /recommends \s* (?: => | , ) \s* ( { [^}]*? } )/xms;
+    my ($test_required) = $build =~ /build_requires \s* (?: => | , ) \s* ( { [^}]*? } )/xms;
 
-    $requires{'Module::Build'} ||= 0;
+    $required      = eval $required;
+    $recommends    = eval $recommends;
+    $test_required = eval $test_required;
+
+    my %requires = map { $_ => { version => $required->{$_} } } keys %$required;
+    for my $module ( keys %$recommends ) {
+        $requires{$module}{version} = $recommends->{$module};
+        $requires{$module}{recommended} = 1;
+    }
+    for my $module ( keys %$test_required ) {
+        $requires{$module}{version} = $test_required->{$module};
+        $requires{$module}{build_only} = 1;
+    }
+
+    $requires{'Module::Build'}{version} ||= 0;
 
     get_libraries(\%requires);
 
@@ -288,12 +304,12 @@ sub pre_specified {
 sub get_libraries {
     my ($requires) = @_;
 
-    my $dir = 'lib';
-    my @files = glob "$dir/*";
+    my $dir = dir('lib');
+    my @files = $dir->children;
 
     while (my $file = shift @files) {
         if (-d $file ) {
-            push @files, glob "$file/*";
+            push @files, $file->children;
         }
         elsif ($file =~ /[.]pm$/) {
             my $module = $file;
@@ -305,6 +321,28 @@ sub get_libraries {
     }
 
     return;
+}
+
+{
+    my @skips;
+    sub skip {
+        my ($file) = @_;
+
+        if ( !@skips ) {
+            for my $skip_file (qw/ MANIFEST.SKIP /) {
+                next if !-f $skip_file;
+                push @skips, qr/$skip_file$/;
+                push @skips, map {chomp; qr/$_/} grep {!/^\s*$/ && !/^\s*#/} file($skip_file)->slurp;
+            }
+            for my $ignore_file (qw/ .gitignore .bzrignore .csvignore /) {
+                next if !-f $ignore_file;
+                push @skips, qr/$ignore_file$/;
+                push @skips, map {chomp; s/[.]/\\./g; s/[*]/.*/g; s/[?]/.?/g; qr/$_/} file($ignore_file)->slurp;
+            }
+        }
+
+        return grep { $file =~ /$_/ } @skips;
+    }
 }
 
 __DATA__
