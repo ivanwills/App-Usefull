@@ -199,8 +199,8 @@ __DATA__
 
 =head1 NAME
 
-img-resize - Resized images all found in a directory and puts the resized
-images into a new directory
+img-resize - Resizes all images found in the input directory and moves the
+resized images into a new output directory.
 
 =head1 VERSION
 
@@ -216,9 +216,9 @@ This documentation refers to img-resize version 0.1.
   -h --height=int New image height maximum
   -w --width=ing  New image width maximum
   -f --fixed      Use the height & width rather than scaling
-     --nodelete   Don't delete the original files after resizing
+     --no-delete  Don't delete the original files after resizing
 
-  -v --verbose    Show more detailed option
+  -v --verbose    Show more detailed output
      --version    Prints the version information
      --help       Prints this help information
      --man        Prints the full documentation for img-resize
