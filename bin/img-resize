@@ -30,6 +30,7 @@ my %option = (
     delete  => 1,
     width   => 700,
     height  => 0,
+    rescan  => 0,
     verbose => 0,
     man     => 0,
     help    => 0,
