@@ -42,7 +42,7 @@ sub main {
         \%option,
         'posture|p=i',
         'eyes|e=i',
-        'time|t=i',
+        'time|sleep-time|t=i',
         'verbose|v+',
         'man',
         'help',
@@ -102,14 +102,17 @@ This documentation refers to posture version 0.1.
    posture [option]
 
  OPTIONS:
-  -p --posture=min   The number of minutes between reminding to check posture
-  -e --eyes=min      The number of minutes between reminding to look into the distance
-  -t --time=sec      Set the number of seconds in a minute (useful for testing)
+  -p --posture=min  The number of minutes between reminding to check posture
+  -e --eyes=min     The number of minutes between reminding to look into the
+                    distance
+  -t --sleep-time=sec
+                    Set the number of seconds to sleep for (defines what
+                    --posture and --eyes consider a minute to be, Default 60)
 
-  -v --verbose       Show more detailed option
-     --version       Prints the version information
-     --help          Prints this help information
-     --man           Prints the full documentation for posture
+  -v --verbose      Show more detailed option
+     --version      Prints the version information
+     --help         Prints this help information
+     --man          Prints the full documentation for posture
 
 =head1 DESCRIPTION
 
