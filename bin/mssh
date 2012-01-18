@@ -18,6 +18,7 @@ use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use Path::Class;
+use POSIX ":sys_wait_h";
 
 our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -44,6 +45,7 @@ sub main {
     GetOptions(
         \%option,
         'host|h=s@',
+        'parallel|p=i',
         'test|t!',
         'verbose|v+',
         'man',
@@ -93,14 +95,49 @@ sub main {
         }
     }
 
-    print join "\n", @hosts, '' if $option{verbose};
+    print join "\n", @hosts, '' if $option{verbose} > 1 || !@ARGV;
+
+    return if !@ARGV;
+
     my $remote_cmd = shift @ARGV;
+    my @children;
 
     for my $host (@hosts) {
         my $cmd = "ssh $host '$remote_cmd'";
-        print "$cmd\n" if $option{verbose} || $option{test};
-        system $cmd    if !$option{test};
+        print "-- $cmd\n" if ( $option{verbose} || $option{test} ) && !$option{parallel};
+        next if $option{test};
+
+        if ( $option{parallel} ) {
+            my $child = fork;
+
+            if ( $child ) {
+                # parent stuff
+                push @children, $child;
+
+                if ( @children == $option{parallel} ) {
+                    while ( my $pid = shift @children ) {
+                        waitpid $pid, 0;
+                    }
+                }
+            }
+            elsif ( defined $child ) {
+                # child code
+                my $out = `$cmd 2>&1`;
+
+                print "\n$cmd\n";
+                print $out;
+                exit;
+            }
+            else {
+                die "Error: $!\n";
+            }
+        }
+        else {
+            system $cmd;
+        }
     }
+
+    wait;
 
     return;
 }
