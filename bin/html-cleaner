@@ -58,7 +58,7 @@ sub main {
         'out|o=s',
         'auto_close|auto-close|a=s@',
         'known|k=s',
-        'simple|s!',
+        'simple|s+',
         'xhtml|x!',
         'clean|c!',
         'strict|S!',
@@ -107,6 +107,7 @@ sub main {
 
             $html =~ s/\s*<[!#]--     (.*?)   -->\s*/ /gxms;
             $html =~ s/\s*<!\[CDATA\[ (.*?) \]\]>\s*/ /gxms;
+            $html =~ s/\s*<\/?[#@]    (.*?)     >\s*/ /gxms if $option{simple} > 1;
 
             if ( $option{verbose} ) {
                 warn join "\n------\n\n", @comments,'' if $option{verbose} > 2 && @comments;
@@ -249,7 +250,8 @@ sub is_known {
     for my $known ( @{$known{ $option{known} }} ) {
         return 1 if $known eq $tag;
     }
-    warn "$tag didn't match any tags known for $option{known}!\n" if ! $seen{$tag}++ && $option{verbose};
+    warn "$tag didn't match any tags known for $option{known}!\n" if ! $seen{$tag} && $option{verbose} && ( $tag !~ /^[#@]/ || $option{verbose} > 1 );
+    $seen{$tag}++;
     return 0;
 }
 
