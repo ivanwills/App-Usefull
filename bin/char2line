@@ -43,6 +43,7 @@ sub main {
     GetOptions(
         \%option,
         'position|p=i',
+        'context|c=i',
         'verbose|v+',
         'man',
         'help',
@@ -69,8 +70,16 @@ sub main {
     my $str = file( shift @ARGV )->slurp;
     my $pos = substr $str, 0, $option{position};
     my @lines = split /\n/, $pos;
+    my $lines = @lines + 1;
+    my $character = @{ [ split //, $lines[-1] ] };
 
-    print "Character $option{position} is approximatly line " . @lines . "\n";
+    print "Character $option{position} is approximatly line $lines column $character\n";
+
+    if ( defined $option{context} ) {
+        @lines = split /\n/, $str;
+        $lines--;
+        print join "\n", @lines[ $lines - $option{context} .. $lines + $option{context} ], '';
+    }
 
     return;
 }
