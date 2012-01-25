@@ -176,7 +176,8 @@ This documentation refers to mssh version 0.1.
 =head1 SYNOPSIS
 
    mssh [ --VERSION | --help | --man ]
-   mssh -h host [ -v | --verbose ] 'remote command'
+   mssh [ -t | --test ] [ -v | --verbose ] -h host [-h host2 ..] 'remote command'
+   mssh [ -t | --test ] [ -v | --verbose ] host [host2 ...] 'remote command'
 
  OPTIONS:
   -h --host[=]str Host or range of hosts to execute 'remote command' on
