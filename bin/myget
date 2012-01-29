@@ -47,6 +47,8 @@ sub main {
         'content|c=s',
         'header|h=s%',
         'header_file|header-file|f=s',
+        'max_lines|max-lines|l=i',
+        'max_size|max-size|m=i',
         'proxy|p=s%',
         'verbose|v+',
         'man',
@@ -109,9 +111,20 @@ sub main {
     }
     print "$url\n" if $option{verbose};
     print "Content:\n" if $option{verbose};
-    print defined $mech->content ? $mech->content : '(No content)';
+    my $content = defined $mech->content ? $mech->content : '(No content)';
+
+    if ( $option{max_size} && length $content > $option{max_size} ) {
+        $content = substr $content, 0, $option{max_size};
+    }
+    if ( $option{max_lines} ) {
+        my @lines = split /\n/, $content;
+        $content = join "\n", @lines[0 .. $option{max_lines}];
+    }
+
+    print $content;
     print "\n";
-    print "\n" . Dumper $mech if $option{verbose} > 1;
+    print "\n" . Dumper $mech->res->headers if $option{verbose} > 1;
+    print "\n" . Dumper $mech if $option{verbose} > 2;
 
     return;
 }
