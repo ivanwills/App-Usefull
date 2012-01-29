@@ -92,6 +92,8 @@ sub main {
         'title_bar|title-bar|b=s',
         'protect|p',
         'short|s!',
+        'pre_cmd|pre-cmd|pre=s',
+        'post_cmd|post-cmd|post=s',
         'test|T',
         'verbose|v+',
         'man',
@@ -156,27 +158,6 @@ sub main {
     my $uc_task = uc $task;
     my $lc_task = lc $task;
 
-    if ( $option{verbose} ) {
-        print Dumper \%session;
-    }
-
-    if ( exists $session{$uc_task} ) {
-        if ( $option{kill} ) {
-            system "kill $session{$uc_task}{pid}";
-            exit;
-        }
-        elsif ( $session{$uc_task}{state} eq 'DEAD' ) {
-            warn "A previous session for '$task' was detected as dead, wiping and starting a new session\n";
-            system "/usr/bin/screen -wipe $uc_task > /dev/null 2>&1" or error( COULD_NOT_WIPE_SESSION => $task, $OS_ERROR );
-        }
-        else {
-            exec "/usr/bin/screen -d -R $uc_task" or error( COULD_NOT_REATTACH => $task, $OS_ERROR );
-        }
-    }
-    elsif ( $option{reconnect} || $option{kill} ) {
-        error( COULD_NOT_FIND_SESSION => $task );
-    }
-
     my @screen_opts = (
         "-S $uc_task",
     );
@@ -197,6 +178,30 @@ sub main {
                 $option{$key} = $config->{$key};
             }
         }
+    }
+
+    if ( $option{verbose} ) {
+        print Dumper \%session;
+    }
+
+    if ( exists $session{$uc_task} ) {
+        if ( $option{kill} ) {
+            if ( $option{post_cmd} ) {
+                system $option{post_cmd};
+            }
+            system "kill $session{$uc_task}{pid}";
+            exit;
+        }
+        elsif ( $session{$uc_task}{state} eq 'DEAD' ) {
+            warn "A previous session for '$task' was detected as dead, wiping and starting a new session\n";
+            system "/usr/bin/screen -wipe $uc_task > /dev/null 2>&1" or error( COULD_NOT_WIPE_SESSION => $task, $OS_ERROR );
+        }
+        else {
+            exec "/usr/bin/screen -d -R $uc_task" or error( COULD_NOT_REATTACH => $task, $OS_ERROR );
+        }
+    }
+    elsif ( $option{reconnect} || $option{kill} ) {
+        error( COULD_NOT_FIND_SESSION => $task );
     }
 
     # Per session config?
@@ -231,6 +236,10 @@ sub main {
 
     if ( $option{protect} ) {
         protect($lc_task);
+    }
+
+    if ( $option{pre_cmd} ) {
+        system $option{pre_cmd};
     }
 
     my $cmd = "/usr/bin/screen " . join (' ', @screen_opts);
