@@ -275,9 +275,9 @@ sub pre_specified {
     my ($recommends)    = $build =~ /recommends \s* (?: => | , ) \s* ( { [^}]*? } )/xms;
     my ($test_required) = $build =~ /build_requires \s* (?: => | , ) \s* ( { [^}]*? } )/xms;
 
-    $required      = eval $required;        ## no critic
-    $recommends    = eval $recommends;      ## no critic
-    $test_required = eval $test_required;   ## no critic
+    $required      = eval $required      if $required;        ## no critic
+    $recommends    = eval $recommends    if $recommends;      ## no critic
+    $test_required = eval $test_required if $test_required;   ## no critic
 
     my %requires = map { $_ => { version => $required->{$_} } } keys %$required;
     for my $module ( keys %$recommends ) {
