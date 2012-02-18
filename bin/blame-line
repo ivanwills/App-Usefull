@@ -1,0 +1,176 @@
+#!/usr/bin/perl
+
+# Created on: 2012-02-18 18:43:46
+# Create by:  Ivan Wills
+# $Id$
+# $Revision$, $HeadURL$, $Date$
+# $Revision$, $Source$, $Date$
+
+use strict;
+use warnings;
+use version;
+use v5.10;
+use Scalar::Util;
+use List::Util;
+#use List::MoreUtils;
+use Getopt::Long;
+use Pod::Usage;
+use Data::Dumper qw/Dumper/;
+use English qw/ -no_match_vars /;
+use FindBin qw/$Bin/;
+use Path::Class;
+
+our $VERSION = version->new('0.0.1');
+my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+my $git      = -x '/usr/bin/git' ? '/usr/bin/git' : 'git';
+my %option = (
+    out     => undef,
+    verbose => 0,
+    man     => 0,
+    help    => 0,
+    VERSION => 0,
+);
+sub run($);
+
+if ( !@ARGV ) {
+    pod2usage( -verbose => 1 );
+}
+
+main();
+exit 0;
+
+sub main {
+
+
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,
+        'out|o=s',
+        'verbose|v+',
+        'man',
+        'help',
+        'VERSION!',
+    ) or pod2usage(2);
+
+    if ( $option{'VERSION'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
+    elsif ( @ARGV < 2 ) {
+        warn "You must specify a line number & file\n";
+        pod2usage( -verbose => 1 );
+    }
+
+    # do stuff here
+    my $line_no = $ARGV[0];
+    my $file_name = $ARGV[1];
+    say "Line: $line_no | File: $file_name" if $option{verbose};
+
+    # Get the git blame for the line & file
+    my $line = run "$git blame -L $line_no,$line_no $file_name";
+    die "No line!\n" if !$line;
+    say "Line: $line" if $option{verbose};
+
+    # Reduce this just to the SHA
+    chomp $line;
+    my ($sha) = $line =~ /^(\S+).*/;
+    die "No SHA!\n" if !$sha;
+    die "Initial commit\n" if $sha eq '^f46d65d';
+    say "SHA: $sha" if $option{verbose};
+
+    # Show the commit for that SHA
+    say run "$git show $sha";
+
+    return;
+}
+
+sub run($) {
+    my ($cmd) = @_;
+
+    print "$cmd\n"      if $option{test} || $option{verbose};
+    my $result = `$cmd` if !$option{test};
+
+    return $result;
+}
+
+__DATA__
+
+=head1 NAME
+
+blame-line - Blame a line
+
+=head1 VERSION
+
+This documentation refers to bin/blame-line version 0.1.
+
+=head1 SYNOPSIS
+
+   bin/blame-line [option] line_no file
+
+ OPTIONS:
+  line_no            The line number of interest (int)
+  file               The file to blame
+
+  -o --other         other option
+
+  -v --verbose       Show more detailed option
+     --version       Prints the version information
+     --help          Prints this help information
+     --man           Prints the full documentation for bin/blame-line
+
+
+
+=head1 DESCRIPTION
+
+=head2 Vim helper
+
+ " Get the commit responsible for the current line
+ nmap <f4> :call BlameCurrentLine()<cr>
+ " Get the current line number & file name, view the git commit that inserted it
+ fun! BlameCurrentLine()
+ let lnum = line(".")
+ let file = @%
+ exec "!gitBlameFromLineNo " lnum file
+ endfun
+
+=head1 SUBROUTINES/METHODS
+
+=head1 DIAGNOSTICS
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+=head1 DEPENDENCIES
+
+=head1 INCOMPATIBILITIES
+
+=head1 BUGS AND LIMITATIONS
+
+There are no known bugs in this module.
+
+Please report problems to Ivan Wills (ivan.wills@gmail.com).
+
+Patches are welcome.
+
+=head1 AUTHOR
+
+Originally from http://geekblog.oneandoneis2.org/index.php/2012/02/15/cuz-multiple-steps-into-one-is-cool
+Ivan Wills - (ivan.wills@gmail.com)
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2012 Ivan Wills (14 Mullion Close, Hornsby Heights, NSW Australia 2077).
+All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself. See L<perlartistic>.  This program is
+distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+=cut
