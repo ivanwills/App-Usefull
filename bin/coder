@@ -84,7 +84,7 @@ sub main {
         my $text = '';
         while (my $line = <>) {
             if ( $style ne 'whole' || $line eq "-\n" ) {
-                print $sub->($text);
+                print $sub->($text || $line);
                 $text = '';
             }
             else {
@@ -99,6 +99,12 @@ sub main {
 
 sub get_coders {
     return (
+        bash => {
+            encode    => sub { chomp $_[0]; $_[0] =~ s/'/'\\''/g; return "'$_[0]'\n" },
+            encode_on => 'line',
+            decode    => sub {},
+            decode_on => 'line',
+        },
         base64 => {
             encode    => \&encode_base64,
             encode_on => 'whole',
@@ -164,11 +170,13 @@ This documentation refers to coder version 0.1.
 
  OPTIONS:
   CODE           The type of coding/decoding to do currently supported:
-                    base64
-                    quoted_printable
-                    html
-                    http
-                    url
+                    bash             Single quoted bash line (only encode)
+                    base64           Base64 encoding/decoding
+                    quoted_printable MIME quoted printable format
+                    html             HTML entity encoding
+                    http             HTTP encoding (dumb all non work characters % encoded)
+                    url              HTTP encoding smarter eg spaces to +
+
   -D --direction=str
                  Direction for codeing (encode|decode) if called as coder the
                  default is encode if called as decoder the default is decode
