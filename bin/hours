@@ -70,7 +70,7 @@ sub main {
             'now|n=s',
             'between|b=s',
             'full|f',
-            'work_day|w=f',
+            'work_day|work-day|w=f',
             'lunch_bread|l=f',
             'round|r=i',
             'bin|i=i',
@@ -359,7 +359,7 @@ sub stats {
     print "Average      : " . time_str( $last->{avg}, 1 ) . " (for $days days)\n";
     print "Std Deviation: " . time_str($last->{stddev}, 1) . "\n";
 
-    my $lunch = !$last->{lunch} ? $option{lunch_break} : 0;
+    my $lunch = !$last->{lunch} || $last->{lunch} eq 'N/A' ? $option{lunch_break} : 0;
 
     if ( ! $last->{end} || $last->{end} eq now()->strftime('%H:%M') ) {
         my $total = $last->{total} - $lunch;
