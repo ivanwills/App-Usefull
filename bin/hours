@@ -359,9 +359,13 @@ sub stats {
     print "Average      : " . time_str( $last->{avg}, 1 ) . " (for $days days)\n";
     print "Std Deviation: " . time_str($last->{stddev}, 1) . "\n";
 
+    # determine if lunch break is still expected
     my $lunch = !$last->{lunch} || $last->{lunch} eq 'N/A' ? $option{lunch_break} : 0;
 
+    # check if the last day in the stats represents today
     if ( ! $last->{end} || $last->{end} eq now()->strftime('%H:%M') ) {
+
+        # workout if work today is less that nominal workday
         my $total = $last->{total} - $lunch;
         if ( $total < $option{work_day} ) {
             my $day = sprintf "%.1f", $option{work_day} / HOUR;
@@ -370,27 +374,25 @@ sub stats {
             print "Leave at:      " . ( ( now() - $total + $option{work_day} )->meridiam ) . "\n";
             print "               " . time_str( ( $option{work_day} ) - $total, 1 ) . "\n";
         }
-    }
 
-    my $hours = $last->{avg} % $option{work_day};
-    if ( $stats->[-2]{avg} > $last->{total} + $lunch ) {
-        my $till = $stats->[-2]{avg} - $last->{total} + $lunch;
-        print "For average day\n";
-        print "Leave at:      " . (now() + $till)->meridiam . "\n";
-        print "               " . time_str( $till, 1 ) . "\n";
-    }
-    else {
-        print "For average day leave now\n";
-    }
+        # determine if still need to work to maintain average day length
+        if ( $stats->[-2]{avg} > $last->{total} + $lunch ) {
+            my $till = $stats->[-2]{avg} - $last->{total} + $lunch;
+            print "For average day\n";
+            print "Leave at:      " . (now() + $till)->meridiam . "\n";
+            print "               " . time_str( $till, 1 ) . "\n";
+        }
+        else {
+            print "For average day leave now\n";
+        }
 
-    if ( $last->{avg} < $option{work_day} ) {
-        #my $till = ( $option{work_day} - $last->{avg} ) * @{ $stats } + $lunch;
-        my $till = ( $option{work_day} - $last->{avg} ) * $days + $lunch;
-        # TODO work out how to make this the correct value (currently it's too small
-        #my $till = ( $option{work_day} - $last->{total} ) + $lunch;
-        print "For minimum day to average at workday length\n";
-        print "Leave at:      " . (now() + $till)->meridiam . "\n";
-        print "               " . time_str( $till, 1 ) . "\n";
+        # Check if need to make up hours to get average matching work day length
+        if ( $last->{avg} < $option{work_day} ) {
+            my $till = ( $option{work_day} - $last->{avg} ) * $days + $lunch;
+            print "For minimum day to average at workday length\n";
+            print "Leave at:      " . (now() + $till)->meridiam . "\n";
+            print "               " . time_str( $till, 1 ) . "\n";
+        }
     }
 
     $days  = ( $last->{avg} - $option{work_day} ) * $days / $option{work_day};
