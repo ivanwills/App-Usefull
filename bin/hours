@@ -355,8 +355,9 @@ sub stats {
         $last = $day;
     }
 
+    my $days_worked = $last->{half_days} ? $days - $last->{half_days} * 0.5 . " days and $last->{half_days} half days" : "$days days";
     print "\n";
-    print "Average      : " . time_str( $last->{avg}, 1 ) . " (for $days days)\n";
+    print "Average      : " . time_str( $last->{avg}, 1 ) . " (for $days_worked)\n";
     print "Std Deviation: " . time_str($last->{stddev}, 1) . "\n";
 
     # determine if lunch break is still expected
@@ -395,6 +396,7 @@ sub stats {
         }
     }
 
+    # determin if you have worked overtime
     $days  = ( $last->{avg} - $option{work_day} ) * $days / $option{work_day};
     if ( $days > 1 || $option{verbose} ) {
         #$days = $option{verbose} ? sprintf "%0.1f", $days : int $days;
@@ -403,6 +405,7 @@ sub stats {
         print "You have $days day$day in overtime\n";
     }
 
+    # show binned stats of day lengths
     if ( $option{verbose} > 1 ) {
         my %bin;
         for my $stat (@{ $stats }) {
@@ -493,6 +496,7 @@ sub raw_stats {
     $end   = $end   ? Class::Date->new($end)   : undef;
     my $today = Class::Date->new( now->strftime('%Y-%m-%d') );
     my $days = 0;
+    my $half_days = 0;
 
     my $now    = now();
 
@@ -543,12 +547,14 @@ sub raw_stats {
 
         # TODO improve these calculations so that they don't make things too slow
         $days += $stats[-1]{days}   = @fields <= 2 && $day != $today ? 0.5 : 1;
-        #my $avg    = ( sum map { $_->{total} } @stats ) / @stats;
+        $half_days++ if @fields <= 2 && $day != $today;
+
         my $avg    = ( sum map { $_->{total} } @stats ) / $days;
         my $stddev = sum map { ( $_->{total} - $avg ) ** 2 } @stats;
-        #$stats[-1]{stddev} = sqrt $stddev / @stats;
-        $stats[-1]{stddev} = sqrt $stddev / $days;
-        $stats[-1]{avg}    = $avg;
+
+        $stats[-1]{stddev}    = sqrt $stddev / $days;
+        $stats[-1]{avg}       = $avg;
+        $stats[-1]{half_days} = $half_days;
     }
 
     if ( $records && $records < @stats && $option{all} < 2 ) {
