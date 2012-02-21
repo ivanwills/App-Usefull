@@ -25,6 +25,7 @@ my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
     host    => [],
+    cssh    => '/usr/bin/cssh',
     verbose => 0,
     man     => 0,
     help    => 0,
@@ -45,6 +46,8 @@ sub main {
         \%option,
         'host|h=s@',
         'parallel|p=i',
+        'fork|f',
+        'cssh|c=s',
         'test|t!',
         'verbose|v+',
         'man',
@@ -62,10 +65,16 @@ sub main {
     elsif ( $option{'help'} ) {
         pod2usage( -verbose => 1 );
     }
-    elsif ( !@ARGV ) {
-        warn "You must specify a command!\n";
+    elsif ( !@ARGV && !-x $option{cssh} ) {
+        warn "You must specify a command or install or specify the location of cssh!\n";
         pod2usage( -verbose => 1 );
     }
+
+    if ( !@ARGV ) {
+        warn "here";
+        exec $option{cssh}, get_hosts($option{host});
+    }
+        die "not here : ", join ", ", @ARGV;
 
     # do stuff here
     my $remote_cmd = pop @ARGV;
@@ -139,7 +148,7 @@ sub get_hosts {
     my $range_re     = qr/ ($int_re) (?:[.][.]|-) ($int_re)/xms;
     my $group_re     = qr/ (?: $int_re | $range_re )       /xms;
     my $seperated_re = qr/ $group_re (?: , $group_re )  *  /xms;
-    my $num_range_re = qr/ \[ ( $seperated_re ) \]         /xms;
+    my $num_range_re = qr/ [[{] ( $seperated_re ) [\]}]    /xms;
 
     while ( my $host_range = shift @{$hosts} ) {
         my ($num_range) = $host_range =~ /$num_range_re/;
@@ -189,6 +198,11 @@ This documentation refers to mssh version 0.1.
                      [0..3,5]   1,2,3 and 5
                      [0-5]      1,2,3,4 and 5
                      [0-3,5]    1,2,3 and 5
+                     {0..5} for 1,2,3,4 and 5
+                     {0,5}      1 and 5
+                     {0..3,5}   1,2,3 and 5
+                     {0-5}      1,2,3,4 and 5
+                     {0-3,5}    1,2,3 and 5
   -p --parallel[=]int
                   Fork calls to each server to run in parallel the value limits
                   the number of processes called at once
