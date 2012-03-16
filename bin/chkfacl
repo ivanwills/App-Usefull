@@ -48,7 +48,6 @@ sub main {
         'help',
         'VERSION!',
     ) or pod2usage(2);
-    #my $file = join ' ', @ARGV;
 
     if ( $option{'VERSION'} ) {
         print "$name Version = $VERSION\n";
@@ -95,8 +94,8 @@ sub check_perms {
     my $dir = $cwd;
 
     my $all_good = 1;
-    my $first = 1;
-    my $last = 0;
+    my $first    = 1;
+    my $last     = 0;
     while ($cwd ne '/' || $last) {
         if (-l $cwd) {
             my $ls = `/bin/ls -dl $cwd`;
@@ -106,7 +105,7 @@ sub check_perms {
         my ($perms, $seen_before) = check_perm($cwd, $first);
         last if $seen_before && !$option{verbose};
 
-        print ''.($perms ? 'GOOD' : 'BAD ')." $cwd\n";
+        print '' . ($perms ? 'GOOD' : 'BAD ') . " $cwd\n";
         $all_good = 0 unless $perms;
 
         if (-d $cwd) {
@@ -155,58 +154,80 @@ sub check_perms {
 }
 
 {
-my %perms;
-sub check_perm {
-    my ($dir, $first) = @_;
-
-    return ($perms{$dir}, 1) if exists $perms{$dir};
-
-    my $perm_re = $first ? qr/r../ : qr/..[xX]/;
     my %perms;
-    my $dir_quote = cmd_quote($dir);
-    my @perms = `getfacl $dir_quote 2> /dev/null`;
 
-    for my $perm (@perms) {
-          $perm =~ /^#\s*(owner|group):\s*(\w+)/ ? $perms{g}{$1}{$1}       = $2
-        : $perm =~ /^#\s*file/                   ? undef
-        : $perm =~ /^(\w+)::(...)/               ? $perms{$1}{$1}{$1}      = $2
-        : $perm =~ /^(\w+):(\w+):(...)/          ? $perms{$1}{$2}{$2}      = $3
-        : $perm =~ /^default:(\w+)::(...)/       ? $perms{default}{$1}{$1} = $2
-        : $perm =~ /^default:(\w+):(\w+):(...)/  ? $perms{default}{$1}{$2} = $3
-        : $perm =~ /^\s+\Z/xms                   ? undef
-        :                                          warn "Unknown line '$perm'\n";
-    }
+    sub check_perm {
+        my ($dir, $first) = @_;
 
-    if ($option{group}) {
-        if (
-            ( $perms{g}{group}{group} eq $option{group} && $perms{group}{group}{group} =~ /$perm_re/ )
-            || ( $perms{group}{$option{group}}{$option{group}} && $perms{group}{$option{group}}{$option{group}} =~ /$perm_re/ )
-            || ( $perms{other}{other}{other} && $perms{other}{other}{other} =~ /$perm_re/ )
+        return ($perms{$dir}, 1) if exists $perms{$dir};
+
+        my $perm_re = $first ? qr/r../ : qr/..[xX]/;
+        my %perms;
+        my $dir_quote = cmd_quote($dir);
+        my @perms     = `getfacl $dir_quote 2> /dev/null`;
+
+        for my $perm (@perms) {
+              $perm =~ /^#\s*(owner|group):\s*(\w+)/ ? $perms{g}{$1}{$1}       = $2
+            : $perm =~ /^#\s*file/                   ? undef
+            : $perm =~ /^(\w+)::(...)/               ? $perms{$1}{$1}{$1}      = $2
+            : $perm =~ /^(\w+):(\w+):(...)/          ? $perms{$1}{$2}{$2}      = $3
+            : $perm =~ /^default:(\w+)::(...)/       ? $perms{default}{$1}{$1} = $2
+            : $perm =~ /^default:(\w+):(\w+):(...)/  ? $perms{default}{$1}{$2} = $3
+            : $perm =~ /^\s+\Z/xms                   ? undef
+            :                                          warn "Unknown line '$perm'\n";
+        }
+
+        if ($option{group}) {
+            if (
+                (
+                    $perms{g}{group}{group} eq $option{group}
+                    && $perms{group}{group}{group} =~ /$perm_re/
+                )
+                || (
+                    $perms{group}{$option{group}}{$option{group}}
+                    && $perms{group}{$option{group}}{$option{group}} =~ /$perm_re/
+                )
+                || (
+                    $perms{other}{other}{other}
+                    && $perms{other}{other}{other} =~ /$perm_re/
+                )
+            ) {
+                return ($perms{$dir} = 1, 0);
+            }
+            else {
+                return ($perms{$dir} = 0, 0);
+            }
+        }
+        elsif ($option{user}) {
+            if (
+                (
+                    $perms{g}{user}{user} eq $option{user}
+                    && $perms{user}{user}{user} =~ /$perm_re/
+                )
+                || (
+                    $perms{user}{$option{user}}{$option{user}}
+                    && $perms{user}{$option{user}}{$option{user}} =~ /$perm_re/
+                )
+                || (
+                    $perms{other}{other}{other}
+                    && $perms{other}{other}{other} =~ /$perm_re/
+                )
+            ) {
+                return ($perms{$dir} = 1, 0);
+            }
+            else {
+                return ($perms{$dir} = 0, 0);
+            }
+        }
+        elsif (
+            $perms{other}{other}{other}
+            && $perms{other}{other}{other} =~ /$perm_re/
         ) {
             return ($perms{$dir} = 1, 0);
         }
-        else {
-            return ($perms{$dir} = 0, 0);
-        }
-    }
-    elsif ($option{user}) {
-        if (
-            ( $perms{g}{user}{user} eq $option{user} && $perms{user}{user}{user} =~ /$perm_re/ )
-            || ( $perms{user}{$option{user}}{$option{user}} && $perms{user}{$option{user}}{$option{user}} =~ /$perm_re/ )
-            || ( $perms{other}{other}{other} && $perms{other}{other}{other} =~ /$perm_re/ )
-        ) {
-            return ($perms{$dir} = 1, 0);
-        }
-        else {
-            return ($perms{$dir} = 0, 0);
-        }
-    }
-    elsif ( $perms{other}{other}{other} && $perms{other}{other}{other} =~ /$perm_re/ ) {
-        return ($perms{$dir} = 1, 0);
-    }
 
         return ($perms{$dir} = 0, 0);
-}
+    }
 }
 
 sub cmd_quote {
