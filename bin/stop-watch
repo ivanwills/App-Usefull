@@ -20,11 +20,11 @@ our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
-	'max-time' => 100,
-	verbose    => 0,
-	man        => 0,
-	help       => 0,
-	VERSION    => 0,
+    'max-time' => 100,
+    verbose    => 0,
+    man        => 0,
+    help       => 0,
+    VERSION    => 0,
 );
 
 main();
@@ -32,50 +32,50 @@ exit 0;
 
 sub main {
 
-	Getopt::Long::Configure('bundling');
-	GetOptions(
-		\%option,
-		'max-time|m=i',
-		'count-down|c=i',
-		'verbose|v+',
-		'man',
-		'help',
-		'VERSION!',
-	) or pod2usage(2);
-	#my $file = join ' ', @ARGV;
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,
+        'max-time|m=i',
+        'count-down|c=i',
+        'verbose|v+',
+        'man',
+        'help',
+        'VERSION!',
+    ) or pod2usage(2);
+    #my $file = join ' ', @ARGV;
 
-	if ( $option{'VERSION'} ) {
-		print "$name Version = $VERSION\n";
-		exit 1;
-	}
-	elsif ( $option{'man'} ) {
-		pod2usage( -verbose => 2 );
-	}
-	elsif ( $option{'help'} ) {
-		pod2usage( -verbose => 1 );
-	}
+    if ( $option{'VERSION'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
 
-	# save the cursor position
-	print {*STDERR} "[s";
+    # save the cursor position
+    print {*STDERR} "[s";
 
-	if ($option{'count-down'}) {
+    if ($option{'count-down'}) {
 
-		for ( 1 .. $option{'count-down'} ) {
-			printf {*STDERR} "[uCountdown: %i", $option{'count-down'} - $_;
-			sleep 1;
-		}
-	}
-	print "\n";
+        for ( 1 .. $option{'count-down'} ) {
+            printf {*STDERR} "[uCountdown: %i", $option{'count-down'} - $_;
+            sleep 1;
+        }
+    }
+    print "\n";
 
-	my $time = time;
-	while (time - $time < $option{'max-time'}) {
-		sleep 0.01;
-		print {*STDERR} sprintf "[u%0.2f ", time - $time;
-	}
+    my $time = time;
+    while (time - $time < $option{'max-time'}) {
+        sleep 0.01;
+        print {*STDERR} sprintf "[u%0.2f ", time - $time;
+    }
 
-	print "\n";
+    print "\n";
 
-	return;
+    return;
 }
 
 __DATA__

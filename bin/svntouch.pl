@@ -27,10 +27,10 @@ my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 sub touch_files;
 
 my %option = (
-	verbose => 0,
-	man     => 0,
-	help    => 0,
-	VERSION => 0,
+    verbose => 0,
+    man     => 0,
+    help    => 0,
+    VERSION => 0,
 );
 
 main();
@@ -38,57 +38,57 @@ exit 0;
 
 sub main {
 
-	Getopt::Long::Configure('bundling');
-	GetOptions(
-		\%option,
-		'all|a',
-		'verbose|v+',
-		'man',
-		'help',
-		'VERSION!',
-	) or pod2usage(2);
-	my @dirs = @ARGV;
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,
+        'all|a',
+        'verbose|v+',
+        'man',
+        'help',
+        'VERSION!',
+    ) or pod2usage(2);
+    my @dirs = @ARGV;
 
-	if ( $option{'VERSION'} ) {
-		print "$name Version = $VERSION\n";
-		exit 1;
-	}
-	elsif ( $option{'man'} ) {
-		pod2usage( -verbose => 2 );
-	}
-	elsif ( $option{'help'} ) {
-		pod2usage( -verbose => 1 );
-	}
+    if ( $option{'VERSION'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
 
-	# do stuff here
-	for my $dir (@dirs) {
-		find( \&touch_files, $dir );
-	}
+    # do stuff here
+    for my $dir (@dirs) {
+        find( \&touch_files, $dir );
+    }
 
-	return;
+    return;
 }
 
 sub touch_files {
 
-	my $file = $File::Find::name;
+    my $file = $File::Find::name;
 
-	# skip internal svn files
-	return if $file =~ m{/[.]svn/};
+    # skip internal svn files
+    return if $file =~ m{/[.]svn/};
 
-	# check that the file is unmodified
-	my $mod = `svn st $_`;
-	chomp $mod;
+    # check that the file is unmodified
+    my $mod = `svn st $_`;
+    chomp $mod;
 
-	return if $mod && !$option{all};
+    return if $mod && !$option{all};
 
-	my $last = `svn log $_ 2> /dev/null | head -2 | tail -1`;
-	my ( $rev, $name, $time ) = $last =~ m{ ^ r(\d+) \s+ [|] \s+ ([^|]+) \s+ [|] \s+ ( \d\d\d\d-\d\d-\d\d \s \d\d:\d\d:\d\d \s [+-]\d\d\d\d ) }xms;
-	$time = Class::Date->new($time);
+    my $last = `svn log $_ 2> /dev/null | head -2 | tail -1`;
+    my ( $rev, $name, $time ) = $last =~ m{ ^ r(\d+) \s+ [|] \s+ ([^|]+) \s+ [|] \s+ ( \d\d\d\d-\d\d-\d\d \s \d\d:\d\d:\d\d \s [+-]\d\d\d\d ) }xms;
+    $time = Class::Date->new($time);
 
-	my $touch = File::Touch->new( mtime => $time->epoch );
-	eval{ $touch->touch($_) };
+    my $touch = File::Touch->new( mtime => $time->epoch );
+    eval{ $touch->touch($_) };
 
-	return;
+    return;
 }
 
 __DATA__

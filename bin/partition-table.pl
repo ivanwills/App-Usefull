@@ -17,20 +17,20 @@ use DBI;
 our $VERSION = 0.1;
 
 my %option = (
-	table    => '',
-	column   => '',
-	range    => '1M',
-	add_only => 0,
-	test     => 0,
-	db_name  => '',
-	db_user  => $ENV{USER},
-	db_pass  => undef,
-	db_host  => undef,
-	db_port  => undef,
-	verbose  => 0,
-	man      => 0,
-	help     => 0,
-	VERSION  => 0,
+    table    => '',
+    column   => '',
+    range    => '1M',
+    add_only => 0,
+    test     => 0,
+    db_name  => '',
+    db_user  => $ENV{USER},
+    db_pass  => undef,
+    db_host  => undef,
+    db_port  => undef,
+    verbose  => 0,
+    man      => 0,
+    help     => 0,
+    VERSION  => 0,
 );
 my $db;
 my $dbh;
@@ -42,168 +42,168 @@ exit(0);
 
 sub main {
 
-	Getopt::Long::Configure("bundling");
-	GetOptions(
-		\%option,
-		'table|t=s',
-		'column|c=s',
-		'range|r=s',
-		'add_only|a!',
-		'test!',
-		'db_name|db-name|n=s',
-		'db_user|db-user|u=s',
-		'db_pass|db-pass|u=s',
-		'db_host|db-host|h=s',
-		'db_port|db-port|p=s',
-		'verbose|verbose|v!',
-		'man',
-		'help',
-		'VERSION'
-	) or pod2usage(2);
+    Getopt::Long::Configure("bundling");
+    GetOptions(
+        \%option,
+        'table|t=s',
+        'column|c=s',
+        'range|r=s',
+        'add_only|a!',
+        'test!',
+        'db_name|db-name|n=s',
+        'db_user|db-user|u=s',
+        'db_pass|db-pass|u=s',
+        'db_host|db-host|h=s',
+        'db_port|db-port|p=s',
+        'verbose|verbose|v!',
+        'man',
+        'help',
+        'VERSION'
+    ) or pod2usage(2);
 
-	print "partition-table Version = $VERSION\n" and exit(1) if $option{VERSION};
-	pod2usage( -verbose => 2 ) if $option{man};
-	pod2usage( -verbose => 1 ) if $option{help} || !$option{db_name} || !$option{table} || !$option{column} || !$option{range} || !(Class::Date::Rel->new($option{range}));
+    print "partition-table Version = $VERSION\n" and exit(1) if $option{VERSION};
+    pod2usage( -verbose => 2 ) if $option{man};
+    pod2usage( -verbose => 1 ) if $option{help} || !$option{db_name} || !$option{table} || !$option{column} || !$option{range} || !(Class::Date::Rel->new($option{range}));
 
-	my $dsn = "dbi:Pg:database=$option{db_name}";
-	$dsn .= ';host=' . $option{db_host} if $option{db_host};
-	$dsn .= ';port=' . $option{db_port} if $option{db_port};
-	$dbh = DBI->connect( $dsn, $option{db_user}, $option{db_pass}, { AutoCommit => 0, RaiseError => 1, PrintError => 1 } );
+    my $dsn = "dbi:Pg:database=$option{db_name}";
+    $dsn .= ';host=' . $option{db_host} if $option{db_host};
+    $dsn .= ';port=' . $option{db_port} if $option{db_port};
+    $dbh = DBI->connect( $dsn, $option{db_user}, $option{db_pass}, { AutoCommit => 0, RaiseError => 1, PrintError => 1 } );
 
-	# need to do some table introspection (need the column names and the earilest value of $option{column}
-	my $now = now();
-	$SIG{__DIE__} = sub { $dbh->rollback(); exit 10 };
-	warn "TEST\n" if $option{test};
+    # need to do some table introspection (need the column names and the earilest value of $option{column}
+    my $now = now();
+    $SIG{__DIE__} = sub { $dbh->rollback(); exit 10 };
+    warn "TEST\n" if $option{test};
 
-	my @columns;
-	my $stmt = $dbh->column_info( undef, 'public', $option{table}, '' );
-	$stmt->execute();
-	while ( my $row = $stmt->fetchrow_hashref ) {
-		push @columns, $row;
-	}
+    my @columns;
+    my $stmt = $dbh->column_info( undef, 'public', $option{table}, '' );
+    $stmt->execute();
+    while ( my $row = $stmt->fetchrow_hashref ) {
+        push @columns, $row;
+    }
 
-	if ( $option{add_only} ) {
-		my $indexes;
+    if ( $option{add_only} ) {
+        my $indexes;
 
-		# add next months table
-		create_range( month => now() + $option{range}, cols => \@columns, );
-	}
-	else {
-		my $indexes;
+        # add next months table
+        create_range( month => now() + $option{range}, cols => \@columns, );
+    }
+    else {
+        my $indexes;
 
-		# get the min and max times for the table
-		my $row = $dbh->selectrow_hashref("SELECT MIN($option{column}), MAX($option{column}) FROM $option{table}");
+        # get the min and max times for the table
+        my $row = $dbh->selectrow_hashref("SELECT MIN($option{column}), MAX($option{column}) FROM $option{table}");
 
-		# get earilest date as a Class::Date object
-		my $current = Class::Date->new( $row->{min} );
+        # get earilest date as a Class::Date object
+        my $current = Class::Date->new( $row->{min} );
 
-		# set now to a point in the future where we should have all dates and one extra range
-		my $max = Class::Date->new( $row->{max} );
-		$now = ( $now > $max ? $now : $max ) + $option{range} + $option{range};
+        # set now to a point in the future where we should have all dates and one extra range
+        my $max = Class::Date->new( $row->{max} );
+        $now = ( $now > $max ? $now : $max ) + $option{range} + $option{range};
 
-		warn "Oldest date = $current\nNewest Date = $now\n";
-		while ( $current < $now + $option{range} ) {
-			create_range( month => $current, cols => \@columns, range => $row );
+        warn "Oldest date = $current\nNewest Date = $now\n";
+        while ( $current < $now + $option{range} ) {
+            create_range( month => $current, cols => \@columns, range => $row );
 
-			$current += $option{range};
-		}
-		$dbh->rollback() if $option{test};
-		$dbh->commit();
+            $current += $option{range};
+        }
+        $dbh->rollback() if $option{test};
+        $dbh->commit();
 
-		#$dbh->do("VACUUM FULL ANALYZE $option{table}");
+        #$dbh->do("VACUUM FULL ANALYZE $option{table}");
 
-		my $min  = int( rand(60) );
-		$min     = $min < 10 ? '0' . $min : $min;
-		my $hour = int( rand(24) );
-		$hour    = $hour < 10 ? '0' . $hour : $hour;
-		$option{add_only} = 1;
-		$option{verbose}  = 0;
-		print "Don't forget to create cron job with:\n";
-		print "$min\t$hour\t01\t*\t*\t$FindBin::Bin/$FindBin::Script " . join( ' ', map { !$option{$_} ? () : $_ !~ /add_only|test|verbose|man|help|VERSION/ ? "--$_ $option{$_}" : "--$_" } sort keys %option ) ."\n";
-	}
+        my $min  = int( rand(60) );
+        $min     = $min < 10 ? '0' . $min : $min;
+        my $hour = int( rand(24) );
+        $hour    = $hour < 10 ? '0' . $hour : $hour;
+        $option{add_only} = 1;
+        $option{verbose}  = 0;
+        print "Don't forget to create cron job with:\n";
+        print "$min\t$hour\t01\t*\t*\t$FindBin::Bin/$FindBin::Script " . join( ' ', map { !$option{$_} ? () : $_ !~ /add_only|test|verbose|man|help|VERSION/ ? "--$_ $option{$_}" : "--$_" } sort keys %option ) ."\n";
+    }
 
 }
 
 sub create_range {
-	my %vars      = @_;
-	my $year      = $vars{month}->year();
-	my $month     = $vars{month}->strftime('%m');
-	my $new_table = $option{table} . '_' . $year . '_' . $month;
-	my $insert    = $option{table} . '_insert_' . $year . '_' . $month;
-	my $start     = $vars{month}->strftime('%Y-%m-01');
-	my $end       = ( $vars{month} + $option{range} )->strftime('%Y-%m-01');
-	my $where     = "$option{column} >= DATE '$start' AND $option{column} < DATE '$end'";
-	my $time      = time;
-	my $sql       = <<"SQL";
+    my %vars      = @_;
+    my $year      = $vars{month}->year();
+    my $month     = $vars{month}->strftime('%m');
+    my $new_table = $option{table} . '_' . $year . '_' . $month;
+    my $insert    = $option{table} . '_insert_' . $year . '_' . $month;
+    my $start     = $vars{month}->strftime('%Y-%m-01');
+    my $end       = ( $vars{month} + $option{range} )->strftime('%Y-%m-01');
+    my $where     = "$option{column} >= DATE '$start' AND $option{column} < DATE '$end'";
+    my $time      = time;
+    my $sql       = <<"SQL";
 CREATE TABLE $new_table (
-	CHECK ( $where )
+    CHECK ( $where )
 ) INHERITS ($option{table});
 SQL
-	print $sql if $option{verbose};
-	return     if exists_table($new_table);
+    print $sql if $option{verbose};
+    return     if exists_table($new_table);
 
-	print "CREATE $new_table\n" unless $option{verbose};
-	$dbh->do($sql);
+    print "CREATE $new_table\n" unless $option{verbose};
+    $dbh->do($sql);
 
-	# create insert rule
-	my $new_cols  = 'NEW.' . join ', NEW.', map { $_->{COLUMN_NAME} } @{ $vars{cols} };
-	my $col_names = join ', ', map { $_->{COLUMN_NAME} } @{ $vars{cols} };
-	$sql = <<"SQL";
+    # create insert rule
+    my $new_cols  = 'NEW.' . join ', NEW.', map { $_->{COLUMN_NAME} } @{ $vars{cols} };
+    my $col_names = join ', ', map { $_->{COLUMN_NAME} } @{ $vars{cols} };
+    $sql = <<"SQL";
 CREATE RULE $insert AS
 ON INSERT TO $option{table} WHERE ( $where )
 DO INSTEAD
-	INSERT INTO $new_table ($col_names)
-	VALUES ( $new_cols );
+    INSERT INTO $new_table ($col_names)
+    VALUES ( $new_cols );
 SQL
-	print $sql if $option{verbose};
-	$dbh->do($sql);
+    print $sql if $option{verbose};
+    $dbh->do($sql);
 
-	# if not testing commit rule so that any new transactions should go into the new table
-	unless ( $option{test} ) {
-		$dbh->commit();
-	}
+    # if not testing commit rule so that any new transactions should go into the new table
+    unless ( $option{test} ) {
+        $dbh->commit();
+    }
 
-	# copy the data from old to new table
-	$sql = "SELECT * FROM $option{table} WHERE  $where;\n";
-	print $sql if $option{verbose};
-	my @rows;
-	for my $row ( @{ $dbh->selectall_arrayref($sql) } ) {
-		push @rows, join "\t", map { defined $_ ? $_ : '\N' } @$row;
-	}
+    # copy the data from old to new table
+    $sql = "SELECT * FROM $option{table} WHERE  $where;\n";
+    print $sql if $option{verbose};
+    my @rows;
+    for my $row ( @{ $dbh->selectall_arrayref($sql) } ) {
+        push @rows, join "\t", map { defined $_ ? $_ : '\N' } @$row;
+    }
 
-	# delete the data from old table
-	$sql = "DELETE FROM $option{table} WHERE $where;\n";
-	print $sql if $option{verbose};
-	$dbh->do($sql);
+    # delete the data from old table
+    $sql = "DELETE FROM $option{table} WHERE $where;\n";
+    print $sql if $option{verbose};
+    $dbh->do($sql);
 
-	# Copy deleted data back into database
-	$sql = "COPY $new_table FROM STDIN\n";
-	print $sql if $option{verbose};
-	$dbh->do($sql);
-	for (@rows) {
-		$dbh->pg_putline("$_\n");
-	}
-	$dbh->pg_endcopy();
+    # Copy deleted data back into database
+    $sql = "COPY $new_table FROM STDIN\n";
+    print $sql if $option{verbose};
+    $dbh->do($sql);
+    for (@rows) {
+        $dbh->pg_putline("$_\n");
+    }
+    $dbh->pg_endcopy();
 
-	print "\n" . ( time - $time ) . "s\n" if $option{verbose};
+    print "\n" . ( time - $time ) . "s\n" if $option{verbose};
 }
 
 my $exists_table_stmt;
 
 sub exists_table {
-	my $table = shift;
-	my $schema;
-	if ( $table =~ /[.]/ ) {
-		( $schema, $table ) = split /[.]/, $table;
-	}
-	else {
-		$schema = 'public';
-	}
-	unless ($exists_table_stmt) {
-		$exists_table_stmt = $dbh->prepare('SELECT COUNT(*) FROM pg_tables WHERE schemaname = ? AND tablename = ?');
-	}
-	my $found = $dbh->selectrow_hashref( $exists_table_stmt, undef, $schema, $table );
-	return $found->{count};
+    my $table = shift;
+    my $schema;
+    if ( $table =~ /[.]/ ) {
+        ( $schema, $table ) = split /[.]/, $table;
+    }
+    else {
+        $schema = 'public';
+    }
+    unless ($exists_table_stmt) {
+        $exists_table_stmt = $dbh->prepare('SELECT COUNT(*) FROM pg_tables WHERE schemaname = ? AND tablename = ?');
+    }
+    my $found = $dbh->selectrow_hashref( $exists_table_stmt, undef, $schema, $table );
+    return $found->{count};
 }
 
 __DATA__

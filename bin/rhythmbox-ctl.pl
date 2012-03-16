@@ -22,15 +22,15 @@ our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
-	out     => undef,
-	verbose => 0,
-	man     => 0,
-	help    => 0,
-	VERSION => 0,
+    out     => undef,
+    verbose => 0,
+    man     => 0,
+    help    => 0,
+    VERSION => 0,
 );
 
 if ( !@ARGV ) {
-	pod2usage( -verbose => 1 );
+    pod2usage( -verbose => 1 );
 }
 
 main();
@@ -38,38 +38,38 @@ exit 0;
 
 sub main {
 
-	Getopt::Long::Configure('bundling');
-	GetOptions(
-		\%option,
-		'out|o=s',
-		'verbose|v+',
-		'man',
-		'help',
-		'VERSION!',
-	) or pod2usage(2);
-	#my $file = join ' ', @ARGV;
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,
+        'out|o=s',
+        'verbose|v+',
+        'man',
+        'help',
+        'VERSION!',
+    ) or pod2usage(2);
+    #my $file = join ' ', @ARGV;
 
-	if ( $option{'VERSION'} ) {
-		print "$name Version = $VERSION\n";
-		exit 1;
-	}
-	elsif ( $option{'man'} ) {
-		pod2usage( -verbose => 2 );
-	}
-	elsif ( $option{'help'} ) {
-		pod2usage( -verbose => 1 );
-	}
+    if ( $option{'VERSION'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
 
-	# do stuff here
-	my $bus = Net::DBus->find;
-	my $service = $bus->get_service("org.gnome.Rhythmbox");
+    # do stuff here
+    my $bus = Net::DBus->find;
+    my $service = $bus->get_service("org.gnome.Rhythmbox");
 
-	my $object = $service->get_object("/org/gnome/Rhythmbox/Player");
-	foreach (@{$object->ListNames}) {
-		print "$_\n";
-	}
+    my $object = $service->get_object("/org/gnome/Rhythmbox/Player");
+    foreach (@{$object->ListNames}) {
+        print "$_\n";
+    }
 
-	return;
+    return;
 }
 
 __DATA__

@@ -22,10 +22,10 @@ our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
-	verbose => 0,
-	man     => 0,
-	help    => 0,
-	VERSION => 0,
+    verbose => 0,
+    man     => 0,
+    help    => 0,
+    VERSION => 0,
 );
 
 main();
@@ -33,61 +33,60 @@ exit 0;
 
 sub main {
 
-	Getopt::Long::Configure('bundling');
-	GetOptions(
-		\%option,
-		'style|s=s',
-		'verbose|v+',
-		'man',
-		'help',
-		'VERSION!',
-	) or pod2usage(2);
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,
+        'style|s=s',
+        'verbose|v+',
+        'man',
+        'help',
+        'VERSION!',
+    ) or pod2usage(2);
 
-	if ( $option{'VERSION'} ) {
-		print "$name Version = $VERSION\n";
-		exit 1;
-	}
-	elsif ( $option{'man'} ) {
-		pod2usage( -verbose => 2 );
-	}
-	elsif ( $option{'help'} ) {
-		pod2usage( -verbose => 1 );
-	}
+    if ( $option{'VERSION'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
 
-	# do stuff here
-	my @all_tests = get_tests();
+    # do stuff here
+    my @all_tests = get_tests();
 
-	my @found_tests = glob "*.t";
-	my $test_dir    = '';
+    my @found_tests = glob "*.t";
+    my $test_dir    = '';
 
-	if (!@found_tests) {
-		@found_tests = map {s{t/(?:\d\d-?)?}{}xms; $_} glob "t/*.t";  ## no critic
-		$test_dir    = "t/";
-	}
+    if (!@found_tests) {
+        @found_tests = map {s{t/(?:\d\d-?)?}{}xms; $_} glob "t/*.t";  ## no critic
+        $test_dir    = "t/";
+    }
 
-	my %found = map { $_ => 1 } @found_tests;
+    my %found = map { $_ => 1 } @found_tests;
 
-	TEST:
-	for my $test ( sort @all_tests ) {
-		next TEST if $found{$test};
+    TEST:
+    for my $test ( sort @all_tests ) {
+        next TEST if $found{$test};
 
-		print
-			 !$option{style}            ? "templatecmd print perl/test/$test -o $test_dir$test\n"
-			: $option{style} eq 'long'  ? "templatecmd print perl/test/$test -o $test_dir$test\n"
-			: $option{style} eq 'short' ? "$test\n"
-			:                             "Missing test $test\n";
-	}
+        print
+             !$option{style}            ? "templatecmd print perl/test/$test -o $test_dir$test\n"
+            : $option{style} eq 'long'  ? "templatecmd print perl/test/$test -o $test_dir$test\n"
+            : $option{style} eq 'short' ? "$test\n"
+            :                             "Missing test $test\n";
+    }
 
-	return;
+    return;
 }
 
 sub get_tests {
-	my @tests = `templatecmd list perl/test/`;
-	@tests = map { split /\s+/, $_ } @tests;
+    my @tests = `templatecmd list perl/test/`;
+    @tests = map { split /\s+/, $_ } @tests;
 
-	return map { s{perl/test/}{}; $_ } @tests;  ## no critic
+    return map { s{perl/test/}{}; $_ } @tests;  ## no critic
 }
-
 
 __DATA__
 

@@ -17,12 +17,12 @@ use Text::CSV_XS;
 our $VERSION = 0.1;
 
 my %option = (
-	win     => undef,
-	out     => undef,
-	man     => 0,
-	help    => 0,
-	verbose => 0,
-	VERSION => 0,
+    win     => undef,
+    out     => undef,
+    man     => 0,
+    help    => 0,
+    verbose => 0,
+    VERSION => 0,
 );
 
 pod2usage( -verbose => 1 ) unless @ARGV;
@@ -32,96 +32,96 @@ exit(0);
 
 sub main {
 
-	Getopt::Long::Configure("bundling");
-	GetOptions(
-		\%option,
-		'win|w',
-		'out|o=s',
-		'man|m',
-		'help|h',
-		'verbose|v!',
-		'VERSION|V'
-	) or pod2usage(2);
-	my $file = pop @ARGV;
+    Getopt::Long::Configure("bundling");
+    GetOptions(
+        \%option,
+        'win|w',
+        'out|o=s',
+        'man|m',
+        'help|h',
+        'verbose|v!',
+        'VERSION|V'
+    ) or pod2usage(2);
+    my $file = pop @ARGV;
 
-	print "psqlout2csv Version = $VERSION\n" and exit(1) if $option{VERSION};
-	pod2usage( -verbose => 2 ) if $option{man};
-	pod2usage( -verbose => 1 ) if $option{help};
+    print "psqlout2csv Version = $VERSION\n" and exit(1) if $option{VERSION};
+    pod2usage( -verbose => 2 ) if $option{man};
+    pod2usage( -verbose => 1 ) if $option{help};
 
-	# do stuff here
-	my $in_fh;
-	my $out_fh;
+    # do stuff here
+    my $in_fh;
+    my $out_fh;
 
-	if ( $file eq '-' ) {
-		$in_fh = *STDIN;
-	}
-	else {
-		open $in_fh, '<', $file or die "Could not open '$file': $!";
-	}
+    if ( $file eq '-' ) {
+        $in_fh = *STDIN;
+    }
+    else {
+        open $in_fh, '<', $file or die "Could not open '$file': $!";
+    }
 
-	if ( $option{out} ) {
-		warn "Writing to '$option{out}'\n";
-		open $out_fh, '>', $option{out} or die "Could not write to '$option{out}': $!";
-	}
-	else {
-		$out_fh = *STDOUT;
-	}
+    if ( $option{out} ) {
+        warn "Writing to '$option{out}'\n";
+        open $out_fh, '>', $option{out} or die "Could not write to '$option{out}': $!";
+    }
+    else {
+        $out_fh = *STDOUT;
+    }
 
-	my $line_no  = 0;
-	my $columns  = 0;
-	my $file_no  = 1;
-	my $csv      = Text::CSV_XS->new( { eol => undef, binary => 1, } );
-	my $split_re = qr/(?<=\s)\s*[|]/;
+    my $line_no  = 0;
+    my $columns  = 0;
+    my $file_no  = 1;
+    my $csv      = Text::CSV_XS->new( { eol => undef, binary => 1, } );
+    my $split_re = qr/(?<=\s)\s*[|]/;
 
-	while ( my $line = <$in_fh> ) {
-		$line_no++;
-		next if $line_no < 3 and $line !~ /[|]/;
-		if ( $line =~ /[(] \s* \d+ \s* rows? [)] /xs ) {
-			if ( $option{out} && $line_no > 1 ) {
-				close $out_fh;
-				my $file = $option{out};
-				$file =~ s/([.]\w+)$/${file_no}$1/xs;
-				open $out_fh, '>', $file or die "Could not write to '$file': $!";
-				$file_no++;
-				warn "Now writing to '$file'\n";
-			}
-			$line_no = -1;
-			$columns = 0;
-			next;
-		}
-		chomp $line;
+    while ( my $line = <$in_fh> ) {
+        $line_no++;
+        next if $line_no < 3 and $line !~ /[|]/;
+        if ( $line =~ /[(] \s* \d+ \s* rows? [)] /xs ) {
+            if ( $option{out} && $line_no > 1 ) {
+                close $out_fh;
+                my $file = $option{out};
+                $file =~ s/([.]\w+)$/${file_no}$1/xs;
+                open $out_fh, '>', $file or die "Could not write to '$file': $!";
+                $file_no++;
+                warn "Now writing to '$file'\n";
+            }
+            $line_no = -1;
+            $columns = 0;
+            next;
+        }
+        chomp $line;
 
-		my @columns = split /$split_re/, $line;
+        my @columns = split /$split_re/, $line;
 
-		if ( not $columns ) {
-			$columns = scalar @columns;
-			warn "Columns = $columns\n" . join "\n", @columns if $option{verbose};
-		}
-		else {
-			warn "col count = " . scalar(@columns) . "\n" if $option{verbose};
-		}
+        if ( not $columns ) {
+            $columns = scalar @columns;
+            warn "Columns = $columns\n" . join "\n", @columns if $option{verbose};
+        }
+        else {
+            warn "col count = " . scalar(@columns) . "\n" if $option{verbose};
+        }
 
-		while ( @columns < $columns ) {
-			warn "here" if $option{verbose};
-			my $next_line = <$in_fh>;
-			die "Could not create a full set of columns" unless $next_line;
-			my @continued = split /$split_re/, $next_line;
-			chomp $columns[-1];
-			$columns[-1] .= "\\n" . shift @continued;
-			push @columns, @continued;
-		}
+        while ( @columns < $columns ) {
+            warn "here" if $option{verbose};
+            my $next_line = <$in_fh>;
+            die "Could not create a full set of columns" unless $next_line;
+            my @continued = split /$split_re/, $next_line;
+            chomp $columns[-1];
+            $columns[-1] .= "\\n" . shift @continued;
+            push @columns, @continued;
+        }
 
-		# trim leading and trailing spaces
-		for (@columns) {
-			s/^\s*(.*?)\s*$/$1/;
-		}
+        # trim leading and trailing spaces
+        for (@columns) {
+            s/^\s*(.*?)\s*$/$1/;
+        }
 
-		my $status = $csv->combine(@columns);
-		unless ($status) {
-			die $csv->error_input();
-		}
-		print {$out_fh} $csv->string(), ( $option{win} ? "\r" : '' ) . "\n";
-	}
+        my $status = $csv->combine(@columns);
+        unless ($status) {
+            die $csv->error_input();
+        }
+        print {$out_fh} $csv->string(), ( $option{win} ? "\r" : '' ) . "\n";
+    }
 }
 
 __DATA__

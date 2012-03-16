@@ -23,11 +23,11 @@ our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
-	out     => undef,
-	verbose => 0,
-	man     => 0,
-	help    => 0,
-	VERSION => 0,
+    out     => undef,
+    verbose => 0,
+    man     => 0,
+    help    => 0,
+    VERSION => 0,
 );
 
 main();
@@ -35,26 +35,26 @@ exit 0;
 
 sub main {
 
-	# do stuff here
-	my $df  = '/bin/df';
-	my $cmd = "$df " . join ' ', @ARGV;
-	my @out = `$cmd`;
-	print shift @out;
+    # do stuff here
+    my $df  = '/bin/df';
+    my $cmd = "$df " . join ' ', @ARGV;
+    my @out = `$cmd`;
+    print shift @out;
 
-	for my $line (@out) {
-		my ($percent) = $line =~ / \s (\d+) \% \s /xms;
+    for my $line (@out) {
+        my ($percent) = $line =~ / \s (\d+) \% \s /xms;
 
-		my $colour =
-			  !$percent       ? RESET
-			: $percent == 100 ? RED ON_YELLOW
-			: $percent >= 90  ? BOLD RED
-			: $percent >= 80  ? BOLD YELLOW
-			:                   RESET;
+        my $colour =
+              !$percent       ? RESET
+            : $percent == 100 ? RED ON_YELLOW
+            : $percent >= 90  ? BOLD RED
+            : $percent >= 80  ? BOLD YELLOW
+            :                   RESET;
 
-		print $colour . $line;
-	}
+        print $colour . $line;
+    }
 
-	return;
+    return;
 }
 
 __DATA__
