@@ -251,15 +251,29 @@ This documentation refers to cmdaliaser version 0.1.
 
 =head1 DESCRIPTION
 
+C<cmdaliaser> allows you to and sub command aliasing to any command that
+supports sub commands (with some work you can even make a series of
+different commands appear as one coherent command with sub commands). It
+supports recursive sub command resolution as well as modifying each sub
+command by running other commands/perl code before and after the sub
+command or piping input to the command and piping output to other commands.
+
 =head2 Config files
 
-The config files are stored in the directory C<~/.cmdaliaser/>. There is one config file per program to be aliased named I<program>.conf eg for svn it would be C<svn.conf>
+The config files are stored in the directory C<~/.cmdaliaser/>. There is one
+config file per program to be aliased named I<program>.conf eg for svn it
+would be C<svn.conf>
 
 =over 4
 
 =item command
 
-The name of the executable to run
+The name of the executable to run, can be overwridden in each aliased sub command
+
+=item pager
+
+Allows you to set the pager to be used, if set to yes then the $PAGER environment
+variable will be used. C<page> can be overridden in each aliased command.
 
 =item <alias I<alias>>
 
@@ -269,11 +283,74 @@ An alias command name (I<alias>). This may contain the following sub parameters
 
 =item sub
 
-=item post
+Replace the matched sub command with the value of C<sub>
 
 =item pre
 
-=item pager
+The value of C<pre> is piped to the command
+
+eg ~/.cmdaliaser/eg.conf
+ <alias data>
+     sub = process
+     pre = cat data
+ </alias>
+
+will run the command as
+
+$ cat data | eg process
+
+=item pre_cmd
+
+The value of C<pre_cmd> is executed before the command is run
+
+eg ~/.cmdaliaser/eg.conf
+ <alias data>
+     sub = process
+     pre_cmd = cat data
+ </alias>
+
+will run the command as
+
+$ cat data
+$ eg process
+
+=item pre_perl
+
+The value of C<pre_perl> is evaled before the command is run. You can modify
+@ARGV this way to change the values passed to the sub command.
+
+=item post
+
+The value of C<post> is used to pass the output of the command
+
+eg ~/.cmdaliaser/eg.conf
+ <alias data>
+     sub = process
+     post = grep interesting
+ </alias>
+
+will run the command as
+
+$ eg process | grep interesting
+
+=item post_cmd
+
+The value of C<post_cmd> is executed after the command is run
+
+eg ~/.cmdaliaser/eg.conf
+ <alias data>
+     sub = process
+     post_cmd = cat data
+ </alias>
+
+will run the command as
+
+$ eg process
+$ cat data
+
+=item post_perl
+
+The value of C<post_perl> is eval()ed after the sub command is run
 
 
 =head1 SUBROUTINES/METHODS
