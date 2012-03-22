@@ -23,15 +23,15 @@ our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
-	diff    => 'diff',
-	verbose => 0,
-	man     => 0,
-	help    => 0,
-	VERSION => 0,
+    diff    => 'diff',
+    verbose => 0,
+    man     => 0,
+    help    => 0,
+    VERSION => 0,
 );
 
 if ( !@ARGV ) {
-	pod2usage( -verbose => 1 );
+    pod2usage( -verbose => 1 );
 }
 
 main();
@@ -39,100 +39,100 @@ exit 0;
 
 sub main {
 
-	Getopt::Long::Configure('bundling');
-	GetOptions(
-		\%option,
-		'function|f=s@',
-		'diff|d=s',
-		'vimdiff|v',
-		'diffargs|a=s',
-		'verbose+',
-		'man',
-		'help',
-		'VERSION!',
-	) or pod2usage(2);
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,
+        'function|f=s@',
+        'diff|d=s',
+        'vimdiff|v',
+        'diffargs|a=s',
+        'verbose+',
+        'man',
+        'help',
+        'VERSION!',
+    ) or pod2usage(2);
 
-	if ( $option{'VERSION'} ) {
-		print "$name Version = $VERSION\n";
-		exit 1;
-	}
-	elsif ( $option{'man'} ) {
-		pod2usage( -verbose => 2 );
-	}
-	elsif ( $option{'help'} ) {
-		pod2usage( -verbose => 1 );
-	}
+    if ( $option{'VERSION'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
 
-	# do stuff here
-	if (!$option{function})
-	{
-		$option{function} = [ split /,/, shift @ARGV ];
-	}
+    # do stuff here
+    if (!$option{function})
+    {
+        $option{function} = [ split /,/, shift @ARGV ];
+    }
 
-	my (@files) = @ARGV;
-	my @names;
-	my $function = shift @{ $option{function} };
+    my (@files) = @ARGV;
+    my @names;
+    my $function = shift @{ $option{function} };
 
-	for my $file (@files) {
-		push @names, extract_function($function, $file);
-		$function = shift @{ $option{function} } if @{ $option{function} };
-	}
+    for my $file (@files) {
+        push @names, extract_function($function, $file);
+        $function = shift @{ $option{function} } if @{ $option{function} };
+    }
 
-	my $diff = $option{vimdiff} ? 'vimdiff' : $option{diff};
+    my $diff = $option{vimdiff} ? 'vimdiff' : $option{diff};
 
-	if (!$option{diffargs} && $diff eq 'diff') {
-		$option{diffargs} = '-uN';
-	}
+    if (!$option{diffargs} && $diff eq 'diff') {
+        $option{diffargs} = '-uN';
+    }
 
-	system $diff, grep {defined $_} $option{diffargs}, @names;
+    system $diff, grep {defined $_} $option{diffargs}, @names;
 
-	return;
+    return;
 }
 
 {
-	my $count = 0;
-	sub extract_function {
-		my ($fn, $file) = @_;
+    my $count = 0;
+    sub extract_function {
+        my ($fn, $file) = @_;
 
-		open my $fh, '<', $file or die "Could not open '$file': $!\n";
-		my $text = join '', <$fh>;
-		close $fh;
+        open my $fh, '<', $file or die "Could not open '$file': $!\n";
+        my $text = join '', <$fh>;
+        close $fh;
 
-		my $perm      = qr/private | protected | public/xms;
-		my $type      = qr/static (?: \s+ $perm )? | $perm (?: \s+ static )?/xms;
-		my $prefix    = qr/(?: $type \s+ )? function/xms;
-		my $func      = qr/ $prefix (?: \s+ (?: & \s* )? | & \s+ ) /xms;
-		my $sub       = qr/ sub \s+ /xms;
-		my $sub_or_fn = qr/$sub | $func/xms;
-		my $subfn_dec = qr/^ \s* $sub_or_fn /xms;
+        my $perm      = qr/private | protected | public/xms;
+        my $type      = qr/static (?: \s+ $perm )? | $perm (?: \s+ static )?/xms;
+        my $prefix    = qr/(?: $type \s+ )? function/xms;
+        my $func      = qr/ $prefix (?: \s+ (?: & \s* )? | & \s+ ) /xms;
+        my $sub       = qr/ sub \s+ /xms;
+        my $sub_or_fn = qr/$sub | $func/xms;
+        my $subfn_dec = qr/^ \s* $sub_or_fn /xms;
 
-		my @functions = split /($subfn_dec \w+ [^\n]* \n)/xms, $text;
-		my $functions = '';
-		my $count = 0;
+        my @functions = split /($subfn_dec \w+ [^\n]* \n)/xms, $text;
+        my $functions = '';
+        my $count = 0;
 
-		for ( my $i = 1; $i < @functions; $i += 2 ) {
-			next if !$functions[$i];
-			my ($name) = $functions[$i] =~ /$subfn_dec (\w+) /xms;
-			next if !$name || $name ne $fn;
-			$functions .= $functions[$i].$functions[$i+1];
-			$count++;
-		}
-		warn "The function was declared $count times in the file '$file'\n" if $count > 1;
+        for ( my $i = 1; $i < @functions; $i += 2 ) {
+            next if !$functions[$i];
+            my ($name) = $functions[$i] =~ /$subfn_dec (\w+) /xms;
+            next if !$name || $name ne $fn;
+            $functions .= $functions[$i].$functions[$i+1];
+            $count++;
+        }
+        warn "The function was declared $count times in the file '$file'\n" if $count > 1;
 
-#		$text =~ s/.*(^\s*sub\s+$fn\s*[{]?$)/$1/xms;
-#		$text =~ s/^[}]\s+\n.*/}\n/xms;
+#       $text =~ s/.*(^\s*sub\s+$fn\s*[{]?$)/$1/xms;
+#       $text =~ s/^[}]\s+\n.*/}\n/xms;
 
-		my (undef, undef, $file_name) = splitpath($file);
+        my (undef, undef, $file_name) = splitpath($file);
 
-		$count++;
-		my $new_file = "/tmp/$$.$count.$file_name";
+        $count++;
+        my $new_file = "/tmp/$$.$count.$file_name";
 
-		open $fh, '>', $new_file or die "Could not write to '$new_file': $!\n";
-		print {$fh} $functions;
-		close $fh;
+        open $fh, '>', $new_file or die "Could not write to '$new_file': $!\n";
+        print {$fh} $functions;
+        close $fh;
 
-		return $new_file;
-	}
+        return $new_file;
+    }
 }
 
 __DATA__

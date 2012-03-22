@@ -87,9 +87,9 @@ sub main {
 
     if ( $option{content} ) {
         my $content
-            = $option{content} eq '-'
-            ? do { local $/; <> }
-            : file($option{content})->slurp;
+            = $option{content} eq '-' ? do { local $/; <> }
+            : !-f $option{content}    ? $option{content}
+            :                           file($option{content})->slurp;
 
         eval { $mech->put($url, content => $content) };
     }
@@ -145,6 +145,17 @@ This documentation refers to myget version 0.1.
 
  OPTIONS:
   -o --out=file      Write output to 'file' (Default is to write to STDOUT)
+  -c --content[=]str POST content, if a dash '-' reads from STDIN if a file
+                     exists called str reads the file else uses the value
+                     of str as the POST body.
+  -h --header[=]str  Any header variables you want to set
+  -f --header-file[=]str
+                     A file containing headders to set
+  -l --max-lines[=]int
+                     Show only int lines of output
+  -s --max-size[=]int
+                     Show at most this number characters (useful if result
+                     is only one line)
   -p --proxy protocol=proxy_url
                      Configure to use proxy on the protocol with the url
                      eg http=http://localhost:3128

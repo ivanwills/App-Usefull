@@ -46,7 +46,7 @@ my %alt_opt = (
     v              => 'verbose',
 );
 
-if ( !@ARGV ) {
+if (!@ARGV) {
     pod2usage( -verbose => 1 );
 }
 
@@ -120,7 +120,7 @@ sub main {
 
     system builder();
 
-    $ENV{TEST_AUTHOR} = $option{author};
+    $ENV{TEST_AUTHOR}     = $option{author};
     $ENV{HARNESS_OPTIONS} = "j$option{parallel}";
 
     if ( $level eq 'dist' ) {
@@ -148,14 +148,16 @@ sub test {
 }
 
 sub testup {
-    my $dir = dir('lib');
+    my $dir      = dir('lib');
     my @children = $dir->children;
     while ( my $child = shift @children ) {
         if ( -d $child ) {
             push @children, $child->children;
         }
         elsif ( $child =~ /[.]p[ml]$/xms ) {
-            my $libs = $option{lib} ? ' -I' . join ' -I', @{ $option{lib} } : '';
+            my $libs = $option{lib}
+                ? ' -I' . join ' -I', @{$option{lib}}
+                : '';
             my $ans = system "$option{perl} -Ilib -It/lib$libs -c $child";
             return 0 if $ans;
         }
@@ -184,7 +186,11 @@ sub dist {
 
     my @tars = sort glob '*.tar.gz';
 
-    if ( @tars && $tars[-1] =~ /^ ( [a-zA-Z-]+ ) - v? ( [\d.]+ ) [.] tar [.] gz $/xms ) {
+    if (
+        @tars
+        && $tars[-1]
+        =~ /^ ( [a-zA-Z-]+ ) - v? ( [\d.]+ ) [.] tar [.] gz $/xms
+    ) {
         my $vcs = VCS::Which->new(dir => '.');
 
         # check that the code is all checked in
@@ -199,7 +205,8 @@ sub dist {
         my $ver     = $2;
         my $changes = file('Changes');
 
-        die "Could not determine the current version of package!\n" if !defined $ver;
+        die "Could not determine the current version of package!\n"
+            if !defined $ver;
 
         if ( !-f $changes ) {
             my $date = strftime('%Y-%m-%d', localtime);
@@ -219,17 +226,20 @@ CHANGES
             unlink $tars[-1];
 
             if ($option{verbose}) {
-                my ($version, $date) = $changes =~ /^v?( \d+ [.] \d+ (?: [.] \d+ )? ) \s+ (\d\d\d\d-\d\d-\d\d)/xms;
+                my ($version, $date)
+                    = $changes =~ /^v?( \d+ [.] \d+ (?: [.] \d+ )? ) \s+ (\d\d\d\d-\d\d-\d\d)/xms;
+
                 if ( $date ) {
                     warn "git log --after=$date\n";
-                    print $vcs->log( "--after=$date" );
+                    print $vcs->log("--after=$date");
                 }
                 else {
                     warn "Could not extract the date from the change log file!\n";
                 }
             }
 
-            die "There is no entry in the Changes file for this version! (using $ver)\n";
+            die
+                "There is no entry in the Changes file for this version! (using $ver)\n";
         }
 
         # check that there is a tag for this version
@@ -283,7 +293,9 @@ sub create_tags {
     sub builder {
         my ($action) = @_;
 
-        my $cmd = $option{lib} ? 'PERL5LIB=$PERL5LIB:' . join ':', @{ $option{lib} } : '';
+        my $cmd = $option{lib}
+            ? 'PERL5LIB=$PERL5LIB:' . join ':', @{$option{lib}}
+            : '';
         $cmd .=
               $builder eq 'build' ? ' ./Build'
             : $builder eq 'make'  ? ' make'

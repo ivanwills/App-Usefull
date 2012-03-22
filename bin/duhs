@@ -6,14 +6,14 @@ use warnings;
 my $dirs = join ' ', map { "\"$_\"" } @ARGV;
 
 for ( `du -bs $dirs | sort -n` ) {
-	my ($number, $dir) = split /\s+/, $_, 2;
+    my ($number, $dir) = split /\s+/, $_, 2;
 
-	print
-		  $number < 1000          ? $number
-		: $number < 100_000       ? sprintf("%.1fK",$number/1000)
-		: $number < 1_000_000     ? sprintf("%.0fK",$number/1000)
-		: $number < 100_000_000   ? sprintf("%.1fM",$number/1_000_000)
-		: $number < 1_000_000_000 ? sprintf("%.0fM",$number/1_000_000)
-		:                           sprintf("%.1fG",$number/1_000_000_000);
-	print "\t$dir";
+    print
+          $number < 1000          ? $number
+        : $number < 100_000       ? sprintf("%.1fK",$number/1000)
+        : $number < 1_000_000     ? sprintf("%.0fK",$number/1000)
+        : $number < 100_000_000   ? sprintf("%.1fM",$number/1_000_000)
+        : $number < 1_000_000_000 ? sprintf("%.0fM",$number/1_000_000)
+        :                           sprintf("%.1fG",$number/1_000_000_000);
+    print "\t$dir";
 }

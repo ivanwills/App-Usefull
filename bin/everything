@@ -86,7 +86,14 @@ sub main {
 
     my @dirs;
     my $max = 0;
+    LINE:
     for my $line (@ARGV) {
+        if ( -d $line ) {
+            $max = length $line if $max < length $line;
+            push @dirs, $line;
+            next LINE;
+        }
+
         my @found = glob($line);
         for my $dir (@found) {
             $max = length $dir if $max < length $dir;
@@ -125,10 +132,10 @@ sub main {
     my @natural;
     sub stats {
         my ($vcs, $dir) = @_;
-        $total ||= 0;
+        $total    ||= 0;
         $projects ||= 0;
-        $small ||= 0;
-        $big ||= 0;
+        $small    ||= 0;
+        $big      ||= 0;
 
         chdir $dir;
         my @v = @{ $vcs->log($dir) };
