@@ -40,8 +40,7 @@ exit 0;
 sub main {
     my (@cmd_args, @prog_args);
     # get this program's arguments from the supplied arguments
-    while (@ARGV) {
-        my $arg = shift @ARGV;
+    while ( my $arg = shift @ARGV ) {
         if (@cmd_args || $arg !~ /^-/) {
             push @cmd_args, $arg;
         }
@@ -73,6 +72,7 @@ sub main {
     elsif ( $option{'help'} ) {
         pod2usage( -verbose => 1 );
     }
+    @ARGV = ( $sub_cmd, @cmd_args );
 
     # do stuff here
     my $conf_file = "$ENV{HOME}/.cmdaliaser/$name.conf";
@@ -272,8 +272,10 @@ The name of the executable to run, can be overwridden in each aliased sub comman
 
 =item pager
 
-Allows you to set the pager to be used, if set to yes then the $PAGER environment
-variable will be used. C<page> can be overridden in each aliased command.
+Allows you to set the pager to be used, if set to 'yes' then the $PAGER
+environment variable will be used, if it is set to 'no' then using a pager will
+be disabled (useful for globally turing pager on but turing it off for specific
+sub commands). C<page> can be overridden in each aliased command.
 
 =item <alias I<alias>>
 
@@ -316,8 +318,22 @@ $ eg process
 
 =item pre_perl
 
-The value of C<pre_perl> is evaled before the command is run. You can modify
-@ARGV this way to change the values passed to the sub command.
+The value of C<pre_perl> is evaled before the command is run. You can access
+@ARGV this way but changing it's values wont have any effect on the executed
+command. The result of the perl code is used to determine if the commmand
+should contiune running ie if the result is true execution should continue,
+if it's false execution will be stopped. This behaviour can be used in a
+similar manor to GIT's commit hooks.
+
+When specifying the value of C<pre_perl> you can use HEREDOCS (which sldo will
+work for any command)
+
+eg
+ <alias pre_perl_command>
+     pre_perl = <<PERL
+ warn "Perl code was executed";
+ return 1;
+ </alias>
 
 =item post
 
