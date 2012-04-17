@@ -357,8 +357,8 @@ sub stats {
 
     my $days_worked = $last->{half_days} ? $days - $last->{half_days} * 0.5 . " days and $last->{half_days} half days" : "$days days";
     print "\n";
-    print "Average      : " . time_str( $last->{avg}, 1 ) . " (for $days_worked)\n";
-    print "Std Deviation: " . time_str($last->{stddev}, 1) . "\n";
+    print "Average      : " . time_str( $last->{avg}, 'sec' ) . " (for $days_worked)\n";
+    print "Std Deviation: " . time_str($last->{stddev}, 'sec') . "\n";
 
     # determine if lunch break is still expected
     my $lunch = !$last->{lunch} || $last->{lunch} eq 'N/A' ? $option{lunch_break} : 0;
@@ -373,7 +373,7 @@ sub stats {
             $day =~ s/[.]0$//xms;
             print "For $day hour day\n";
             print "Leave at:      " . ( ( now() - $total + $option{work_day} )->meridiam ) . "\n";
-            print "               " . time_str( ( $option{work_day} ) - $total, 1 ) . "\n";
+            print "               " . time_str( ( $option{work_day} ) - $total, 'sec' ) . "\n";
         }
 
         # determine if still need to work to maintain average day length
@@ -381,7 +381,7 @@ sub stats {
             my $till = $stats->[-2]{avg} - $last->{total} + $lunch;
             print "For average day\n";
             print "Leave at:      " . (now() + $till)->meridiam . "\n";
-            print "               " . time_str( $till, 1 ) . "\n";
+            print "               " . time_str( $till, 'sec' ) . "\n";
         }
         else {
             print "For average day leave now\n";
@@ -392,17 +392,15 @@ sub stats {
             my $till = ( $option{work_day} - $last->{avg} ) * $days + $lunch;
             print "For minimum day to average at workday length\n";
             print "Leave at:      " . (now() + $till)->meridiam . "\n";
-            print "               " . time_str( $till, 1 ) . "\n";
+            print "               " . time_str( $till, 'sec' ) . "\n";
         }
     }
 
     # determin if you have worked overtime
     $days  = ( $last->{avg} - $option{work_day} ) * $days / $option{work_day};
-    if ( $days > 1 || $option{verbose} ) {
-        #$days = $option{verbose} ? sprintf "%0.1f", $days : int $days;
-        $days =  sprintf "%0.$option{verbose}f", $days;
-        my $day = $days == 1 ? '' : 's';
-        print "You have $days day$day in overtime\n";
+    if ( $days < -1 || $days > 1 || $option{verbose} ) {
+        my ($time, $colour) = $days < 0 ? ( 'undertime', 'red' ) : ('overtime', 'green' );
+        print colored( "You have " . time_str(abs $days * $option{work_day}, $option{verbose}) ."in $time\n", $colour );
     }
 
     # show binned stats of day lengths
@@ -566,21 +564,36 @@ sub raw_stats {
 
 sub time_parts {
     my ($time) = @_;
-    my $hour = int $time / HOUR;
-    my $min  = int $time / MINUTE;
-    my $sec  = int $time - $min * MINUTE;
+    my $day      = int $time / $option{work_day};
+    my $hour     = int $time / HOUR;
+    my $day_hour = $hour - $day * $option{work_day} / HOUR;
+    my $min      = int $time / MINUTE;
+    my $sec      = int $time - $min * MINUTE;
     $min -= $hour * MINUTE;
-    $hour = "0$hour" if $hour < 10;
-    $min  = "0$min"  if $min  < 10;
-    $sec  = "0$sec"  if $sec  < 10;
-    return ($hour, $min, $sec);
+    $hour = "0$hour"     if $hour < 10;
+    $min  = "0$min"      if $min  < 10;
+    $sec  = "0$sec"      if $sec  < 10;
+    return ($hour, $min, $sec, $day, $day_hour);
 }
 
 sub time_str {
-    my ($time, $show_sec) = @_;
-    my ($hour, $min, $sec) = time_parts($time);
+    my ($time, $show) = @_;
 
-    return $show_sec ? "$hour\:$min\:$sec" : "$hour\:$min";
+    my ($hour, $min, $sec, $day, $day_hour) = time_parts($time);
+
+    if ( @_ == 2 && (!$show || $show ne 'sec') ) {
+        my $out = '';
+        $out .= sprintf "%i day%s "   , $day     , $day      == 1 ? '' : 's';
+        return $out if !$option{verbose};
+        $out .= sprintf "%i hour%s "  , $day_hour, $day_hour == 1 ? '' : 's';
+        return $out if $option{verbose} == 1;
+        $out .= sprintf "%i minute%s ", $min     , $min      == 1 ? '' : 's';
+        return $out if $option{verbose} == 2;
+        $out .= sprintf "%i second%s ", $sec     , $sec      == 1 ? '' : 's';
+        return $out;
+    }
+
+    return $show && $show eq 'sec' ? "$hour\:$min\:$sec" : "$hour\:$min";
 }
 
 sub time_trunc {
