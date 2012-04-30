@@ -74,7 +74,6 @@ sub main {
         warn "here";
         exec $option{cssh}, get_hosts($option{host});
     }
-        die "not here : ", join ", ", @ARGV;
 
     # do stuff here
     my $remote_cmd = pop @ARGV;
