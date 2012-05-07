@@ -15,11 +15,13 @@ use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use Path::Class;
 use Term::Title 'set_titlebar';
+use Term::ANSIColor qw/colored/;
 use Path::Class;
 
 our $VERSION   = version->new('0.0.5');
 my ($PROGNAME) = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 my $HOME       = $ENV{HOME};
+my $SCREEN     = '/usr/bin/screen';
 
 my %option = (
     task    => '',
@@ -113,23 +115,7 @@ sub main {
         pod2usage(-verbose => 1);
     }
 
-    my %session = ();
-
-    # run screen to read in all the sessions
-    open my $screen, "-|", "/usr/bin/screen -ls" or error( COULD_NOT_LAUNCH_SCREEN => $OS_ERROR);
-
-    # read each running session
-    while ( my $session = <$screen> ) {
-        if ( $session =~ /^\s+ (\d+) [.] ([\w-]+) \s+ (?: \( .*? \) \s+ )? \( (Attached|Dead|Detached) /xms ) {
-            $session{$2} = {
-                pid   => $1,
-                name  => $2,
-                state => uc($3),
-            };
-            $session{$1} = $session{$2}
-        }
-    }
-    close $screen;
+    my %session = get_sessions();
 
     if ($option{'list'}) {
         my $count = 0;
@@ -144,8 +130,19 @@ sub main {
 
         SESSION:
         for my $session ( sort keys %session ) {
+            # remove any sessions that look like they are named after their pid
             next SESSION if $session{$session}{pid} && $session =~ /^\d+$/ && $session == $session{$session}{pid};
-            print ucfirst lc $session{$session}{state}, ' ' x (14 - length $session{$session}{state}), lc $session, "\n";
+
+            print ucfirst lc $session{$session}{state},
+                ' ' x (14 - length $session{$session}{state}),
+                colored(
+                    lc $session,
+                      $session{$session}{state} eq 'ATTACHED'    ? 'green'
+                    : $session{$session}{state} eq 'DETACHED'    ? 'blue'
+                    : $session{$session}{state} eq 'Not Started' ? 'white'
+                    :                                              'red'
+                ),
+                "\n";
             $count++;
         }
 
@@ -194,10 +191,13 @@ sub main {
         }
         elsif ( $session{$uc_task}{state} eq 'DEAD' ) {
             warn "A previous session for '$task' was detected as dead, wiping and starting a new session\n";
-            system "/usr/bin/screen -wipe $uc_task > /dev/null 2>&1" or error( COULD_NOT_WIPE_SESSION => $task, $OS_ERROR );
+            system "$SCREEN -wipe $uc_task > /dev/null 2>&1" or error( COULD_NOT_WIPE_SESSION => $task, $OS_ERROR );
         }
         else {
-            exec "/usr/bin/screen -d -R $uc_task" or error( COULD_NOT_REATTACH => $task, $OS_ERROR );
+            my $task = "$session{$uc_task}{pid}.$uc_task";
+            warn "$SCREEN -d -R $task" if $option{verbose} || $option{test};
+            return if $option{test};
+            exec "$SCREEN -d -R $task" or error( COULD_NOT_REATTACH => $task, $OS_ERROR );
         }
     }
     elsif ( $option{reconnect} || $option{kill} ) {
@@ -242,12 +242,35 @@ sub main {
         system $option{pre_cmd};
     }
 
-    my $cmd = "/usr/bin/screen " . join (' ', @screen_opts);
+    my $cmd = "$SCREEN " . join (' ', @screen_opts);
     if ($option{test}) {
         warn $cmd;
         exit 0;
     }
     exec $cmd or error( COULD_NOT_LAUNCH_SCREEN_TASK => $task, $OS_ERROR );
+}
+
+sub get_sessions {
+    my %session;
+
+    # run screen to read in all the sessions
+    open my $screen, "-|", "$SCREEN -ls" or error( COULD_NOT_LAUNCH_SCREEN => $OS_ERROR);
+
+    # read each running session
+    while ( my $session = <$screen> ) {
+        if ( $session =~ /^\s+ (\d+) [.] ([\w-]+) \s+ (?: \( .*? \) \s+ )? \( (Attached|Dead|Detached) /xms ) {
+            $session{$2} = {
+                pid   => $1,
+                name  => $2,
+                state => uc($3),
+            };
+            $session{$1} = $session{$2}
+        }
+    }
+    close $screen;
+
+    return map { $_ => $session{$_} } grep { $_ ne $session{$_}{pid} } keys %session;
+
 }
 
 # runs a ssh-agent protecting screen session
@@ -266,7 +289,7 @@ sub protect {
     for my $env ( keys %ENV ) {
         delete $ENV{$env} if $env =~ /ssh/i;
     }
-    my $cmd = "/usr/bin/screen -S PROT_$task -c $protect_rc";
+    my $cmd = "$SCREEN -S PROT_$task -c $protect_rc";
     if ($option{test}) {
         warn $cmd;
         exit 0;
