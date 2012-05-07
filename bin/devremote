@@ -42,12 +42,12 @@ sub main {
     GetOptions(
         \%option,
         'server|s=s',
+        'test|t!',
         'verbose|v+',
         'man',
         'help',
         'VERSION!',
     ) or pod2usage(2);
-    #my $file = join ' ', @ARGV;
 
     if ( $option{'VERSION'} ) {
         print "$name Version = $VERSION\n";
@@ -66,6 +66,7 @@ sub main {
 
     # do stuff here
     my $mode = shift @ARGV;
+    return print "ssh -t $option{server} 'reset; devmode $mode'\n" if $option{test};
     return exec "ssh -t $option{server} 'reset; devmode $mode'";
 }
 
