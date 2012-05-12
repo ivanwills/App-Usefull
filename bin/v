@@ -61,19 +61,24 @@ sub main {
     }
 
     # do stuff here
-    my $type = shift @ARGV || 'perl';
     create_tags();
 
-    my @files =
-          $type eq 'perl'      ? open_perl()
-        : $type eq 'test'      ? open_tests()
-        : $type eq 'tests'     ? open_tests()
-        : $type eq 'templates' ? open_templates()
-        : $type eq 'static'    ? open_templates()
-        : $type eq 'db'        ? open_database()
-        : $type eq 'all'       ? ( open_perl(), open_templates(), open_database() )
-        :                        ($type, @ARGV);
-
+    my @optioins = @ARGV ? @ARGV : ('perl');
+    my @files;
+    for my $file ( @options ) {
+        push @files
+            , -f $file          ? $file
+            : $file eq 'perl'   ? open_perl()
+            : $file eq 'test'   ? open_tests()
+            : $file eq 'tests'  ? open_tests()
+            : $file =~ /templ/  ? open_templates()
+            : $file eq 'static' ? ( open_css(), open_js() )
+            : $file eq 'css'    ? open_css()
+            : $file eq 'js'     ? open_js()
+            : $file eq 'db'     ? open_database()
+            : $file eq 'all'    ? ( open_perl(), open_templates(), open_database() )
+            :                     $type;
+    }
     die "Could not find any files!\n" if !@files;
 
     warn        'vim \'' . (join "' '", uniq sort @files) . "'" if $option{verbose} || $option{test};
@@ -103,7 +108,7 @@ sub open_perl {
         while (my $file = shift @children) {
             print {*STDERR} "  Found $file" if $option{verbose} > 2;
             if (-d $file) {
-                if ( $file =~ m{ /.(?: svn | bzr | git ) | /CVS }xms ) {
+                if ( $file =~ m{ /.(?: svn | bzr | git ) | CVS | RCS }xms ) {
                     print {*STDERR} "\n" if $option{verbose} > 2;
                     next;
                 }
@@ -164,18 +169,23 @@ sub open_tests {
     return @files;
 }
 
-sub open_templates {
+sub open_templates { return open_general([qw{template templates root html views}]); }
+sub open_css       { return open_general([qw{css public/css root/css}], [ qr{[.]css$} ] ); }
+sub open_js        { return open_general([qw{js javascript public/js public/javascripts root/js root/javascript }], [ qr{[.]js$} ] ); }
+
+sub open_general {
+    my ($dirs, $matches) = @_;
     my @files;
 
-    for my $dir (qw{template templates root html data/templates js css}) {
+    for my $dir (@$dirs) {
         next if !-d $dir;
-        warn $dir;
+        warn "$dir\n" if $option{verbose};
         my @children = dir($dir)->children;
 
         FILE:
         while (my $file = shift @children) {
             if (-d $file) {
-                next if $file =~ /(?: [.] (?: svn | git | bzr ) | CVS ) $/xms;
+                next if $file =~ /(?: [.] (?: svn | git | bzr ) | CVS | RCS ) $/xms;
                 push @children, $file->children;
             }
             elsif (-B $file) {
@@ -184,7 +194,8 @@ sub open_templates {
             else {
                 next if $file =~ m{ [.] (?: sw[po] | png | gif | jpe?g ) $}xms;
                 next if $file =~ /jquery/;
-                return if -b $file;
+                next FILE if -b $file;
+                next FILE if $matches && !grep {$file =~ /$_/} @$matches;
                 push @files, $file;
             }
         }
