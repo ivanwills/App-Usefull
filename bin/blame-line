@@ -30,7 +30,7 @@ my %option = (
     help    => 0,
     VERSION => 0,
 );
-sub run($);
+sub run;
 
 if ( !@ARGV ) {
     pod2usage( -verbose => 1 );
@@ -40,7 +40,6 @@ main();
 exit 0;
 
 sub main {
-
 
     Getopt::Long::Configure('bundling');
     GetOptions(
@@ -90,11 +89,12 @@ sub main {
     return;
 }
 
-sub run($) {
+sub run {
     my ($cmd) = @_;
+    my $result;
 
     print "$cmd\n"      if $option{test} || $option{verbose};
-    my $result = `$cmd` if !$option{test};
+    $result = `$cmd` if !$option{test};
 
     return $result;
 }
