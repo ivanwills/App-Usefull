@@ -57,3 +57,8 @@ bin/used
 bin/v
 bin/validate_json
 bin/vims
+bin/blame-line
+bin/char2line
+bin/incsearch
+bin/mssh
+lib/App/Useful.pm
