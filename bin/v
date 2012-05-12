@@ -63,7 +63,7 @@ sub main {
     # do stuff here
     create_tags();
 
-    my @optioins = @ARGV ? @ARGV : ('perl');
+    my @options = @ARGV ? @ARGV : ('perl');
     my @files;
     for my $file ( @options ) {
         push @files
@@ -77,7 +77,7 @@ sub main {
             : $file eq 'js'     ? open_js()
             : $file eq 'db'     ? open_database()
             : $file eq 'all'    ? ( open_perl(), open_templates(), open_database() )
-            :                     $type;
+            :                     $file;
     }
     die "Could not find any files!\n" if !@files;
 
