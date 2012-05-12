@@ -88,7 +88,7 @@ __DATA__
 
 =head1 NAME
 
-char2line - Converts charictor position to line position for a file
+char2line - Converts character position to line position for a file
 
 =head1 VERSION
 

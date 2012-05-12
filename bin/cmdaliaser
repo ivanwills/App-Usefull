@@ -268,13 +268,13 @@ would be C<svn.conf>
 
 =item command
 
-The name of the executable to run, can be overwridden in each aliased sub command
+The name of the executable to run, can be overwritten in each aliased sub command
 
 =item pager
 
 Allows you to set the pager to be used, if set to 'yes' then the $PAGER
 environment variable will be used, if it is set to 'no' then using a pager will
-be disabled (useful for globally turing pager on but turing it off for specific
+be disabled (useful for globally turning pager on but turning it off for specific
 sub commands). C<page> can be overridden in each aliased command.
 
 =item <alias I<alias>>
@@ -320,12 +320,12 @@ $ eg process
 
 The value of C<pre_perl> is evaled before the command is run. You can access
 @ARGV this way but changing it's values wont have any effect on the executed
-command. The result of the perl code is used to determine if the commmand
-should contiune running ie if the result is true execution should continue,
-if it's false execution will be stopped. This behaviour can be used in a
+command. The result of the perl code is used to determine if the command
+should continue running ie if the result is true execution should continue,
+if it's false execution will be stopped. This behavior can be used in a
 similar manor to GIT's commit hooks.
 
-When specifying the value of C<pre_perl> you can use HEREDOCS (which sldo will
+When specifying the value of C<pre_perl> you can use HEREDOCS (which will
 work for any command)
 
 eg
@@ -368,6 +368,9 @@ $ cat data
 
 The value of C<post_perl> is eval()ed after the sub command is run
 
+=back
+
+=back
 
 =head1 SUBROUTINES/METHODS
 

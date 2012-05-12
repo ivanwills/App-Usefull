@@ -65,5 +65,11 @@ add_stopwords(qw/
     url
     vims
     Wynter
+    mssh
+    ssh
+    GIT's
+    HEREDOCS
+    evaled
+    ie
 /);
 all_pod_files_spelling_ok();
