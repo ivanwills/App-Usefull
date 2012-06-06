@@ -177,6 +177,18 @@ sub main {
         }
     }
 
+    if ($option{'force_title'}) {
+        force_title( $option{title_bar} || $task);
+    }
+    else {
+        $option{short} = length $task > 8 if !exists $option{short};
+
+        set_titlebar(
+            ( $option{short} ? '' : "Devmode " )
+            . ( $option{title_bar} || $task )
+        );
+    }
+
     if ( $option{verbose} ) {
         print Dumper \%session;
     }
@@ -220,18 +232,6 @@ sub main {
     elsif ( $option{exits} ) {
         error( COULD_NOT_FIND_CONFIG => $task, $0, $task );
         die "No config exists for $task\nTo create from template Use:\n \$ $0 $task --create\n";
-    }
-
-    if ($option{'force_title'}) {
-        force_title( $option{title_bar} || $task);
-    }
-    else {
-        $option{short} = length $task > 8 if !exists $option{short};
-
-        set_titlebar(
-            ( $option{short} ? '' : "Devmode " )
-            . ( $option{title_bar} || $task )
-        );
     }
 
     if ( $option{protect} ) {
