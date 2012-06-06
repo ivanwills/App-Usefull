@@ -105,23 +105,25 @@ __DATA__
 
 =head1 NAME
 
-<Name> - <One-line description of commands purpose>
+incsearch - Searches the perl @INC path for matching modules
 
 =head1 VERSION
 
-This documentation refers to <Name> version 0.1.
+This documentation refers to incsearch version 0.1.
 
 =head1 SYNOPSIS
 
-   <Name> [option]
+   incsearch [option] module
 
  OPTIONS:
-  -o --other         other option
+  module        The module you are interested in (may be a file name or
+                path name)
 
-  -v --verbose       Show more detailed option
-     --version       Prints the version information
-     --help          Prints this help information
-     --man           Prints the full documentation for <Name>
+  -v --verbose  Used once shows the @INC paths that modules are found in,
+                used twice shows the actual files found
+     --version  Prints the version information
+     --help     Prints this help information
+     --man      Prints the full documentation for incsearch
 
 
 
