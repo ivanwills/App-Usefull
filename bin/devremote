@@ -11,7 +11,7 @@ use warnings;
 use version;
 use Scalar::Util;
 use List::Util;
-#use List::MoreUtils;
+use List::MoreUtils qw/uniq/;
 use Getopt::Long;
 use Pod::Usage;
 use Data::Dumper qw/Dumper/;
@@ -42,6 +42,8 @@ sub main {
     GetOptions(
         \%option,
         'server|s=s',
+        'auto|a=s',
+        'current|c=s',
         'test|t!',
         'verbose|v+',
         'man',
@@ -59,6 +61,9 @@ sub main {
     elsif ( $option{'help'} ) {
         pod2usage( -verbose => 1 );
     }
+    elsif ( $option{auto} ) {
+        auto($option{auto}) ;
+    }
     elsif ( !$option{'server'} ) {
         warn "You must specify --server\n";
         pod2usage( -verbose => 1 );
@@ -68,6 +73,62 @@ sub main {
     my $mode = shift @ARGV;
     return print "ssh -t $option{server} 'reset; devmode $mode'\n" if $option{test};
     return exec "ssh -t $option{server} 'reset; devmode $mode'";
+}
+
+sub auto {
+    my ($type) = @_;
+
+    if ( $type eq 'ssh' ) {
+        my @hosts
+            = map {
+                s/#.*$//;
+                my ($addr, @a) = split /\s+/, $_;
+                @a;
+            }
+            grep {
+                !/^\s*$/ && !/^\s*#/
+            }
+            map {
+                s/\n//;
+                $_
+            }
+            file('/etc/hosts')->slurp;
+        push @hosts,
+            map {
+                s/Host\s*//;
+                $_;
+            }
+            grep {
+                /^Host /
+            }
+            map {
+                s/\n//;
+                $_
+            }
+            file("$ENV{HOME}/.ssh/config")->slurp;
+        print join ' ', uniq sort @hosts;
+        exit 0;
+    }
+    elsif ( $type eq 'full' ) {
+        #warn "\nCommand appears ($option{current}):\n";
+        #warn join ' ', @ARGV, "\n";
+        if ( $option{server} ) {
+            my @names
+                = grep {
+                    !/[.]rc$/
+                }
+                map {
+                    s{^.*/}{};
+                    $_;
+                }
+                split /\n/,
+                '' . `ssh $option{server} '/bin/ls -1 ~/.devmode/[^.#]*'`;
+            print join ' ', @names;
+            exit 0;
+        }
+    }
+    exit 1;
+
 }
 
 __DATA__
@@ -97,6 +158,26 @@ This documentation refers to devremote version 0.1.
 
 
 =head1 DESCRIPTION
+
+=head2 BASH autocompletion
+
+_devremote() {
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--help --man --version --server -v -s"
+    if [[ ${cur} == -* && ${COMP_CWORD} -eq 1 ]]; then
+        COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+    elif [[ ${prev} == -s* ]]; then
+        local hosts=$(devremote -a ssh)
+        COMPREPLY=($(compgen -W "${hosts}" -- ${cur}))
+    else
+        local sonames=$(devremote -a full -c ${COMP_CWORD} -- ${COMP_WORDS[@]})
+        COMPREPLY=($(compgen -W "${sonames}" -- ${cur}))
+    fi
+}
+complete -F _devremote devremote
 
 =head1 SUBROUTINES/METHODS
 
