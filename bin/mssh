@@ -48,6 +48,7 @@ sub main {
         'parallel|p=i',
         'fork|f',
         'cssh|c=s',
+        'interleave|i',
         'test|t!',
         'verbose|v+',
         'man',
@@ -77,6 +78,7 @@ sub main {
 
     # do stuff here
     my $remote_cmd = pop @ARGV;
+    #my $remote_cmd = join ' ', map {s{'}{'\\''}gxms; $_} @ARGV;
 
     if (@ARGV) {
         push @{$option{host}}, @ARGV;
@@ -117,10 +119,15 @@ sub main {
             }
             elsif ( defined $child ) {
                 # child code
-                my $out = `$cmd 2>&1`;
+                if ( $option{interleave} ) {
+                    exec "$cmd 2>&1";
+                }
+                else {
+                    my $out = `$cmd 2>&1`;
 
-                print "\n$cmd\n";
-                print $out;
+                    print "\n$cmd\n";
+                    print $out;
+                }
                 exit;
             }
             else {
@@ -155,6 +162,14 @@ sub get_hosts {
         if (!$num_range) {
             push @hosts, $host_range;
             next;
+            #if ( is_host($host_range) ) {
+            #    push @hosts, $host_range;
+            #    next;
+            #}
+            #else {
+            #    unshift @{$hosts}, $host_range;
+            #    last;
+            #}
         }
 
         my @numbs    = map { /$range_re/ ? ($1 .. $2) : ($_) } split /,/, $num_range;
@@ -169,6 +184,11 @@ sub get_hosts {
     }
 
     return @hosts;
+}
+
+sub is_host {
+    my $full_name = `host $_[0]`;
+    return $full_name;
 }
 
 __DATA__
@@ -205,6 +225,7 @@ This documentation refers to mssh version 0.1.
   -p --parallel[=]int
                   Fork calls to each server to run in parallel the value limits
                   the number of processes called at once
+  -i --interleave When running parallel commands interleave the output of each host
   -t --test       Just show all the commands that would be run don't actually
                   run anything
 
