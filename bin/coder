@@ -67,6 +67,8 @@ sub main {
     $option{code}      ||= shift @ARGV;
     $option{direction} ||= $0 =~ /(?: ^ | \/ ) (?:en)? coder/xms ? 'encode' : 'decode';
 
+    die "Unknown direction '$option{direction}' use 'encode' or 'decode'\n" if $option{direction} ne 'encode' && $option{direction} ne 'decode';
+
     my %coders = get_coders();
     my $sub    = $coders{$option{code}}{$option{direction}};
     my $style  = $coders{$option{code}}{$option{direction} . '_on'};
@@ -120,7 +122,7 @@ sub get_coders {
         html => {
             encode    => sub { $_[0] =~ s/([^\w])/sprintf "&#%x;", ord $1/egxms; return $_[0] },
             encode_on => 'line',
-            decode    => sub { $_[0] =~ s/&#([\da-fA-F]+);/chr hex $1/egxms; return $_[0] },
+            decode    => sub { $_[0] =~ s/\&\#([\da-fA-F]+);/chr hex $1/egxms; return $_[0] },
             decode_on => 'line',
         },
         http => {
@@ -195,6 +197,10 @@ This documentation refers to coder version 0.1.
 
 =over 4
 
+=item bash
+
+Single quoted bash commands
+
 =item base64
 
 Does Base64 encoding and decoding
@@ -210,6 +216,20 @@ Does (en|de)coding of HTML/XML characters
 =item http
 
 Simple URL encoding
+
+EG:
+
+ $ coder -D decode html 'http&#3a;&#2f;&#2f;example&#2e;com&#2f;thing&#3f;some&#3d;query&#26;with&#3d;parameters&#23;and_anchor'
+ # or
+ $ decoder html 'http&#3a;&#2f;&#2f;example&#2e;com&#2f;thing&#3f;some&#3d;query&#26;with&#3d;parameters&#23;and_anchor'
+ http&#3a;&#2f;&#2f;example&#2e;com&#2f;thing&#3f;some&#3d;query&#26;with&#3d;parameters&#23;and_anchor
+ http://example.com/thing?some=query&with=parameters#and_anchor
+
+ $ coder html 'http://example.com/thing?some=query&with=parameters#and_anchor'
+ # or
+ $ coder -D encode html 'http://example.com/thing?some=query&with=parameters#and_anchor'
+ http://example.com/thing?some=query&with=parameters#and_anchor
+ http&#3a;&#2f;&#2f;example&#2e;com&#2f;thing&#3f;some&#3d;query&#26;with&#3d;parameters&#23;and_anchor
 
 =item url
 
