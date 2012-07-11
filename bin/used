@@ -134,6 +134,7 @@ sub main {
 sub show_results {
     my ( $max_ver, $used, $specified ) = @_;
     my %notes;
+    $max_ver ||= 0;
 
     # start the out put
     my $star = ' ';
@@ -337,7 +338,19 @@ sub get_libraries {
             for my $ignore_file (qw/ .gitignore .bzrignore .csvignore /) {
                 next if !-f $ignore_file;
                 push @skips, qr/$ignore_file$/;
-                push @skips, map {chomp; s/[.]/\\./g; s/[*]/.*/g; s/[?]/.?/g; qr/$_/} file($ignore_file)->slurp;   ## no critic
+                push @skips,
+                    map {
+                        s/[.]/\\./g; s/[*]/.*/g; s/[?]/.?/g;
+                        qr/$_/
+                    }
+                    grep {
+                        $_ ne ''
+                    }
+                    map {
+                        chomp;
+                        $_
+                    }
+                    file($ignore_file)->slurp;   ## no critic
             }
         }
 
