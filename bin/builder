@@ -189,13 +189,14 @@ sub dist {
     if (
         @tars
         && $tars[-1]
-        =~ /^ ( [a-zA-Z-]+ ) - v? ( [\d.]+ ) [.] tar [.] gz $/xms
+        =~ /^ ( [0-9a-zA-Z-]+ ) - v? ( [\d.]+ ) [.] tar [.] gz $/xms
     ) {
         my $vcs = VCS::Which->new(dir => '.');
 
         # check that the code is all checked in
         if ( !$vcs->uptodate('.') ) {
             unlink $tars[-1];
+            warn `pwd`;
             warn "There appear to be uncommitted changes in the directory\n";
             return if !$option{force};
             $option{force}--;
@@ -260,7 +261,7 @@ CHANGES
         }
     }
     else {
-        warn "Could not determine module version!\n";
+        warn "Could not determine module version from '$tars[-1]'!\n";
     }
 
     return;
