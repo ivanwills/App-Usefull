@@ -44,6 +44,7 @@ sub main {
         'server|s=s',
         'auto|a=s',
         'current|c=s',
+        'list|l',
         'test|t!',
         'verbose|v+',
         'man',
@@ -70,7 +71,7 @@ sub main {
     }
 
     # do stuff here
-    my $mode = shift @ARGV;
+    my $mode = $option{list} ? '--list' : shift @ARGV;
     return print "ssh -t $option{server} 'reset; devmode $mode'\n" if $option{test};
     return exec "ssh -t $option{server} 'reset; devmode $mode'";
 }
@@ -149,6 +150,7 @@ This documentation refers to devremote version 0.1.
   name               The name of the devmode session to run
   -s --server=str    The name of the server to connect to, may include
                      username@ to login with a particular user.
+  -l --list          List screen sessions on the remote server
 
   -v --verbose       Show more detailed option
      --version       Prints the version information
