@@ -78,6 +78,7 @@ sub main {
                     return if -d $_;
                     return if $File::Find::name =~ m{/ (?: blib | _build | [.](?: git | svn | bzr) | CVS | RCS ) /}xms;
                     return if skip($File::Find::name);
+                    return unless /[.](?:pm|pod|pl|cgi|t)$/ || !/[.]/;
 
                     if (!/[.]/xms) {
                         return if slurp($_) !~ /\A.*perl/;
@@ -92,6 +93,7 @@ sub main {
 
     # remove modules that available from the maximum of the minum versions of perl required for these files
     my $max_ver = max keys %versions;
+    warn "Files with the hightest version:\n", join "\n\t", @{ $versions{$max_ver} }, '' if $option{verbose} > 1;
     for my $module (keys %used) {
         my $rel_ver = Module::CoreList->first_release($module);
         if ( $rel_ver && $rel_ver <= $max_ver ) {
@@ -352,6 +354,7 @@ sub get_libraries {
                     }
                     file($ignore_file)->slurp;   ## no critic
             }
+            push @skips, qr{templates?/};
         }
 
         return grep { $file =~ /$_/ } @skips;
