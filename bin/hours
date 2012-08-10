@@ -92,6 +92,10 @@ sub main {
             $option{history} = 365;
             $option{all}     = 0;
         }
+        elsif ( $option{all} > 2 ) {
+            $option{history} = 3652;
+            $option{all}     = 0;
+        }
     }
 
     $option{all} = 1 if $option{between};
@@ -396,7 +400,7 @@ sub stats {
         }
     }
 
-    # determin if you have worked overtime
+    # determine if you have worked overtime
     $days  = ( $last->{avg} - $option{work_day} ) * $days / $option{work_day};
     if ( $days < -1 || $days > 1 || $option{verbose} ) {
         my ($time, $colour) = $days < 0 ? ( 'undertime', 'red' ) : ('overtime', 'green' );
