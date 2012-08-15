@@ -216,6 +216,8 @@ sub main {
         error( COULD_NOT_FIND_SESSION => $task );
     }
 
+    system $option{pre_cmds} if $option{pre_cmds};
+
     # Per session config?
     if (-e "$HOME/.devmode/$lc_task") {
         push @screen_opts, "-c $HOME/.devmode/$lc_task";
