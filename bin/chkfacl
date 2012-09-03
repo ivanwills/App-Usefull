@@ -14,6 +14,7 @@ use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use File::Find qw/find/;
+use Term::ANSIColor;
 
 our $VERSION = 0.1;
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -106,7 +107,7 @@ sub check_perms {
         warn Dumper $perms;
         last if $seen_before && !$option{verbose};
 
-        print '' . ($perms ? 'GOOD' : 'BAD ') . " $cwd\n";
+        print '' . ($perms ? colored('GOOD', 'green') : colored('BAD', 'red')) . " $cwd\n";
         $all_good = 0 unless $perms;
 
         if (-d $cwd) {
