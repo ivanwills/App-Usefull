@@ -104,7 +104,6 @@ sub check_perms {
             push @ARGV, $link if -e $link;
         }
         my ($perms, $seen_before) = check_perm($cwd, $first);
-        warn Dumper $perms;
         last if $seen_before && !$option{verbose};
 
         print '' . ($perms ? colored('GOOD', 'green') : colored('BAD', 'red')) . " $cwd\n";
