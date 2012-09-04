@@ -18,6 +18,8 @@ use Term::ANSIColor;
 
 our $VERSION = 0.1;
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+my $GOOD     = colored('GOOD', 'green');
+my $BAD      = colored('BAD ', 'red');
 
 my %option = (
     out     => undef,
@@ -106,7 +108,7 @@ sub check_perms {
         my ($perms, $seen_before) = check_perm($cwd, $first);
         last if $seen_before && !$option{verbose};
 
-        print '' . ($perms ? colored('GOOD', 'green') : colored('BAD', 'red')) . " $cwd\n";
+        print '' . ($perms ? $GOOD : $BAD) . " $cwd\n";
         $all_good = 0 unless $perms;
 
         if (-d $cwd) {
@@ -140,13 +142,13 @@ sub check_perms {
                     my ($perm) = check_perm($File::Find::name, 1);
 
                     if (!$perm) {
-                        print "$File::Find::name BAD\n";
+                        print "$File::Find::name $BAD\n";
                         $all_good = 0;
                     }
                 },
                 $dir
             );
-            print "All sub files and folders were GOOD\n" if $all_good;
+            print "All sub files and folders were $GOOD\n" if $all_good;
         }
         else {
             print "There were some bad directories in $dir\n";
