@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use version;
 use Scalar::Util;
-use List::Util qw/sum/;
+use List::Util qw/sum max/;
 use List::MoreUtils qw/zip/;
 use Getopt::Alt qw/get_options/;
 use Pod::Usage;
@@ -413,9 +413,15 @@ sub stats {
         for my $stat (@{ $stats }) {
             $bin{ time_trunc( $stat->{total}, $option{bin} ) }++;
         }
+        my $max = max values %bin;
         print "\nTime  : Num days worked for that long\n";
         for my $key ( sort { $a <=> $b } keys %bin ) {
-            printf "%s : %3i\n", time_str($key), $bin{$key};
+            my $colour
+                = $key >= $option{work_day} * 8.5 / 8 ? 'green'
+                : $key <  $option{work_day} * 7.0 / 8 ? 'red'
+                : $key <  $option{work_day} * 7.8 / 8 ? 'yellow'
+                :                                              '';
+            printf "%s : %3i %s\n", time_str($key), $bin{$key}, colored( '*' x (($bin{$key} / $max) * 50), $colour );
         }
     }
 }
