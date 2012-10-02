@@ -100,7 +100,7 @@ sub main {
     # loop over each host and run the remote command
     for my $host (@hosts) {
         my $cmd = "ssh $host '$remote_cmd'";
-        print "$cmd\n" if ( $option{verbose} || $option{test} ) && !$option{parallel};
+        print "$cmd\n" if $option{verbose} || $option{test};
         next if $option{test};
 
         if ( $option{parallel} ) {
@@ -111,6 +111,7 @@ sub main {
                 push @children, $child;
 
                 if ( @children == $option{parallel} ) {
+                    warn "Waiting for children to finish\n" if $option{verbose} > 1;
                     # reap children if reached max fork count
                     while ( my $pid = shift @children ) {
                         waitpid $pid, 0;
@@ -224,7 +225,9 @@ This documentation refers to mssh version 0.1.
                      {0-3,5}    1,2,3 and 5
   -p --parallel[=]int
                   Fork calls to each server to run in parallel the value limits
-                  the number of processes called at once
+                  the number of processes called at once.
+                  Note without --interleave you wont see results until the each
+                  server has completed so that results are groupped.
   -i --interleave When running parallel commands interleave the output of each host
   -t --test       Just show all the commands that would be run don't actually
                   run anything
