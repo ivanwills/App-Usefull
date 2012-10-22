@@ -87,6 +87,7 @@ sub main {
         'kill|k',
         'list|ls|l',
         'exists|e!',
+        'multiconnect|x',
         'create|c+',
         'chdir|d',
         'reconnect|r!',
@@ -207,9 +208,10 @@ sub main {
         }
         else {
             my $task = "$session{$uc_task}{pid}.$uc_task";
-            warn "$SCREEN -d -R $task" if $option{verbose} || $option{test};
+            my $conn = $option{multiconnect} ? '-x' : '-d -R';
+            warn "$SCREEN $conn $task" if $option{verbose} || $option{test};
             return if $option{test};
-            exec "$SCREEN -d -R $task" or error( COULD_NOT_REATTACH => $task, $OS_ERROR );
+            exec "$SCREEN $conn $task" or error( COULD_NOT_REATTACH => $task, $OS_ERROR );
         }
     }
     elsif ( $option{reconnect} || $option{kill} ) {
@@ -352,6 +354,8 @@ This documentation refers to devmode version 0.0.1.
   -k --kill    Kill the task
   -l --list    List all running devmode tasks
   -e --exists  Only run screen if a devmode file exists by that name
+  -x --multiconnect
+               Connect to session with out disconnecting existing session
   -c --create  Creates a missing devmode task
   -d --chdir   Parse the config and change directory to the last chdir command
                found in there.
