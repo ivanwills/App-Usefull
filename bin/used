@@ -43,6 +43,7 @@ sub main {
         'name|n',
         'uses|u',
         'decending|d',
+        'exclude|x=s',
         'verbose|v+',
         'man',
         'help',
@@ -79,6 +80,7 @@ sub main {
                     return if $File::Find::name =~ m{/ (?: blib | _build | [.](?: git | svn | bzr) | CVS | RCS ) /}xms;
                     return if skip($File::Find::name);
                     return unless /[.](?:pm|pod|pl|cgi|t)$/ || !/[.]/;
+                    return if $option{exclude} && $File::Find::name =~ m{/ $option{exclude} /}xms;
 
                     if (!/[.]/xms) {
                         return if slurp($_) !~ /\A.*perl/;

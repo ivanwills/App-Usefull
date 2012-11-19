@@ -50,6 +50,7 @@ sub main {
         'max_lines|max-lines|l=i',
         'max_size|max-size|m=i',
         'proxy|p=s%',
+        'format|F=s',
         'verbose|v+',
         'man',
         'help',
@@ -121,7 +122,15 @@ sub main {
         $content = join "\n", @lines[0 .. $option{max_lines}];
     }
 
-    print $content;
+    if ( $option{format} eq 'json' ) {
+        require JSON::XS;
+        my $jx = JSON::XS->new->allow_nonref(1)->pretty(1);
+        my $json = $jx->decode($content);
+        print $jx->encode($json);
+    }
+    else {
+        print $content;
+    }
     print "\n";
     print "\n" . Dumper $mech->res->headers if $option{verbose} > 1;
     print "\n" . Dumper $mech if $option{verbose} > 2;
@@ -144,26 +153,30 @@ This documentation refers to myget version 0.1.
    myget [option] URL
 
  OPTIONS:
-  -o --out=file      Write output to 'file' (Default is to write to STDOUT)
-  -c --content[=]str POST content, if a dash '-' reads from STDIN if a file
-                     exists called str reads the file else uses the value
-                     of str as the POST body.
-  -h --header[=]str  Any header variables you want to set
+  -o --out=file  Write output to 'file' (Default is to write to STDOUT)
+  -c --content[=]str
+                 POST content, if a dash '-' reads from STDIN if a file
+                 exists called str reads the file else uses the value of
+                 str as the POST body.
+  -h --header[=]str
+                 Any header variables you want to set
   -f --header-file[=]str
-                     A file containing headders to set
+                 A file containing headders to set
   -l --max-lines[=]int
-                     Show only int lines of output
+                 Show only int lines of output
   -s --max-size[=]int
-                     Show at most this number characters (useful if result
-                     is only one line)
+                 Show at most this number characters (useful if result is
+                 only one line)
   -p --proxy protocol=proxy_url
-                     Configure to use proxy on the protocol with the url
-                     eg http=http://localhost:3128
+                 Configure to use proxy on the protocol with the url
+                 eg http=http://localhost:3128
+  -f --format[=][json|xml|html]
+                 Format the results neatly based on the specified format
 
-  -v --verbose       Show more detailed option
-     --version       Prints the version information
-     --help          Prints this help information
-     --man           Prints the full documentation for myget
+  -v --verbose   Show more detailed option
+     --version   Prints the version information
+     --help      Prints this help information
+     --man       Prints the full documentation for myget
 
 =head1 DESCRIPTION
 
