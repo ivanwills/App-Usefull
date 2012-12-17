@@ -99,7 +99,7 @@ sub main {
 
     # loop over each host and run the remote command
     for my $host (@hosts) {
-        my $cmd = "ssh $host '$remote_cmd'";
+        my $cmd = "ssh $host " . shell_quote($remote_cmd);
         print "$cmd\n" if $option{verbose} || $option{test};
         next if $option{test};
 
@@ -190,6 +190,17 @@ sub get_hosts {
 sub is_host {
     my $full_name = `host $_[0]`;
     return $full_name;
+}
+
+sub shell_quote {
+    my ($text) = @_;
+
+    if ($text =~ /[\s$|><;#]/xms) {
+        $text =~ s/'/'\\''/gxms;
+        $text = "'$text'";
+    }
+
+    return $text;
 }
 
 __DATA__
