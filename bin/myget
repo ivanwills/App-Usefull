@@ -122,7 +122,7 @@ sub main {
         $content = join "\n", @lines[0 .. $option{max_lines}];
     }
 
-    if ( $option{format} eq 'json' ) {
+    if ( $option{format} && $option{format} eq 'json' ) {
         require JSON::XS;
         my $jx = JSON::XS->new->allow_nonref(1)->pretty(1);
         my $json = $jx->decode($content);
