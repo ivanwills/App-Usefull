@@ -86,6 +86,7 @@ sub main {
         'task|t=s',
         'kill|k',
         'list|ls|l',
+        'all|a',
         'exists|e!',
         'multiconnect|x',
         'create|c+',
@@ -121,7 +122,7 @@ sub main {
     if ($option{'list'}) {
         my $count = 0;
 
-        if ( $option{verbose} ) {
+        if ( $option{verbose} || $option{all} ) {
             my @modes = grep { -f $_ && $_->basename !~ /^[.]|[.]rc$/xms } dir("$ENV{HOME}", ".devmode")->children;
             for my $mode (@modes) {
                 my $base = $mode->basename;
@@ -353,6 +354,7 @@ This documentation refers to devmode version 0.0.1.
   <task>       The name of a screen config found in the ~/.devmode/ directory
   -k --kill    Kill the task
   -l --list    List all running devmode tasks
+  -a --all     Makes --list show even non-running sessions
   -e --exists  Only run screen if a devmode file exists by that name
   -x --multiconnect
                Connect to session with out disconnecting existing session
