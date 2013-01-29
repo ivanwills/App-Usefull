@@ -70,6 +70,7 @@ sub main {
             'now|n=s',
             'between|b=s',
             'full|f',
+            'percent|p=f',
             'work_day|work-day|w=f',
             'lunch_bread|l=f',
             'round|r=i',
@@ -347,6 +348,7 @@ sub stats {
             :  $day->{total} > $day->{avg} + $day->{stddev} ? ' bold'
             :                                                 '';
         print sprintday( $option{fmt}, { total => $colour }, %$day ), "\n";
+        time_collector($day->{day}, $hour) if $option{percent};
 
         $last = $day;
     }
@@ -416,6 +418,7 @@ sub stats {
             printf "%s : %3i %s\n", time_str($key), $bin{$key}, colored( '*' x (($bin{$key} / $max) * 50), $colour );
         }
     }
+    time_display() if $option{percent};
 }
 
 sub sprinthead {
@@ -609,6 +612,73 @@ sub time_trunc {
 }
 
 {
+    my $month_days = 20;
+    my $week_days  = 5;
+    my @month;
+    my @week ;
+    my @short_month;
+    my @short_week;
+    my @long_month;
+    my @long_week;
+    BEGIN {
+        $month_days = 20;
+        $week_days  = 5;
+    };
+
+    sub time_collector {
+        my ($date, $time) = @_;
+        my $full  = 0;
+        my $count = 0;
+
+        push @week, [ $date, $time ];
+        if ( @week > $week_days ) {
+            shift @week;
+            my $hours = sum map { $_->[1] } @week;
+            if ( $hours < $option{work_day} / HOUR * $week_days * ( 1 - $option{percent} / 100 ) ) {
+                push @short_week, [ $week[0][0]->ymd, $hours ];
+            }
+            elsif ( $hours > $option{work_day} / HOUR * $week_days * ( 1 + $option{percent} / 100 ) ) {
+                push @long_week, [ $week[0][0]->ymd, $hours ];
+            }
+        }
+        push @month, [ $date, $time ];
+        if ( @month > $month_days ) {
+            shift @month;
+            my $hours = sum map { $_->[1] } @month;
+            if ( $hours < $option{work_day} / HOUR * $month_days * ( 1 - $option{percent} / 100 ) ) {
+                push @short_month, [ $month[0][0]->ymd, $hours ];
+            }
+            elsif ( $hours > $option{work_day} / HOUR * $month_days * ( 1 + $option{percent} / 100 ) ) {
+                push @long_month, [ $month[0][0]->ymd, $hours ];
+            }
+        }
+
+        return;
+    }
+
+    sub time_display {
+        if (@long_week) {
+            print 'Long week' . ( @long_week > 1 ? 's' : '' ) . ' (~' . ( $option{work_day} / HOUR * $week_days ) . ")\n";
+            print colored( (join "\n", map { "$_->[0] => $_->[1]" } @long_week), 'green' ), "\n";
+        }
+        if (@long_month) {
+            print 'Long month' . ( @long_month > 1 ? 's' : '' ) . ' (~' . ( $option{work_day} / HOUR * $month_days ) . ")\n";
+            print colored( (join "\n", map { "$_->[0] => $_->[1]" } @long_month), 'green' ), "\n";
+        }
+        if (@short_week) {
+            print 'Short week' . ( @short_week > 1 ? 's' : '' ) . ' (~' . ( $option{work_day} / HOUR * $week_days ) . ")\n";
+            print colored( (join "\n", map { "$_->[0] => $_->[1]" } @short_week), 'red' ), "\n";
+        }
+        if (@short_month) {
+            print 'Short month' . ( @short_month > 1 ? 's' : '' ) . ' (~' . ( $option{work_day} / HOUR * $month_days ) . ")\n";
+            print colored( (join "\n", map { "$_->[0] => $_->[1]" } @short_month), 'red' ), "\n";
+        }
+
+        return;
+    }
+}
+
+{
     my ( $csv, $fh );
     sub get_fields {
         init();
@@ -677,6 +747,10 @@ This documentation refers to hours version 0.1.
   -i --bin[=]int When very verbose is used the number of days works for a
                  particular length of time is shown, this option sets the
                  grouping size of hours worked in minutes (Default is 15 minutes)
+  -p --percent[=]int
+                 Turns on showing weeks/months that are more than this
+                 percentage away from expected amount. Note a week is defined
+                 as a 5 days of work in a row and a month is 20 days in a row.
 
   -v --verbose   Show more detailed option
      --version   Prints the version information
