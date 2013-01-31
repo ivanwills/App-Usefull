@@ -363,34 +363,48 @@ sub stats {
 
     # check if the last day in the stats represents today
     if ( ! $last->{end} || $last->{end} eq now()->strftime('%H:%M') ) {
+        my %leave;
 
         # workout if work today is less that nominal workday
         my $total = $last->{total} - $lunch;
         if ( $total < $option{work_day} ) {
             my $day = sprintf "%.1f", $option{work_day} / HOUR;
             $day =~ s/[.]0$//xms;
-            print "For $day hour day\n";
-            print "Leave at:      " . ( ( now() - $total + $option{work_day} )->meridiam ) . "\n";
-            print "               " . time_str( ( $option{work_day} ) - $total, 'sec' ) . "\n";
+            my $leave = now() - $total + $option{work_day};
+            $leave{ $leave->epoch }
+                = "For $day hour day\n"
+                . "Leave at:      " . ( $leave->meridiam ) . "\n"
+                . "               " . time_str( ( $option{work_day} ) - $total, 'sec' ) . "\n";
         }
 
         # determine if still need to work to maintain average day length
-        if ( $stats->[-2]{avg} > $last->{total} + $lunch ) {
-            my $till = $stats->[-2]{avg} - $last->{total} + $lunch;
-            print "For average day\n";
-            print "Leave at:      " . (now() + $till)->meridiam . "\n";
-            print "               " . time_str( $till, 'sec' ) . "\n";
-        }
-        else {
-            print "For average day leave now\n";
+        if ( @{$stats} >= 2 ) {
+            if ( $stats->[-2]{avg} > $last->{total} + $lunch ) {
+                my $till = $stats->[-2]{avg} - $last->{total} + $lunch;
+                my $leave = now() + $till;
+                $leave{ $leave->epoch }
+                    = "For average day\n"
+                    . "Leave at:      " . $leave->meridiam . "\n"
+                    . "               " . time_str( $till, 'sec' ) . "\n";
+            }
+            else {
+                print "For average day leave now\n";
+            }
         }
 
         # Check if need to make up hours to get average matching work day length
         if ( $last->{avg} < $option{work_day} ) {
             my $till = ( $option{work_day} - $last->{avg} ) * $days + $lunch;
-            print "For minimum day to average at workday length\n";
-            print "Leave at:      " . (now() + $till)->meridiam . "\n";
-            print "               " . time_str( $till, 'sec' ) . "\n";
+            my $leave = now() + $till;
+            $leave{ $leave->epoch }
+                = "For minimum day to average at workday length\n"
+                . "Leave at:      " . $leave->meridiam . "\n"
+                . "               " . time_str( $till, 'sec' ) . "\n";
+        }
+
+        print "\n";
+        for my $leave ( sort keys %leave ) {
+            print $leave{$leave};
         }
     }
 
@@ -500,6 +514,7 @@ sub raw_stats {
     my @stats;
     my ($lines) = get_records();
 
+    $option{between} ||= '';
     $option{between} =~ s{/}{-}g;
     my ($start, $end) = split /:/, $option{between} || '', 2;
     $start = $start ? Class::Date->new($start) || die "Bad start date" : undef;
