@@ -125,7 +125,8 @@ sub main {
 
     if ( $level eq 'dist' ) {
         # turn on author tests before making a distribution
-        $ENV{TEST_AUTHOR} = defined $ENV{TEST_AUTHOR} ? $ENV{TEST_AUTH} : 1;
+        $ENV{TEST_AUTHOR} = defined $ENV{TEST_AUTHOR} ? $ENV{TEST_AUTHOR} : 1;
+        $ENV{TEST_POD}    = defined $ENV{TEST_POD}    ? $ENV{TEST_POD}    : 1;
     }
 
       $level eq 'test'      ? test()
