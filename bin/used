@@ -93,7 +93,7 @@ sub main {
     }
 
     # remove modules that available from the maximum of the minum versions of perl required for these files
-    my $max_ver = max keys %versions;
+    my $max_ver = max map { version->parse($_) } keys %versions;
     warn "Files with the hightest version:\n", join "\n\t", @{ $versions{$max_ver} }, '' if $option{verbose} > 1;
     for my $module (keys %used) {
         my $rel_ver = Module::CoreList->first_release($module);
