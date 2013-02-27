@@ -50,6 +50,7 @@ sub main {
         'max_lines|max-lines|l=i',
         'max_size|max-size|m=i',
         'proxy|p=s%',
+        'useragent|ua|u=s',
         'format|F=s',
         'verbose|v+',
         'man',
@@ -71,6 +72,18 @@ sub main {
     # do stuff here
     my $url  = shift @ARGV;
     my $mech = WWW::Mechanize->new;
+
+    if ( $option{useragent} ) {
+        my %agents = (
+            'galaxys3' => 'Mozilla/5.0 (Linux; U; Android 4.0.4; en-au; GT-I9300 Build/IMM76D) AppleWebKit/534.30 (KHTML, like Gecko) Version/4.0 Mobile Safari/534.30',
+            'iphone3'  => '5.0 (iPhone; U; CPU iPhone OS 3_0 like Mac OS X; en-us) AppleWebKit/528.18 (KHTML, like Gecko) Version/4.0 Mobile/7A341 Safari/528.16',
+            'ie8'      => 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1)',
+            'ie7'      => 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)',
+            'ie6'      => 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)',
+            'ff'       => 'Mozilla/5.0 (X11; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0',
+        );
+        $mech->agent( $agents{$option{useragent}} ? $agents{$option{useragent}} : $option{useragent} );
+    }
 
     if ( $option{header_file} ) {
         my $headers = file($option{header_file})->slurp;
@@ -172,6 +185,8 @@ This documentation refers to myget version 0.1.
                  eg http=http://localhost:3128
   -f --format[=][json|xml|html]
                  Format the results neatly based on the specified format
+  -u --ua[=]str  Set the user-agent string
+                 shortcuts: ff, ie6, ie7, ie8, iphone3, galaxys3
 
   -v --verbose   Show more detailed option
      --version   Prints the version information
