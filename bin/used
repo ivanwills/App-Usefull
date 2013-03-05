@@ -16,7 +16,6 @@ use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use File::Find qw/find/;
-use File::Slurp qw/slurp/;
 use Path::Class;
 use Module::CoreList;
 use Perl::MinimumVersion;
@@ -83,7 +82,7 @@ sub main {
                     return if $option{exclude} && $File::Find::name =~ m{/ $option{exclude} /}xms;
 
                     if (!/[.]/xms) {
-                        return if slurp($_) !~ /\A.*perl/;
+                        return if file($_)->slurp !~ /\A.*perl/;
                     }
 
                     process_file($_, \%used, \%versions);
@@ -94,7 +93,7 @@ sub main {
     }
 
     # remove modules that available from the maximum of the minum versions of perl required for these files
-    my $max_ver = max keys %versions;
+    my $max_ver = max map { version->parse($_) } keys %versions;
     warn "Files with the hightest version:\n", join "\n\t", @{ $versions{$max_ver} }, '' if $option{verbose} > 1;
     for my $module (keys %used) {
         my $rel_ver = Module::CoreList->first_release($module);
@@ -239,7 +238,7 @@ sub show_results {
 sub process_file {
     my ($file, $used, $versions) = @_;
 
-    my $contents = slurp $file;
+    my $contents = file($file)->slurp;
 
     $contents =~ s{^__DATA__\n.*\Z}{}xms;
 
@@ -274,7 +273,7 @@ sub process_file {
 # finds modules prespecified in the Build.PL file
 sub pre_specified {
     return if !-f 'Build.PL';
-    my $build = slurp 'Build.PL';
+    my $build = file('Build.PL')->slurp;
 
     my ($required)      = $build =~ /\brequires \s* (?: => | , ) \s* ( { [^}]*? } )/xms;
     my ($recommends)    = $build =~ /recommends \s* (?: => | , ) \s* ( { [^}]*? } )/xms;

@@ -331,6 +331,7 @@ This documentation refers to builder version 0.1.0.
 
  LEVELS:
   test      Just run the distribution's tests
+  testup    Appears to check that libs compile
   testcover Run the distribution's test with code coverage
   install   Run the tests and if they pass install the distribution
   dist      Run the tests (with author tests) and if they pass create a new tar.gz for release
