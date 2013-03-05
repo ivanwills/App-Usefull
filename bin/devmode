@@ -13,6 +13,7 @@ use Getopt::Long;
 use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
+use List::MoreUtils qw/uniq/;
 use Path::Class;
 use Term::Title 'set_titlebar';
 use Term::ANSIColor qw/colored/;
@@ -24,12 +25,12 @@ my $HOME       = $ENV{HOME};
 my $SCREEN     = '/usr/bin/screen';
 
 my %option = (
-    task    => '',
+    task        => '',
     force_title => 1,
-    verbose => 0,
-    man     => 0,
-    help    => 0,
-    VERSION => 0,
+    verbose     => 0,
+    man         => 0,
+    help        => 0,
+    VERSION     => 0,
 );
 my %ERROR = (
     COULD_NOT_LAUNCH_SCREEN => {
@@ -95,7 +96,10 @@ sub main {
         'force_title|force-title|f',
         'title_bar|title-bar|b=s',
         'protect|p',
-        'short|s!',
+        'short|S!',
+        'server|s=s',
+        'auto|A=s',
+        'current|C=s',
         'pre_cmd|pre-cmd|pre=s',
         'post_cmd|post-cmd|post=s',
         'test|T',
@@ -116,10 +120,23 @@ sub main {
     elsif ($option{help}) {
         pod2usage(-verbose => 1);
     }
+    elsif ( $option{auto} ) {
+        auto($option{auto}) ;
+    }
 
     my %session = get_sessions();
 
-    if ($option{'list'}) {
+    if ($option{'server'}) {
+        my $mode = shift @ARGV;
+        my $reset = 'reset;';
+        if ( $option{list} ) {
+            $mode  = '--list';
+            $reset = '';
+        }
+        return print "ssh -t $option{server} '$reset devmode $mode'\n" if $option{test};
+        return exec "ssh -t $option{server} '$reset devmode $mode'";
+    }
+    elsif ($option{'list'}) {
         my $count = 0;
 
         if ( $option{verbose} || $option{all} ) {
@@ -338,6 +355,84 @@ sub create_task {
     return "$out_dir/$task";
 }
 
+sub auto {
+    my ($type) = @_;
+
+    if ( $type eq 'ssh' ) {
+        my @hosts
+            = map {
+                s/#.*$//;
+                my ($addr, @a) = split /\s+/, $_;
+                @a;
+            }
+            grep {
+                !/^\s*$/ && !/^\s*#/
+            }
+            map {
+                s/\n//;
+                $_
+            }
+            file('/etc/hosts')->slurp;
+        push @hosts,
+            map {
+                s/Host\s*//;
+                $_;
+            }
+            grep {
+                /^Host /
+            }
+            map {
+                s/\n//;
+                $_
+            }
+            file("$ENV{HOME}/.ssh/config")->slurp;
+        print join ' ', uniq sort @hosts;
+        exit 0;
+    }
+    elsif ( $type eq 'full' ) {
+        if ( $option{server} ) {
+            my @names
+                = grep {
+                    !/[.]rc$/
+                }
+                map {
+                    s{^.*/}{};
+                    $_;
+                }
+                split /\n/,
+                '' . `ssh $option{server} '/bin/ls -1 ~/.devmode/[^.#]*'`;
+            print join ' ', @names;
+            exit 0;
+        }
+        else {
+            shift @ARGV;
+            my $search = pop @ARGV || '';
+            my @names
+                = sort {
+                    my $A = $a;
+                    $A =~ s/(\d+)/sprintf "%05d", $1/egxms;
+                    my $B = $b;
+                    $B =~ s/(\d+)/sprintf "%05d", $1/egxms;
+                    $A cmp $B;
+                }
+                grep {
+                    $search ? /$search/ : 1
+                }
+                map {
+                    $_->basename
+                }
+                grep {
+                    !/[.]rc$/
+                }
+                dir($ENV{HOME}, '.devmode')->children;
+            print join ' ', @names;
+            exit 0;
+        }
+    }
+
+    exit 1;
+}
+
 =head1 NAME
 
 devmode - Simple wrapper for screen that permits running of multiple screen configs for different tasks
@@ -370,8 +465,13 @@ This documentation refers to devmode version 0.0.1.
   -p --protect Run a surrounding screen session to protect the intended
                session from ssh-agent being lost when logging out of the
                of box. (experimental 256 colours doesn't work is sub screen)
-  -s --short   Don't show Devmode in the title bar
+  -s --server=str
+               Use a remote server to connect to and run devmode. The server
+               may include username@ to login with a particular user.
+  -S --short   Don't show "Devmode" in the title bar
 
+  -A --auto=str
+               Allows a BASH command line completion mode helper mode to run
   -T --test    Don't run any external commands
      --version Prints the version information
      --help    Prints this help information
@@ -387,6 +487,26 @@ Templates for creating new configuration files can be placed in the directory
 $HOME/.devmode/template/, the default template creates a session that always
 opens to the directory that devmode was run from, it is aimed at working with
 perl packages.
+
+=head2 BASH autocompletion
+
+ _devmode() {
+     local cur prev opts
+     COMPREPLY=()
+     cur="${COMP_WORDS[COMP_CWORD]}"
+     prev="${COMP_WORDS[COMP_CWORD-1]}"
+     opts="--task -t --kill -k --list --ls -l --all -a --exists -e --multiconnect -x --create -c --chdir -d --reconnect -r --force_title -force-title -f --title_bar -title-bar -b --protect -p --short -S --server -s --auto -A --current -C --pre_cmd -pre-cmd --pre --post_cmd -post-cmd --post --test -T --verbose -v --man --help --VERSION"
+     if [[ ${cur} == -* && ${COMP_CWORD} -eq 1 ]]; then
+         COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+     elif [[ ${prev} == -s* ]]; then
+         local hosts=$(devmode --auto ssh)
+         COMPREPLY=($(compgen -W "${hosts}" -- ${cur}))
+     else
+         local sonames=$(devmode --auto full --current ${COMP_CWORD} ${COMP_WORDS[@]})
+         COMPREPLY=($(compgen -W "${sonames}" -- ${cur}))
+     fi
+ }
+ complete -F _devmode devmode
 
 =head1 SUBROUTINES/METHODS
 
