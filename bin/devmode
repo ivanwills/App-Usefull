@@ -66,6 +66,18 @@ my %ERROR = (
         code    => 40,
     },
 );
+my %COLOURS = (
+    'ATTACHED'    => 'green',
+    'DETACHED'    => 'blue',
+    'Not Started' => 'white',
+    ''            => 'red',
+);
+my %SUFFIXES = (
+    'ATTACHED'    => '*',
+    'DETACHED'    => '/',
+    'Not Started' => '',
+    ''            => '',
+);
 
 if (!@ARGV) {
     pod2usage(-verbose => 1);
@@ -87,6 +99,7 @@ sub main {
         'task|t=s',
         'kill|k',
         'list|ls|l',
+        'bw',
         'all|a',
         'exists|e!',
         'multiconnect|x',
@@ -127,14 +140,16 @@ sub main {
     my %session = get_sessions();
 
     if ($option{'server'}) {
-        my $mode = shift @ARGV;
+        my $mode  = shift @ARGV;
         my $reset = 'reset;';
+        my $ssh   = 'ssh -t';
         if ( $option{list} ) {
             $mode  = '--list';
             $reset = '';
+            $ssh   = 'ssh';
         }
-        return print "ssh -t $option{server} '$reset devmode $mode'\n" if $option{test};
-        return exec "ssh -t $option{server} '$reset devmode $mode'";
+        return print "$ssh $option{server} '$reset devmode $mode'\n" if $option{test};
+        return exec "$ssh $option{server} '$reset devmode $mode'";
     }
     elsif ($option{'list'}) {
         my $count = 0;
@@ -154,13 +169,9 @@ sub main {
 
             print ucfirst lc $session{$session}{state},
                 ' ' x (14 - length $session{$session}{state}),
-                colored(
-                    lc $session,
-                      $session{$session}{state} eq 'ATTACHED'    ? 'green'
-                    : $session{$session}{state} eq 'DETACHED'    ? 'blue'
-                    : $session{$session}{state} eq 'Not Started' ? 'white'
-                    :                                              'red'
-                ),
+                $option{bw}
+                ? lc $session
+                : colored( lc $session, $COLOURS{ $session{$session}{state} || '' } ),
                 "\n";
             $count++;
         }
@@ -390,8 +401,10 @@ sub auto {
         exit 0;
     }
     elsif ( $type eq 'full' ) {
+        my @names;
+        my @running;
         if ( $option{server} ) {
-            my @names
+            @names
                 = grep {
                     !/[.]rc$/
                 }
@@ -401,13 +414,12 @@ sub auto {
                 }
                 split /\n/,
                 '' . `ssh $option{server} '/bin/ls -1 ~/.devmode/[^.#]*'`;
-            print join ' ', @names;
-            exit 0;
+            @running = `ssh $option{server} 'devmode --list --bw'`;
         }
         else {
             shift @ARGV;
             my $search = pop @ARGV || '';
-            my @names
+            @names
                 = sort {
                     my $A = $a;
                     $A =~ s/(\d+)/sprintf "%05d", $1/egxms;
@@ -425,9 +437,24 @@ sub auto {
                     !/[.]rc$/
                 }
                 dir($ENV{HOME}, '.devmode')->children;
-            print join ' ', @names;
-            exit 0;
+            @running = `devmode --list --bw`;
         }
+        if ( @running && !$option{bw} ) {
+            my %running
+                = map {
+                    chomp;
+                    my ($state, $mode) = split /\s+/, $_, 2;
+                    ( $mode => $state );
+                }
+                @running;
+            @names
+                = map {
+                    $running{$_} ? $_ . ( $SUFFIXES{ $running{$_} || '' } || '' ) : $_;
+                }
+                @names;
+        }
+        print join ' ', @names;
+        exit 0;
     }
 
     exit 1;
