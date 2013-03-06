@@ -155,7 +155,7 @@ sub main {
         my $count = 0;
 
         if ( $option{verbose} || $option{all} ) {
-            my @modes = grep { -f $_ && $_->basename !~ /^[.]|[.]rc$/xms } dir("$ENV{HOME}", ".devmode")->children;
+            my @modes = grep { -f $_ && $_->basename !~ /^[.#]|[.]rc$/xms } dir("$ENV{HOME}", ".devmode")->children;
             for my $mode (@modes) {
                 my $base = $mode->basename;
                 $session{uc $base} ||= { state => 'Not Started' };
@@ -404,21 +404,9 @@ sub auto {
         my @names;
         my @running;
         if ( $option{server} ) {
-            @names
-                = grep {
-                    !/[.]rc$/
-                }
-                map {
-                    s{^.*/}{};
-                    $_;
-                }
-                split /\n/,
-                '' . `ssh $option{server} '/bin/ls -1 ~/.devmode/[^.#]*'`;
-            @running = `ssh $option{server} 'devmode --list --bw'`;
+            @names = remote_cache($option{server});
         }
         else {
-            shift @ARGV;
-            my $search = pop @ARGV || '';
             @names
                 = sort {
                     my $A = $a;
@@ -427,18 +415,16 @@ sub auto {
                     $B =~ s/(\d+)/sprintf "%05d", $1/egxms;
                     $A cmp $B;
                 }
-                grep {
-                    $search ? /$search/ : 1
-                }
                 map {
                     $_->basename
                 }
                 grep {
-                    !/[.]rc$/
+                    !/[.]rc$/ && !/^#/
                 }
                 dir($ENV{HOME}, '.devmode')->children;
             @running = `devmode --list --bw`;
         }
+
         if ( @running && !$option{bw} ) {
             my %running
                 = map {
@@ -453,11 +439,51 @@ sub auto {
                 }
                 @names;
         }
+
+        shift @ARGV;
+        my $search = pop @ARGV;
+        if ($search) {
+            @names = grep { /$search/ } @names;
+        }
+
         print join ' ', @names;
         exit 0;
     }
 
     exit 1;
+}
+
+sub remote_cache {
+    my ($server)   = @_;
+    my $cache      = {};
+    my $cache_file = file('/tmp/devmode_remoter_cache');
+
+    if ( -f $cache_file ) {
+        $cache = eval '' . $cache_file->slurp;
+    }
+
+    # check the cache is fresh (1 day)
+    if ( $cache->{$server} && $cache->{$server}{last} > time - 1 * 24 * 60 * 60 ) {
+        return @{ $cache->{$server}{modes} };
+    }
+
+    $cache->{$server}{last} = time;
+    $cache->{$server}{modes}
+        = [
+            grep {
+                !/[.]rc$/ && !/^#/
+            }
+            map {
+                s{^.*/}{};
+                $_
+            }
+            split /\n/,
+            '' . `ssh $option{server} '/bin/ls -1 ~/.devmode/[^.#]*'`
+        ];
+
+    print { $cache_file->openw } 'my ' . Dumper $cache;
+
+    return @{ $cache->{$server}{modes} };
 }
 
 =head1 NAME
