@@ -21,7 +21,6 @@ use Path::Class;
 use Text::CSV_XS;
 use Class::Date qw/now/;
 use Term::ANSIColor;
-use YAML::Syck;
 
 our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
