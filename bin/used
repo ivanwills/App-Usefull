@@ -25,6 +25,8 @@ our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
+    lib     => [ qw{lib t/lib} ],
+    build   => 'Build.PL',
     verbose => 0,
     man     => 0,
     help    => 0,
@@ -41,6 +43,9 @@ sub main {
         \%option,
         'name|n',
         'uses|u',
+        'lib|I=s@',
+        'build|b=s',
+        'update|U',
         'decending|d',
         'exclude|x=s',
         'verbose|v+',
@@ -92,9 +97,9 @@ sub main {
         }
     }
 
-    # remove modules that available from the maximum of the minum versions of perl required for these files
+    # remove modules that available from the maximum of the minimum versions of Perl required for these files
     my $max_ver = max map { version->parse($_) } keys %versions;
-    warn "Files with the hightest version:\n", join "\n\t", @{ $versions{$max_ver} }, '' if $option{verbose} > 1;
+    warn "Files with the hightest version:\n", join "\n\t", @{ $versions{$max_ver} }, '' if $option{verbose} > 1 && !$option{update};
     for my $module (keys %used) {
         my $rel_ver = Module::CoreList->first_release($module);
         if ( $rel_ver && $rel_ver <= $max_ver ) {
@@ -106,19 +111,22 @@ sub main {
     }
 
     # remove any modules defined in the local lib directory
-    my @files = eval { dir('lib')->children };
-    while (my $file = shift @files) {
-        if ( -d $file ) {
-            push @files, $file->children;
-        }
-        elsif ( $file =~ /[.]pm$/ ) {
-            my $mod = "$file";
-            $mod =~ s{^lib/}{}xms;
-            $mod =~ s{/}{::}gxms;
-            $mod =~ s{[.]pm$}{}xms;
-            my $value = delete $used{$mod};
-            if ( $option{verbose} > 1 ) {
-                $used{$mod} = { count => $value, colour => 'bold' };
+    for my $lib ( @{ $option{lib} } ) {
+        $lib =~ s{/$}{};
+        my @files = eval { dir($lib)->children };
+        while (my $file = shift @files) {
+            if ( -d $file ) {
+                push @files, $file->children;
+            }
+            elsif ( $file =~ /[.]pm$/ ) {
+                my $mod = "$file";
+                $mod =~ s{^$lib/}{}xms;
+                $mod =~ s{/}{::}gxms;
+                $mod =~ s{[.]pm$}{}xms;
+                my $value = delete $used{$mod};
+                if ( $option{verbose} > 1 ) {
+                    $used{$mod} = { count => $value, colour => 'bold' };
+                }
             }
         }
     }
@@ -136,6 +144,30 @@ sub main {
 
 sub show_results {
     my ( $max_ver, $used, $specified ) = @_;
+
+    if ( $option{update} ) {
+        my $max = 0;
+        my %map
+            = map {
+                $max = length $_ if length $_ > $max;
+                $_ => get_version($_)->{num}
+            }
+            grep {
+                $_ ne 'v5'
+            }
+            keys %{$used};
+
+        $max += 2;
+        print ' ' x 8,
+            join ' ' x 8,
+            ( sprintf "%-${max}s => %s,\n", "'perl'", "'$max_ver'" ),
+            map {
+                sprintf "%-${max}s => %s,\n", "'$_'", $map{$_} eq 0 ? $map{$_} : "'$map{$_}'"
+            }
+            sort keys %map;
+        return;
+    }
+
     my %notes;
     $max_ver ||= 0;
 
@@ -171,23 +203,10 @@ sub show_results {
         my $star    = '';
 
         if ( $option{verbose} ) {
-            my $num;
-            my $file = "$module.pm";
-            $file =~ s{::}{/}gxms;
+            my $ver = get_version($module);
+            my $num = $ver->{num};
+            $version = $ver->{version};
 
-            eval { require $file };
-
-            {
-                no strict qw/refs/;   ## no critic
-                $version .=
-                     $EVAL_ERROR                       ? '0?0'
-                    : defined ${$module . '::VERSION'} ? ${$module . '::VERSION'}
-                    :                                    'undef';
-                $num =
-                     $EVAL_ERROR                       ? 0
-                    : defined ${$module . '::VERSION'} ? ${$module . '::VERSION'}
-                    :                                    0;
-            }
             my $spec = defined $specified->{$module} ? " ($specified->{$module}{version})" : '';
             $version .= ' ' x (8 - length $version) . $spec;
             $version = ' ' x ($max + 1 - length $module) . $version;
@@ -235,6 +254,33 @@ sub show_results {
     return;
 }
 
+{
+    my %cache;
+    sub get_version {
+        my ($module) = @_;
+        return $cache{$module} if $cache{$module};
+
+        my $file = "$module.pm";
+        $file =~ s{::}{/}gxms;
+
+        eval { require $file };
+
+        {
+            no strict qw/refs/;   ## no critic
+            $cache{$module}{version} =
+                 $EVAL_ERROR                       ? '0?0'
+                : defined ${$module . '::VERSION'} ? ${$module . '::VERSION'}
+                :                                    'undef';
+            $cache{$module}{num} =
+                 $EVAL_ERROR                       ? 0
+                : defined ${$module . '::VERSION'} ? ${$module . '::VERSION'}
+                :                                    0;
+        }
+
+        return $cache{$module};
+    }
+}
+
 sub process_file {
     my ($file, $used, $versions) = @_;
 
@@ -272,11 +318,11 @@ sub process_file {
 
 # finds modules prespecified in the Build.PL file
 sub pre_specified {
-    return if !-f 'Build.PL';
-    my $build = file('Build.PL')->slurp;
+    return if !-f $option{build};
+    my $build = file($option{build})->slurp;
 
-    my ($required)      = $build =~ /\brequires \s* (?: => | , ) \s* ( { [^}]*? } )/xms;
-    my ($recommends)    = $build =~ /recommends \s* (?: => | , ) \s* ( { [^}]*? } )/xms;
+    my ($required)      = $build =~ /\brequires     \s* (?: => | , ) \s* ( { [^}]*? } )/xms;
+    my ($recommends)    = $build =~ /recommends     \s* (?: => | , ) \s* ( { [^}]*? } )/xms;
     my ($test_required) = $build =~ /build_requires \s* (?: => | , ) \s* ( { [^}]*? } )/xms;
 
     $required      = eval $required      if $required;        ## no critic
@@ -378,7 +424,12 @@ This documentation refers to used version 0.1.
 
  OPTIONS:
   -n --name       Order by module name (Default order)
+  -I --lib[=]dir  Add the directory to the list of local library paths. This
+                  stops reporting of modules that are part of the project
+                  being marked as not added to the Build.PL file. The default
+                  list includes lib/ and t/lib/
   -u --used       Order by the number of times a module is used/required
+  -U --update     Update the requires section of the Build.PL file
   -d --decending  Reverse the sort order
 
   -v --verbose    Show more detailed option
