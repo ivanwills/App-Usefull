@@ -49,6 +49,7 @@ sub main {
         'header_file|header-file|f=s',
         'max_lines|max-lines|l=i',
         'max_size|max-size|m=i',
+        'max_redirect|max-redirect|r=i',
         'proxy|p=s%',
         'useragent|ua|u=s',
         'format|F=s',
@@ -123,7 +124,7 @@ sub main {
         #print $@;
         print "Error " . ( $option{content} ? 'PUT' : 'GET' ) . 'ing ' . $mech->uri . ': ' . $mech->res->code . ' ' . $mech->res->message . "\n";
     }
-    print "$url\n" if $option{verbose};
+    warn +($mech->base || $url) . "\n" if $option{verbose};
     print "Content:\n" if $option{verbose};
     my $content = defined $mech->content ? $mech->content : '(No content)';
 
@@ -145,8 +146,8 @@ sub main {
         print $content;
     }
     print "\n";
-    print "\n" . Dumper $mech->res->headers if $option{verbose} > 1;
-    print "\n" . Dumper $mech if $option{verbose} > 2;
+    warn "\n" . Dumper $mech->res->headers if $option{verbose} > 1;
+    warn "\n" . Dumper $mech if $option{verbose} > 2;
 
     return;
 }
@@ -180,6 +181,8 @@ This documentation refers to myget version 0.1.
   -s --max-size[=]int
                  Show at most this number characters (useful if result is
                  only one line)
+  -r --max-redirect[=]int
+                 The maximum number of redirects to perform (Default 10)
   -p --proxy protocol=proxy_url
                  Configure to use proxy on the protocol with the url
                  eg http=http://localhost:3128
