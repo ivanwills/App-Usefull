@@ -17,7 +17,6 @@ use List::MoreUtils qw/uniq/;
 use Path::Class;
 use Term::Title 'set_titlebar';
 use Term::ANSIColor qw/colored/;
-use Path::Class;
 
 our $VERSION   = version->new('0.0.5');
 my ($PROGNAME) = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -333,7 +332,10 @@ sub protect {
 sub force_title {
     my ($task) = @_;
 
-    set_titlebar($option{short} ? $task : "Devmode $task");
+    set_titlebar(
+        ( $option{short} ? '' : "Devmode " )
+        . ( $option{title_bar} || $task )
+    );
 
     return;
 }
