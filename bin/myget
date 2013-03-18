@@ -51,6 +51,7 @@ sub main {
         'max_size|max-size|m=i',
         'max_redirect|max-redirect|r=i',
         'proxy|p=s%',
+        'timeout|to=i',
         'useragent|ua|u=s',
         'format|F=s',
         'verbose|v+',
@@ -84,6 +85,10 @@ sub main {
             'ff'       => 'Mozilla/5.0 (X11; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0',
         );
         $mech->agent( $agents{$option{useragent}} ? $agents{$option{useragent}} : $option{useragent} );
+    }
+
+    if ( $option{timeout} ) {
+        $mech->timeout( $option{timeout} );
     }
 
     if ( $option{header_file} ) {
@@ -188,6 +193,8 @@ This documentation refers to myget version 0.1.
                  eg http=http://localhost:3128
   -f --format[=][json|xml|html]
                  Format the results neatly based on the specified format
+  -t --timeout[=]sec
+                 Set the HTTP time out (Default 60 sec)
   -u --ua[=]str  Set the user-agent string
                  shortcuts: ff, ie6, ie7, ie8, iphone3, galaxys3
 
