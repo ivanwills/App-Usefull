@@ -60,6 +60,7 @@ sub main {
         'ignore-space-change|b',
         'ignore-all-space|w',
         'missing_dirs|missing-dirs|d!',
+        'size_diff|size-diff|D',
         'exec|E!',
         'verbose|v+',
         'man',
@@ -103,6 +104,7 @@ sub main {
     for my $file ( sort keys %uniq ) {
         warn "diff $dirs[0]/$file $dirs[1]/$file\n" if $option{verbose};
         my $ok = 1;
+        my $lengths = 0;
         my @mesg;
         my @found;
         for my $dir ( @dirs ) {
@@ -134,9 +136,10 @@ sub main {
             }
             else {
                 for my $found (@found) {
-                    my $diff = diff("$found/$file", "$dir/$file");
+                    my ($length, $diff) = diff("$found/$file", "$dir/$file");
 
                     if ($diff) {
+                        $lengths += $length;
                         push @mesg, $diff;
                         push @diffs, $diff;
                         if ($option{join}) {
@@ -185,7 +188,7 @@ sub main {
         }
 
         if ( !$ok ) {
-            push @messages, { file => $file, messages => \@mesg };
+            push @messages, { file => $file, messages => \@mesg, lengths => $lengths };
         }
     }
 
@@ -209,6 +212,7 @@ sub main {
 
     for my $msg ( @messages ) {
         print $msg->{file} . ' ' x ($length - length $msg->{file});
+        printf "(%5d) ", $msg->{lengths} if $option{size_diff};
         print join "\n" . (' ' x $length), @{ $msg->{'messages'} };
         print "\n";
     }
@@ -239,13 +243,13 @@ sub diff {
     }
     $cmd  .= " $file1_q $file2_q";
     my $diff
-        = -s $file1 != -s $file2 ? 1
+        = -s $file1 != -s $file2 ? abs( (-s $file1) - (-s $file2) )
         : $option{fast}          ? 0
-        :                          `$cmd`;
+        :                          length ''.`$cmd`;
 
     if ($diff) {
         warn "$option{cmd} $file1_q $file2_q\n" if $option{verbose};
-        return "$option{cmd} $file1_q $file2_q";
+        return ( $diff, "$option{cmd} $file1_q $file2_q" );
     }
 
     return;
