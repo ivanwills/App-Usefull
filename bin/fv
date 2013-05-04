@@ -1,0 +1,153 @@
+#!/usr/bin/perl
+
+# Created on: 2013-04-16 09:28:48
+# Create by:  dev
+# $Id$
+# $Revision$, $HeadURL$, $Date$
+# $Revision$, $Source$, $Date$
+
+use strict;
+use warnings;
+use v5.12;
+use version;
+use Scalar::Util;
+use List::Util;
+#use List::MoreUtils;
+use Getopt::Long;
+use Pod::Usage;
+use Data::Dumper qw/Dumper/;
+use English qw/ -no_match_vars /;
+use FindBin qw/$Bin/;
+use File::Find;
+use Path::Class;
+
+our $VERSION = version->new('0.0.1');
+my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+
+my %option = (
+);
+
+if ( !@ARGV ) {
+    pod2usage( -verbose => 1 );
+}
+
+main();
+exit 0;
+
+sub main {
+
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,
+        'o',
+        'O',
+        'verbose|v+',
+        'man',
+        'help',
+        'VERSION!',
+    ) or pod2usage(2);
+
+    if ( $option{'VERSION'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
+
+    # do stuff here
+    my @files;
+    for my $file (@ARGV) {
+        if ( -f $file ) {
+            push @files, $file;
+            next;
+        }
+        my @found;
+        find(
+            sub { push @found, $File::Find::name if $File::Find::name =~ /$file/ },
+            '.'
+        );
+
+        if ( @found == 1 ) {
+            push @files, $found[0];
+        }
+        else {
+            warn join "\n", @found, '';
+            push @files, @found;
+        }
+    }
+
+    die "No files found!" if !@files;
+
+    #say join ' ', 'vim', ( map { "-$_" } keys %option ), @files;
+    return exec 'vim', ( map { "-$_" } keys %option ), @files;
+}
+
+sub quote {
+    my ($str) = @_;
+    $str =~ s/'/'\\''/g;
+    return "'$str'";
+}
+
+__DATA__
+
+=head1 NAME
+
+fv - Find vim, finds (in the current directory) any incompletely specified files and opens them in vim
+
+=head1 VERSION
+
+This documentation refers to fv version 0.1.
+
+=head1 SYNOPSIS
+
+   fv [option] file_spec ...
+
+ OPTIONS:
+  file_spec          File to search for
+  -o --other         other option
+
+  -v --verbose       Show more detailed option
+     --version       Prints the version information
+     --help          Prints this help information
+     --man           Prints the full documentation for fv
+
+=head1 DESCRIPTION
+
+=head1 SUBROUTINES/METHODS
+
+=head1 DIAGNOSTICS
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+=head1 DEPENDENCIES
+
+=head1 INCOMPATIBILITIES
+
+=head1 BUGS AND LIMITATIONS
+
+There are no known bugs in this module.
+
+Please report problems to dev (dev@localhost).
+
+Patches are welcome.
+
+=head1 AUTHOR
+
+dev - (dev@localhost)
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2013 dev (123 Timbuc Too).
+All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself. See L<perlartistic>.  This program is
+distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+=cut
