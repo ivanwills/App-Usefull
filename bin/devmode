@@ -191,9 +191,7 @@ sub main {
     if ( $option{create} && !-e "$HOME/.devmode/$lc_task" ) {
         my $task = create_task( $task, $option{template} || 'rc', "$ENV{HOME}/.devmode/" );
 
-        if ( $option{create} > 1 ) {
-            system 'vim', $task;
-        }
+        exec 'vim', $task;
     }
 
     # task defaults
