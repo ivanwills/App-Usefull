@@ -107,7 +107,7 @@ This documentation refers to suggest-tests version 0.1.
                 Set the output style (Default long)
 
   -v --verbose  Show more detailed option
-     --version  Prints the version information
+     --VERSION  Prints the version information
      --help     Prints this help information
      --man      Prints the full documentation for suggest-tests
 

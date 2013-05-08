@@ -245,7 +245,7 @@ This documentation refers to cmdaliaser version 0.1.
   -t --test          Test what would happen if the command was run (shows the command as would be executed)
 
   -v --verbose       Show more detailed option
-     --version       Prints the version information
+     --VERSION       Prints the version information
      --help          Prints this help information
      --man           Prints the full documentation for cmdaliaser
 

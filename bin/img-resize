@@ -230,7 +230,7 @@ This documentation refers to img-resize version 0.1.
      --no-delete  Don't delete the original files after resizing
 
   -v --verbose    Show more detailed output
-     --version    Prints the version information
+     --VERSION    Prints the version information
      --help       Prints this help information
      --man        Prints the full documentation for img-resize
 

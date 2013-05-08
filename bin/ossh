@@ -82,7 +82,7 @@ This documentation refers to ossh version 0.1.
   all       - Open all of the above files
 
   -v --verbose       Show more detailed option
-     --version       Prints the version information
+     --VERSION       Prints the version information
      --help          Prints this help information
      --man           Prints the full documentation for ossh
 

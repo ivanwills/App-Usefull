@@ -110,7 +110,7 @@ This documentation refers to posture version 0.1.
                     --posture and --eyes consider a minute to be, Default 60)
 
   -v --verbose      Show more detailed option
-     --version      Prints the version information
+     --VERSION      Prints the version information
      --help         Prints this help information
      --man          Prints the full documentation for posture
 

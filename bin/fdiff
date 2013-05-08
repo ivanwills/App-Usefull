@@ -159,7 +159,7 @@ This documentation refers to fdiff version 0.1.
   -v -vimdiff        Use vimdiff instead of diff, equivalent to --diff=vimdiff
 
      --verbose       Show more detailed option
-     --version       Prints the version information
+     --VERSION       Prints the version information
      --help          Prints this help information
      --man           Prints the full documentation for fdiff
 

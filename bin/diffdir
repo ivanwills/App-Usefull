@@ -331,7 +331,7 @@ This documentation refers to diffdir version 0.1.
   -E --exec     Show all diff action in one line
 
   -v --verbose  Show more detailed option
-     --version  Prints the version information
+     --VERSION  Prints the version information
      --help     Prints this help information
      --man      Prints the full documentation for diffdir
 

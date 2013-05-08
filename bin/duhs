@@ -100,7 +100,7 @@ This documentation refers to duhs version 0.1.
                 Only show usage for one filesystem
 
   -v --verbose  Show more detailed option
-     --version  Prints the version information
+     --VERSION  Prints the version information
      --help     Prints this help information
      --man      Prints the full documentation for duhs
 

@@ -110,7 +110,7 @@ This documentation refers to svntouch version 0.1.
   -a --all     Touch all files even if locally modified
 
   -v --verbose Show more detailed option
-     --version Prints the version information
+     --VERSION Prints the version information
      --help    Prints this help information
      --man     Prints the full documentation for svntouch
 

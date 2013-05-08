@@ -266,7 +266,7 @@ This documentation refers to chkfacl version 0.1.
   -m --rule       One rule to rule them all?
 
   -v --verbose    Show more detailed option
-     --version    Prints the version information
+     --VERSION    Prints the version information
      --help       Prints this help information
      --man        Prints the full documentation for chkfacl
 

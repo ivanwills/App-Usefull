@@ -90,7 +90,7 @@ This documentation refers to rhymbox-ctrl version 0.1.
   -o --other         other option
 
   -v --verbose       Show more detailed option
-     --version       Prints the version information
+     --VERSION       Prints the version information
      --help          Prints this help information
      --man           Prints the full documentation for rhymbox-ctrl
 
