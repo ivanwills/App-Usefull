@@ -258,7 +258,12 @@ CHANGES
             warn "No tags were found!\n\n"
                 . "Use:\n"
                 . " \$ git tag -a -m 'Tagging version $ver' '$ver'\n"
-                . " \$ git push origin master --tags\n";
+                . " \$ git push origin master --tags\n"
+                . " \$ cpan-upload-http -verbose $tars[-1]\n";
+        }
+        else {
+            print "Upload to CPAN\n"
+                . " \$ cpan-upload-http -verbose $tars[-1]\n";
         }
     }
     else {
