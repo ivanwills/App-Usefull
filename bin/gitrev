@@ -41,6 +41,7 @@ sub main {
     GetOptions(
         \%option,
         'backup|b',
+        'revision|r=s',
         'test|t!',
         'verbose|v+',
         'man',
@@ -80,7 +81,7 @@ sub main {
             }
             copy $file, $backup;
         }
-        my $cat = $vcs->cat($file);
+        my $cat = $vcs->cat($file, $option{revision} ? $option{revision} : () );
         write_file $file, $cat;
     }
 
