@@ -244,6 +244,16 @@ CHANGES
                 "There is no entry in the Changes file for this version! (using $ver)\n";
         }
 
+        my $used_error = system 'used -q';
+        if ( $used_error ) {
+            warn "Build.pl not up to date!\ntry \$ used -U\n";
+
+            if ( $option{force}-- <= 0 ) {
+                unlink $tars[-1];
+                exit;
+            }
+        }
+
         # check that there is a tag for this version
         my $tags = $vcs->exec('tag');
         chomp $tags;
