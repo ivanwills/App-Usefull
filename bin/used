@@ -311,6 +311,7 @@ sub process_file {
     }
 
     my $minver = Perl::MinimumVersion->new($file);
+    warn "Perl " . $minver->minimum_version . " $file\n" if $option{verbose} > 3;
     if (!$minver) {
         warn "Could not get the minimum version of $file!\n";
         return;
