@@ -46,6 +46,9 @@ my $builder = Module::Build->new(
         'YAML'                            => 0,
         'YAML::Syck'                      => 0,
     },
+    configure_requires => {
+        'Module::Build' => 0.38,
+    },
     build_requires => {
         'Test::More'       => 0,
         'Test::NoWarnings' => 0,
