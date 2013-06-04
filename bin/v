@@ -89,6 +89,7 @@ sub open_perl {
     my @files;
     my %dirs = (
         bin     => { order => 1, extension => 0 },
+        script  => { order => 2, extension => 0 },
         lib     => { order => 2, extension => 1 },
         example => { order => 5, extension => 0 },
         eg      => { order => 6, extension => 0 },
