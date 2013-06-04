@@ -32,7 +32,6 @@ use constant {
 };
 my %option = (
     fmt         => '%10day %6start %3lunch %6end %12avg %10total',
-    history     => undef,
     work_day    => 8,
     lunch_break => 30,
     bin         => 15,
@@ -80,6 +79,7 @@ sub main {
     ) or pod2usage(2);
     %option = %{ $opt->opt };
     $option{work_day} *= HOUR;
+    $option{lunch_break} ||= 0;
     $option{lunch_break} *= MINUTE;
 
     # increase the number of days shown
