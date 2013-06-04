@@ -134,7 +134,7 @@ This documentation refers to schema-loader version 0.1.
                  the schema
 
   -v --verbose   Show more detailed option
-     --version   Prints the version information
+     --VERSION   Prints the version information
      --help      Prints this help information
      --man       Prints the full documentation for schema-loader
 

@@ -244,6 +244,16 @@ CHANGES
                 "There is no entry in the Changes file for this version! (using $ver)\n";
         }
 
+        my $used_error = system 'used -q';
+        if ( $used_error ) {
+            warn "Build.pl not up to date!\ntry \$ used -U\n";
+
+            if ( $option{force}-- <= 0 ) {
+                unlink $tars[-1];
+                exit;
+            }
+        }
+
         # check that there is a tag for this version
         my $tags = $vcs->exec('tag');
         chomp $tags;
@@ -258,7 +268,12 @@ CHANGES
             warn "No tags were found!\n\n"
                 . "Use:\n"
                 . " \$ git tag -a -m 'Tagging version $ver' '$ver'\n"
-                . " \$ git push origin master --tags\n";
+                . " \$ git push origin master --tags\n"
+                . " \$ cpan-upload-http -verbose $tars[-1]\n";
+        }
+        else {
+            print "Upload to CPAN\n"
+                . " \$ cpan-upload-http -verbose $tars[-1]\n";
         }
     }
     else {

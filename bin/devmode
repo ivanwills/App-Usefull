@@ -526,7 +526,7 @@ This documentation refers to devmode version 0.0.1.
   -A --auto=str
                Allows a BASH command line completion mode helper mode to run
   -T --test    Don't run any external commands
-     --version Prints the version information
+     --VERSION Prints the version information
      --help    Prints this help information
      --man     Prints the full documentation for devmode
 

@@ -43,6 +43,8 @@ sub main {
         'max|m=i',
         'test|t!',
         'tags|T!',
+        'open|o',
+        'open_vertical|O',
         'verbose|v+',
         'man',
         'help',
@@ -81,8 +83,13 @@ sub main {
     }
     die "Could not find any files!\n" if !@files;
 
-    warn        'vim \'' . (join "' '", uniq sort @files) . "'" if $option{verbose} || $option{test};
-    return exec 'vim \'' . (join "' '", uniq sort @files) . "'" if !$option{test};
+    my $args
+        = $option{open}          ? '-o '
+        : $option{open_vertical} ? '-O '
+        :                          '';
+
+    warn        "vim $args'" . (join "' '", uniq sort @files) . "'" if $option{verbose} || $option{test};
+    return exec "vim $args'" . (join "' '", uniq sort @files) . "'" if !$option{test};
 }
 
 sub open_perl {

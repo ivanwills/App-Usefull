@@ -364,7 +364,7 @@ This documentation refers to html-cleaner version 0.1.
   -f --force
 
   -v --verbose       Show more detailed option
-     --version       Prints the version information
+     --VERSION       Prints the version information
      --help          Prints this help information
      --man           Prints the full documentation for html-cleaner
 

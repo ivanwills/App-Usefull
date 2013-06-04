@@ -192,7 +192,7 @@ This documentation refers to duuser version 0.1.
   -t --terabyte Show usage in terabytes
 
   -v --verbose  Show more detailed option
-     --version  Prints the version information
+     --VERSION  Prints the version information
      --help     Prints this help information
      --man      Prints the full documentation for duuser
 

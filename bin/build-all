@@ -228,7 +228,7 @@ This documentation refers to src/home/bin/build-all version 0.1.
   -p --perl[=]num  This the perl version targeted
 
   -v --verbose     Show more detailed option
-     --version     Prints the version information
+     --VERSION     Prints the version information
      --help        Prints this help information
      --man         Prints the full documentation for src/home/bin/build-all
 

@@ -48,6 +48,7 @@ sub main {
         'update|U',
         'decending|d',
         'exclude|x=s',
+        'quiet|q+',
         'verbose|v+',
         'man',
         'help',
@@ -177,7 +178,7 @@ sub show_results {
         $star = '⁑';
         $notes{$star} = 'The specified minimum perl version is less than some used features require';
     }
-    print "Perl$star $max_ver\n";
+    print "Perl$star $max_ver\n" unless $option{quiet};
     delete $specified->{perl};
 
     if ( $option{verbose} ) {
@@ -233,7 +234,8 @@ sub show_results {
         $used->{$module}{count}  ||= 0;
         $used->{$module}{colour} ||= '';
 
-        printf "%4d %s$star$version\n", $used->{$module}{count}, $used->{$module}{colour} ? colored($module, $used->{$module}{colour} ) : $module;
+        printf "%4d %s$star$version\n", $used->{$module}{count}, $used->{$module}{colour} ? colored($module, $used->{$module}{colour} ) : $module
+            unless $option{quiet};
         if ( $used->{$module}{colour} && $used->{$module}{colour} ne '' && !$notes{ colored( $used->{$module}{colour}, $used->{$module}{colour} ) } ) {
             $notes{ colored( $used->{$module}{colour}, $used->{$module}{colour} ) }
                 = $used->{$module}{colour} eq 'blue' ? "Core module"
@@ -242,7 +244,7 @@ sub show_results {
         }
     }
 
-    print "\n";
+    print "\n" unless $option{quiet};
     $max = 1;
     for my $key ( keys %notes ) {
         $max = 4 if length $key > 4;
@@ -250,6 +252,9 @@ sub show_results {
     for my $note (sort keys %notes) {
         print $note . ( ' ' x ( $max + 1 - ( length $note > 4 ? 4 : 1 ) ) ) . "$notes{$note}\n";
     }
+
+    # return an error if some notes found
+    exit scalar keys %notes if keys %notes;
 
     return;
 }

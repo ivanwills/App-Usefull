@@ -243,7 +243,7 @@ This documentation refers to player-pause version 0.1.
                - x11: checks with X11 weather the screen saver has started
 
   -v --verbose Show more detailed option
-     --version Prints the version information
+     --VERSION Prints the version information
      --help    Prints this help information
      --man     Prints the full documentation for player-pause
 

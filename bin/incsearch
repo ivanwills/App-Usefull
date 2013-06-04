@@ -121,7 +121,7 @@ This documentation refers to incsearch version 0.1.
 
   -v --verbose  Used once shows the @INC paths that modules are found in,
                 used twice shows the actual files found
-     --version  Prints the version information
+     --VERSION  Prints the version information
      --help     Prints this help information
      --man      Prints the full documentation for incsearch
 

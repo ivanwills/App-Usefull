@@ -199,7 +199,7 @@ This documentation refers to myget version 0.1.
                  shortcuts: ff, ie6, ie7, ie8, iphone3, galaxys3
 
   -v --verbose   Show more detailed option
-     --version   Prints the version information
+     --VERSION   Prints the version information
      --help      Prints this help information
      --man       Prints the full documentation for myget
 

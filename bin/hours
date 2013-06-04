@@ -774,7 +774,7 @@ This documentation refers to hours version 0.1.
                  as a 5 days of work in a row and a month is 20 days in a row.
 
   -v --verbose   Show more detailed option
-     --version   Prints the version information
+     --VERSION   Prints the version information
      --help      Prints this help information
      --man       Prints the full documentation for hours
 

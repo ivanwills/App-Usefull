@@ -241,7 +241,7 @@ This documentation refers to httprecorder version 0.1.
   -l --log[=]str     Turn on logging, may be specified may times see HTTP::Proxy for values
 
   -v --verbose       Show more detailed option
-     --version       Prints the version information
+     --VERSION       Prints the version information
      --help          Prints this help information
      --man           Prints the full documentation for httprecorder
 
