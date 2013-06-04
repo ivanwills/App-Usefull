@@ -192,6 +192,21 @@ sub dist {
         && $tars[-1]
         =~ /^ ( [0-9a-zA-Z-]+ ) - v? ( [\d.]+ ) [.] tar [.] gz $/xms
     ) {
+        my $dist = $1;
+        my $ver  = $2;
+
+        ## Check t/00-load.t tests all modules
+        my $modules = `find lib | grep '[.]pm\$' | wc -l`;
+        my $tested  = `grep use_ok t/00-load.t | wc -l`;
+        if ( $modules ne $tested ) {
+            my @modules = map { s{lib/|[.]pm\n}{}g; s{/}{::}g; "use_ok('$_');\n" } `find lib | grep '[.]pm\$'`;
+            unlink $tars[-1];
+            warn "t/00-load.t doesn't appear to test all found modules!\n";
+            warn join '', @modules;
+            return if !$option{force};
+            $option{force}--;
+        }
+
         my $vcs = VCS::Which->new(dir => '.');
 
         # check that the code is all checked in
@@ -203,8 +218,6 @@ sub dist {
             $option{force}--;
         }
 
-        my $dist    = $1;
-        my $ver     = $2;
         my $changes = file('Changes');
 
         die "Could not determine the current version of package!\n"
