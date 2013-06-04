@@ -14,8 +14,10 @@ t/pod.t
 t/perlcriticrc
 t/spelling.t
 bin/bigfiles
+bin/blame-line
 bin/build-all
 bin/builder
+bin/char2line
 bin/chkfacl
 bin/cmdaliaser
 bin/coder
@@ -27,6 +29,7 @@ bin/duhs
 bin/duuser
 bin/everything
 bin/fdiff
+bin/fv
 bin/gitrev
 bin/highlight
 bin/hlist
@@ -34,10 +37,13 @@ bin/hours
 bin/httprecorder
 bin/img-resize
 bin/img-size
+bin/incsearch
 bin/itop
+bin/mssh
 bin/myget
 bin/ossh
 bin/partition-table.pl
+bin/perlmodver
 bin/pingfind
 bin/player-alarm
 bin/player-pause.pl
@@ -47,6 +53,7 @@ bin/rhythmbox-ctl.pl
 bin/schema-loader
 bin/set-title
 bin/spchk
+bin/ssh-forwards
 bin/ssh-to
 bin/stop-watch
 bin/suggest-tests
@@ -56,8 +63,4 @@ bin/used
 bin/v
 bin/validate_json
 bin/vims
-bin/blame-line
-bin/char2line
-bin/incsearch
-bin/mssh
 lib/App/Useful.pm
