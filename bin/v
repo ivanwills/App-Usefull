@@ -46,6 +46,7 @@ sub main {
         'tags|T!',
         'open|o',
         'open_vertical|O',
+        'auto_complete|auto-complete',
         'verbose|v+',
         'man',
         'help',
@@ -75,6 +76,12 @@ sub main {
         @{$conf}
     };
 
+    if ( $option{auto_complete} ) {
+        my @auto = grep {/$ARGV[-1]/} qw/perl test tests templ static css js db all/, keys %$conf;
+        print join " ", sort @auto;
+        exit 0;
+    }
+
     my @options = @ARGV ? @ARGV : ('perl');
     my @files;
     for my $file ( @options ) {
@@ -99,8 +106,8 @@ sub main {
         : $option{open_vertical} ? '-O '
         :                          '';
 
-    warn        "vim $args'" . (join "' '", uniq sort @files) . "'" if $option{verbose} || $option{test};
-    return exec "vim $args'" . (join "' '", uniq sort @files) . "'" if !$option{test};
+    warn        "vim $args'" . (join "' '", uniq @files) . "'" if $option{verbose} || $option{test};
+    return exec "vim $args'" . (join "' '", uniq @files) . "'" if !$option{test};
 }
 
 sub open_perl {
