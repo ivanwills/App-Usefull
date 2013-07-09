@@ -73,7 +73,7 @@ sub main {
             'lunch_bread|l=f',
             'round|r=i',
             'bin|i=i',
-            'fmt|format|m=s',
+            'fmt|format|M=s',
             'verbose|v+',
         ]
     ) or pod2usage(2);
