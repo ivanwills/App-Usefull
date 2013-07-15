@@ -9,7 +9,7 @@
 use strict;
 use warnings;
 use version;
-use Getopt::Long;
+use Getopt::Alt qw/get_options/;
 use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
@@ -23,15 +23,7 @@ use Config::General;
 our $VERSION = version->new('0.1.0');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
-my %option = (
-    install  => 'sudo ',
-    perl     => $EXECUTABLE_NAME,
-    parallel => 2,
-    verbose  => 0,
-    man      => 0,
-    help     => 0,
-    VERSION  => 0,
-);
+my $opt;
 my %alt_opt = (
     "dist-clean"   => 'clean',
     c              => 'clean',
@@ -55,64 +47,65 @@ exit 0;
 
 sub main {
 
+    my %default;
     if ( -e '.builderrc' ) {
         my $config = Config::General->new('.builderrc');
-        %option = ( %option, $config->getall );
-        for my $key ( keys %option ) {
+        %default = ( %default, $config->getall );
+        for my $key ( keys %default ) {
             if ( $alt_opt{$key} ) {
-                $option{$alt_opt{$key}} = $option{$key};
-                delete $option{$key};
+                $default{$alt_opt{$key}} = $default{$key};
+                delete $default{$key};
             }
         }
-        if ( $option{pre_commands} && ref $option{pre_commands} eq 'HASH' ) {
-            $option{pre_commands} = [
-                map {"$_ $option{pre_commands}{$_}"} keys %{ $option{pre_commands} }
+        if ( $default{pre_commands} && ref $default{pre_commands} eq 'HASH' ) {
+            $default{pre_commands} = [
+                map {"$_ $default{pre_commands}{$_}"} keys %{ $default{pre_commands} }
             ];
         }
-        die Dumper \%option;
+        die Dumper \%default;
     }
 
-    Getopt::Long::Configure('bundling');
-    GetOptions(
-        \%option,
-        'clean|dist-clean|c',
-        'author|author-tests|a!',
-        'parallel|parallel-tests|j=i',
-        'install|i=s',
-        'lib|I=s@',
-        'tags|t!',
-        'force|f+',
-        'brews|b',
-        'pre_commands|pre-commands|p=s@',
-        'verbose|v+',
-        'man',
-        'help',
-        'VERSION!',
-    ) or pod2usage(2);
+    $opt = get_options(
+        {
+            bundle  => 1,
+            help    => 1,
+            default => {
+                install  => 'sudo ',
+                perl     => $EXECUTABLE_NAME,
+                parallel => 2,
+                %default,
+            },
+        },
+        [
+            'clean|dist-clean|c',
+            'author|author-tests|a!',
+            'parallel|parallel-tests|j=i',
+            'install|i=s',
+            'lib|I=s@',
+            'tags|t!',
+            'force|f+',
+            'brews|b',
+            'pre_commands|pre-commands|p=s@',
+            'verbose|v+',
+            'man',
+            'help',
+            'VERSION!',
+        ]
+    );
+    %option = %{ $opt };
     my $level = shift @ARGV || '';
-
-    if ( $option{'VERSION'} ) {
-        print "$name Version = $VERSION\n";
-        exit 1;
-    }
-    elsif ( $option{'man'} ) {
-        pod2usage( -verbose => 2 );
-    }
-    elsif ( $option{'help'} ) {
-        pod2usage( -verbose => 1 );
-    }
 
     # Determine weather the package is using Module::Build or make files
     my $builder = build();
 
-    if ( ( $option{'clean'} || $level eq 'dist' ) && built() ) {
+    if ( ( $opt->clean || $level eq 'dist' ) && built() ) {
         system builder() . ' distclean';
         return if !$level;
     }
 
     if ( !built() ) {
         create_tags();
-        system "$option{perl} " . build_pl();
+        system $opt->perl . ' ' . build_pl();
     }
     else {
         system builder() . ' clean';
@@ -120,8 +113,8 @@ sub main {
 
     system builder();
 
-    $ENV{TEST_AUTHOR}     = $option{author};
-    $ENV{HARNESS_OPTIONS} = "j$option{parallel}";
+    $ENV{TEST_AUTHOR}     = $opt->author};
+    $ENV{HARNESS_OPTIONS} = 'j' . $opt->parallel;
 
     if ( $level eq 'dist' ) {
         # turn on author tests before making a distribution
@@ -141,7 +134,7 @@ sub main {
 }
 
 sub test {
-    if ($option{brew}) {
+    if ($opt->brew) {
         warn "TODO Implement the perlbrew code to run the tests";
     }
 
@@ -156,10 +149,10 @@ sub testup {
             push @children, $child->children;
         }
         elsif ( $child =~ /[.]p[ml]$/xms ) {
-            my $libs = $option{lib}
-                ? ' -I' . join ' -I', @{$option{lib}}
+            my $libs = $opt->lib
+                ? ' -I' . join ' -I', @{$opt->lib}
                 : '';
-            my $ans = system "$option{perl} -Ilib -It/lib$libs -c $child";
+            my $ans = system $opt->perl . " -Ilib -It/lib$libs -c $child";
             return 0 if $ans;
         }
     }
@@ -171,7 +164,7 @@ sub testcover {
 }
 
 sub install {
-    system $option{install} . builder() . ' install';
+    system $opt->install . builder() . ' install';
 }
 
 sub dist {
@@ -179,8 +172,8 @@ sub dist {
     # Check that there are no vim files in bin directories
     if (my @vims = glob 'bin/.*.sw[po]') {
         warn "There are vim swap files in the bin dir:\n" . ( join "\n", @vims ) . "\n";
-        return if !$option{force};
-        $option{force}--;
+        return if !$opt->force;
+        $opt->force($opt->force - 1);
     }
 
     builder('dist');
@@ -203,8 +196,8 @@ sub dist {
             unlink $tars[-1];
             warn "t/00-load.t doesn't appear to test all found modules!\n";
             warn join '', @modules;
-            return if !$option{force};
-            $option{force}--;
+            return if !$opt->force;
+            $opt->force($opt->force - 1);
         }
 
         my $vcs = VCS::Which->new(dir => '.');
@@ -214,8 +207,8 @@ sub dist {
             unlink $tars[-1];
             warn `pwd`;
             warn "There appear to be uncommitted changes in the directory\n";
-            return if !$option{force};
-            $option{force}--;
+            return if !$opt->force;
+            $opt->force($opt->force - 1);
         }
 
         my $changes = file('Changes');
@@ -240,7 +233,7 @@ CHANGES
         if ( $changes !~ /^v?$ver\s/xms ) {
             unlink $tars[-1];
 
-            if ($option{verbose}) {
+            if ($opt->verbose) {
                 my ($version, $date)
                     = $changes =~ /^v?( \d+ [.] \d+ (?: [.] \d+ )? ) \s+ (\d\d\d\d-\d\d-\d\d)/xms;
 
@@ -261,7 +254,8 @@ CHANGES
         if ( $used_error ) {
             warn "Build.pl not up to date!\ntry \$ used -U\n";
 
-            if ( $option{force}-- <= 0 ) {
+            if ( $opt->force <= 0 ) {
+                $opt->force($opt->force - 1);
                 unlink $tars[-1];
                 exit;
             }
@@ -298,11 +292,11 @@ CHANGES
 
 sub create_tags {
     my $tag = file('usr', 'bin', 'ctags');
-    if ( $option{tags} && -x $tag ) {
+    if ( $opt->tags && -x $tag ) {
         my @exclude = qw/blib _build Build tmp/;
         my $cmd = "$tag -R --exclude=" . join ' --exlude=', @exclude;
-        warn "$cmd\n" if $option{verbose} || $option{test};
-        system $cmd if !$option{test};
+        warn "$cmd\n" if $opt->verbose || $opt->test;
+        system $cmd if !$opt->test;
     }
 }
 
@@ -323,8 +317,8 @@ sub create_tags {
     sub builder {
         my ($action) = @_;
 
-        my $cmd = $option{lib}
-            ? 'PERL5LIB=$PERL5LIB:' . join ':', @{$option{lib}}
+        my $cmd = $opt->lib
+            ? 'PERL5LIB=$PERL5LIB:' . join ':', @{$opt->lib}
             : '';
         $cmd .=
               $builder eq 'build' ? ' ./Build'
