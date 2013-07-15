@@ -86,13 +86,14 @@ sub main {
             'force|f+',
             'brews|b',
             'pre_commands|pre-commands|p=s@',
+            'perl=s',
+            'brew=s',
             'verbose|v+',
             'man',
             'help',
             'VERSION!',
         ]
     );
-    %option = %{ $opt };
     my $level = shift @ARGV || '';
 
     # Determine weather the package is using Module::Build or make files
@@ -113,7 +114,7 @@ sub main {
 
     system builder();
 
-    $ENV{TEST_AUTHOR}     = $opt->author};
+    $ENV{TEST_AUTHOR}     = $opt->author;
     $ENV{HARNESS_OPTIONS} = 'j' . $opt->parallel;
 
     if ( $level eq 'dist' ) {
