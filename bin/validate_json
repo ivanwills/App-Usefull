@@ -91,7 +91,7 @@ sub main {
         print "JSON OK";
     }
 
-    if ( $opt->opt->{clean} ) {
+    if ( $opt->{clean} ) {
         indent($json);
         $json =~ s/ ^ ( [{[] ) /$1\n/xms;
         $json =~ s/ (\S) ( [{}[\]] ) /$1\n$2\n/gxms;
