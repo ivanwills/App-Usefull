@@ -295,7 +295,20 @@ CHANGES
 sub release {
     my $changelog = file('Changes')->slurp;
     my ($version) = $changelog =~ /\r?\n\r?\n(\S+)\s+/;
-    warn $version;
+    my ($old, $new) = @ARGV;
+
+    if ( !$old && !$new ) {
+        $new = $version;
+        $new =~ s/(\d+)$/$1+1/egxms;
+        print "builder release $version $new\n";
+        return;
+    }
+
+    my $old_re = $old;
+    my $new_re = $new;
+    $old_re =~ s/[.]/[.]/g;
+
+    print "cs $old_re -r $new_re -Nperl -Xbuild\n";
 }
 
 sub create_tags {
