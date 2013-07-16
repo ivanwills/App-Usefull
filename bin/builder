@@ -128,6 +128,7 @@ sub main {
     : $level eq 'testcover' ? testcover()
     : $level eq 'install'   ? test() && install()
     : $level eq 'dist'      ? test() && dist()
+    : $level eq 'release'   ? release()
     : !$level               ? return
     :                         die "No such command '$level'\n";
 
@@ -289,6 +290,12 @@ CHANGES
     }
 
     return;
+}
+
+sub release {
+    my $changelog = file('Changes')->slurp;
+    my ($version) = $changelog =~ /\r?\n\r?\n(\S+)\s+/;
+    warn $version;
 }
 
 sub create_tags {
