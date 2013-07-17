@@ -19,6 +19,7 @@ use File::Slurp qw/write_file/;
 use VCS::Which;
 use Path::Class;
 use Config::General;
+use DateTime;
 
 our $VERSION = version->new('0.1.0');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -293,22 +294,43 @@ CHANGES
 }
 
 sub release {
-    my $changelog = file('Changes')->slurp;
+    my $changes   = file('Changes');
+    my $changelog = $changes->slurp;
     my ($version) = $changelog =~ /\r?\n\r?\n(\S+)\s+/;
     my ($old, $new) = @ARGV;
 
     if ( !$old && !$new ) {
         $new = $version;
-        $new =~ s/(\d+)$/$1+1/egxms;
+        $new =~ s/(\d+)$/sprintf '%0'.(length $1).'d', $1+1/egxms;
         print "builder release $version $new\n";
         return;
     }
+
+    test() || return;
 
     my $old_re = $old;
     my $new_re = $new;
     $old_re =~ s/[.]/[.]/g;
 
-    print "cs $old_re -r $new_re -Nperl -Xbuild\n";
+    system "cs $old_re -r $new_re --yes -Nperl -Xbuild\n";
+    my @all_log = `git log --format=format:'%s (%an) -%d'`;
+    my @log;
+    for my $line (@all_log) {
+        my ($log, $branches_tags) = $line =~ /^(.*) \s - \s (?: [(] (.*) [)] )? $/xms;
+        my %branches_tags = map {$_ => 1} split /,\s/, $branches_tags || '';
+
+        last if $branches_tags{$old} || $branches_tags{ version->new($old) };
+
+        push @log, "       $log\n";
+    }
+
+    my $now = DateTime->now->ymd('-');
+    $changelog =~ s/\r?\n(\r?\n(\S+)\s+)/\n\n$new   $now\n @log$1/;
+    my $fh = $changes->openw;
+    print {$fh} $changelog;
+
+    print "git commit -am 'Updating for release of version $new'\n";
+    print "$name -c dist\n";
 }
 
 sub create_tags {
