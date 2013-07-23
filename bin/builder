@@ -167,13 +167,21 @@ sub testcover {
 }
 
 sub install {
+
+    # Check that there are no vim files in bin directories
+    if (my @vims = glob 'bin/.*.sw[ponxmn]') {
+        warn "There are vim swap files in the bin dir:\n" . ( join "\n", @vims ) . "\n";
+        return if !$opt->force;
+        $opt->force($opt->force - 1);
+    }
+
     system $opt->install . builder() . ' install';
 }
 
 sub dist {
 
     # Check that there are no vim files in bin directories
-    if (my @vims = glob 'bin/.*.sw[po]') {
+    if (my @vims = glob 'bin/.*.sw[ponxmn]') {
         warn "There are vim swap files in the bin dir:\n" . ( join "\n", @vims ) . "\n";
         return if !$opt->force;
         $opt->force($opt->force - 1);
