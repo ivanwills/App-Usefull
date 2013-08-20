@@ -48,7 +48,7 @@
 \B\._
 
 # Avoid vim temporary file and other vim generated files
-.*\.sw[ponxmn]$
+\.*\.sw[ponxmn]$
 .vimtagsdisplay
 tags
 
@@ -72,3 +72,4 @@ vim.sh
 tmp*
 temp*
 errors.err
+bin/.builder.swp

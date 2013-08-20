@@ -35,9 +35,12 @@ my %option = (
 my %alt_opt = (
     "dist-clean"   => 'clean',
     c              => 'clean',
+    cl             => 'clean',
     "author-tests" => 'author',
     a              => 'author',
+    au             => 'author',
     i              => 'install',
+    in             => 'install',
     I              => 'lib',
     t              => 'tags',
     f              => 'force',
@@ -103,10 +106,10 @@ sub main {
     }
 
     # Determine weather the package is using Module::Build or make files
-    my $builder = build();
 
     if ( ( $option{'clean'} || $level eq 'dist' ) && built() ) {
-        system builder() . ' distclean';
+        builder('distclean');
+        system q{find blib 2>/dev/null | grep '[.][^/]+[.]sw[poxnm]$' | xargs rm};
         return if !$level;
     }
 
@@ -115,7 +118,7 @@ sub main {
         system "$option{perl} " . build_pl();
     }
     else {
-        system builder() . ' clean';
+        builder('clean');
     }
 
     system builder();
@@ -145,7 +148,7 @@ sub test {
         warn "TODO Implement the perlbrew code to run the tests";
     }
 
-    return !( system builder() . ' test' );
+    return !( builder('test') );
 }
 
 sub testup {
@@ -167,7 +170,7 @@ sub testup {
 }
 
 sub testcover {
-    return !( system builder() . ' testcover' );
+    return !( builder('testcover') );
 }
 
 sub install {
