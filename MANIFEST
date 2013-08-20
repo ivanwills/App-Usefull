@@ -48,6 +48,7 @@ bin/pingfind
 bin/player-alarm
 bin/player-pause.pl
 bin/posture
+bin/project-mgr
 bin/psqlout2csv.pl
 bin/rhythmbox-ctl.pl
 bin/schema-loader
