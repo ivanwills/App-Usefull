@@ -293,12 +293,12 @@ CHANGES
                 . " \$ cpan-upload-http -verbose $tars[-1]\n";
         }
         else {
-            if ( -d 'debian' ) {
-                system "git dch --auto";
-            }
-
             print "Upload to CPAN\n"
                 . " \$ cpan-upload-http -verbose $tars[-1]\n";
+
+            if ( -d 'debian' ) {
+                print " \$ git dch --auto\n";
+            }
         }
     }
     else {
