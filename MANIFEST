@@ -22,7 +22,6 @@ bin/chkfacl
 bin/cmdaliaser
 bin/coder
 bin/csv2html-table.pl
-bin/devmode
 bin/df-colour
 bin/diffdir
 bin/duhs
