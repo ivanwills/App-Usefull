@@ -370,6 +370,7 @@ sub create_tags {
     }
 
     sub built {
+        $builder || build();
         return
               $builder eq 'build' ? -e 'Build'
             : $builder eq 'make'  ? -e 'Makefile'
