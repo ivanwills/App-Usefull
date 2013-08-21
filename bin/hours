@@ -77,7 +77,7 @@ sub main {
             'verbose|v+',
         ]
     ) or pod2usage(2);
-    %option = %{ $opt->opt };
+    %option = %{ $opt };
     $option{work_day} *= HOUR;
     $option{lunch_break} ||= 0;
     $option{lunch_break} *= MINUTE;
