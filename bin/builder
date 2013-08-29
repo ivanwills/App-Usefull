@@ -266,7 +266,7 @@ CHANGES
 
         my $used_error = system 'used -q';
         if ( $used_error ) {
-            warn "Build.pl not up to date!\ntry \$ used -U\n";
+            warn "Build.pl not up to date!\ntry:\n    used -U\n";
 
             if ( $opt->force <= 0 ) {
                 $opt->force($opt->force - 1);
@@ -282,22 +282,22 @@ CHANGES
         if ( $tags && $tags !~ /$ver/ ) {
             unlink $tars[-1];
             die "There are no tags for this version!\nUse:\n"
-                . " \$ git tag -a -m 'Tagging version $ver' '$ver'\n"
-                . " \$ git push origin master --tags\n";
+                . "    git tag -a -m 'Tagging version $ver' '$ver'\n"
+                . "    git push origin master --tags\n";
         }
         elsif (!$tags) {
             warn "No tags were found!\n\n"
                 . "Use:\n"
-                . " \$ git tag -a -m 'Tagging version $ver' '$ver'\n"
-                . " \$ git push origin master --tags\n"
-                . " \$ cpan-upload-http -verbose $tars[-1]\n";
+                . "    git tag -a -m 'Tagging version $ver' '$ver'\n"
+                . "    git push origin master --tags\n"
+                . "    cpan-upload-http -verbose $tars[-1]\n";
         }
         else {
             print "Upload to CPAN\n"
-                . " \$ cpan-upload-http -verbose $tars[-1]\n";
+                . "    cpan-upload-http -verbose $tars[-1]\n";
 
             if ( -d 'debian' ) {
-                print " \$ git dch --auto\n";
+                print "    git dch --auto\n";
             }
         }
     }
