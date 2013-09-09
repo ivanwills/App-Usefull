@@ -1,0 +1,124 @@
+#!/usr/bin/perl
+
+# Created on: 2013-09-09 07:59:10
+# Create by:  Ivan Wills
+# $Id$
+# $Revision$, $HeadURL$, $Date$
+# $Revision$, $Source$, $Date$
+
+use strict;
+use warnings;
+use version;
+use Scalar::Util;
+use List::Util;
+#use List::MoreUtils;
+use Getopt::Alt qw/get_options/;
+use Pod::Usage;
+use Data::Dumper qw/Dumper/;
+use English qw/ -no_match_vars /;
+use FindBin qw/$Bin/;
+use Path::Class;
+
+our $VERSION = version->new('0.0.1');
+my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+
+my %option = (
+    out     => undef,
+    verbose => 0,
+    man     => 0,
+    help    => 0,
+    VERSION => 0,
+);
+
+if ( !@ARGV ) {
+    pod2usage( -verbose => 1 );
+}
+
+main();
+exit 0;
+
+sub main {
+
+    my ($opt, $cmd) = get_options(
+        {
+            bundle      => 1,
+            help        => 1,
+            default     => { %option },
+            sub_command => 1,
+        },
+        [
+            'verbose|v+',
+            'man',
+            'help',
+            'VERSION!',
+        ]
+    );
+
+    # do stuff here
+    for (<STDIN>) {
+        chomp;
+        print join ' ', $cmd, @ARGV, $_, "\n" if $opt->verbose > 1;
+        system $cmd, @ARGV, $_;
+    }
+
+    return;
+}
+
+__DATA__
+
+=head1 NAME
+
+yargs - Like xargs but runs the command for each input
+
+=head1 VERSION
+
+This documentation refers to yargs version 0.0.1
+
+=head1 SYNOPSIS
+
+   yargs [option] cmd [cmd options]
+
+ OPTIONS:
+   cmd          The command you wish to execute for each input line
+
+  -v --verbose  Show more detailed option
+     --version  Prints the version information
+     --help     Prints this help information
+     --man      Prints the full documentation for yargs
+
+=head1 DESCRIPTION
+
+=head1 SUBROUTINES/METHODS
+
+=head1 DIAGNOSTICS
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+=head1 DEPENDENCIES
+
+=head1 INCOMPATIBILITIES
+
+=head1 BUGS AND LIMITATIONS
+
+There are no known bugs in this module.
+
+Please report problems to Ivan Wills (ivan.wills@gmail.com).
+
+Patches are welcome.
+
+=head1 AUTHOR
+
+Ivan Wills - (ivan.wills@gmail.com)
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2013 Ivan Wills (14 Mullion Close, Hornsby Heights, NSW Australia 2077).
+All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself. See L<perlartistic>.  This program is
+distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+=cut
