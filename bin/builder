@@ -268,6 +268,7 @@ CHANGES
         if ( $used_error ) {
             warn "Build.pl not up to date!\ntry:\n    used -U\n";
 
+            $opt->force(0) if !$opt->force;
             if ( $opt->force <= 0 ) {
                 $opt->force($opt->force - 1);
                 unlink $tars[-1];
