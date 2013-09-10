@@ -73,7 +73,7 @@ sub main {
     $conf = {
         map { %$_        }
         map { values %$_ }
-        @{$conf}
+        reverse @{$conf}
     };
 
     if ( $option{auto_complete} ) {
