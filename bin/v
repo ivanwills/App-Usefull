@@ -67,7 +67,7 @@ sub main {
     # do stuff here
     create_tags();
     my $conf = Config::Any->load_stems({
-        stems   => [ qw/vrc .vrc/ ],
+        stems   => [ qw/vrc .vrc/, "$ENV{HOME}/.vrc", "/etc/vrc" ],
         use_ext => 1,
     });
     $conf = {
