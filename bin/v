@@ -19,6 +19,7 @@ use File::Find;
 use Path::Class;
 use File::CodeSearch::Files;
 use Config::Any;
+use Hash::Merge qw/merge/;
 
 our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -66,15 +67,16 @@ sub main {
 
     # do stuff here
     create_tags();
-    my $conf = Config::Any->load_stems({
+    my $confs = Config::Any->load_stems({
         stems   => [ qw/vrc .vrc/, "$ENV{HOME}/.vrc", "/etc/vrc" ],
         use_ext => 1,
     });
-    $conf = {
-        map { %$_        }
-        map { values %$_ }
-        reverse @{$conf}
-    };
+    my $conf = {};
+    for my $config ( reverse @{$confs} ) {
+        for my $file ( values %$config ) {
+            $conf = merge( $conf, $file );
+        }
+    }
 
     if ( $option{auto_complete} ) {
         my @auto = grep {/$ARGV[-1]/} qw/perl test tests templ static css js db all/, keys %$conf;
