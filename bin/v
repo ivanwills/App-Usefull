@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use version;
 use List::MoreUtils qw/uniq/;
-use Getopt::Long;
+use Getopt::Alt qw/get_options/;
 use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
@@ -38,32 +38,23 @@ exit 0;
 
 sub main {
 
-    Getopt::Long::Configure('bundling');
-    GetOptions(
-        \%option,
-        'schema|s=s',
-        'max|m=i',
-        'test|t!',
-        'tags|T!',
-        'open|o',
-        'open_vertical|O',
-        'auto_complete|auto-complete',
-        'verbose|v+',
-        'man',
-        'help',
-        'VERSION!',
-    ) or pod2usage(2);
-
-    if ( $option{'VERSION'} ) {
-        print "$name Version = $VERSION\n";
-        exit 1;
-    }
-    elsif ( $option{'man'} ) {
-        pod2usage( -verbose => 2 );
-    }
-    elsif ( $option{'help'} ) {
-        pod2usage( -verbose => 1 );
-    }
+    my ($opt) = get_options(
+        {
+            bundle  => 1,
+            help    => 1,
+            default => {%option},
+        },
+        [
+            'schema|s=s',
+            'max|m=i',
+            'test|t!',
+            'tags|T!',
+            'open|o',
+            'open_vertical|O',
+            'auto_complete|auto-complete',
+        ],
+    );
+    %option = %$opt;
 
     # do stuff here
     create_tags();
@@ -286,15 +277,20 @@ This documentation refers to v version 0.1.
   db        - Opens all files in the db directory
   all       - Open all of the above files
 
-  -m --max=int       The maximum number of files to open before stopping
-                     opening files for other directories
+  -m --max=int  The maximum number of files to open before stopping
+                opening files for other directories
 
-  -v --verbose       Show more detailed option
-     --version       Prints the version information
-     --help          Prints this help information
-     --man           Prints the full documentation for v
+  -v --verbose  Show more detailed option
+     --version  Prints the version information
+     --help     Prints this help information
+     --man      Prints the full documentation for v
 
 =head1 DESCRIPTION
+
+The purpose of the C<v> script is to make opening bunches of files easier by
+being able to store the lists of files in a configuration or by using the
+predefined lists.
+
 
 =head1 SUBROUTINES/METHODS
 
@@ -303,7 +299,8 @@ This documentation refers to v version 0.1.
 =head1 CONFIGURATION AND ENVIRONMENT
 
 If you create a configuration file (either vrc.yml or .vrc.yml) in the current
-directory you can create your own lists of files to open.
+directory, your home directory and/or /etc you can create your own lists of
+files to open.
 
 eg vrc.yml
 
