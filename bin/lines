@@ -22,11 +22,7 @@ our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
-    out     => undef,
-    verbose => 0,
-    man     => 0,
-    help    => 0,
-    VERSION => 0,
+    highlight => 1,
 );
 
 main();
@@ -41,6 +37,7 @@ sub main {
         'context|C=i',
         'before|B=i',
         'after|A=i',
+        'highlight!',
         'files|f!',
         'verbose|v+',
         'man',
@@ -71,7 +68,7 @@ sub main {
         files($_) while $_ = <STDIN>;
     }
     else {
-        lines(\*STDIN)
+        print lines(\*STDIN);
     }
 
     return;
@@ -80,10 +77,15 @@ sub main {
 sub files {
     my ($file) = @_;
     confess "No File\n" if !$file;
-    chomp $files;
-    print "====> $file <====\n";
+    chomp $file;
 
-    return lines(file($file)->openr);
+    my $out = lines(file($file)->openr);
+    return if !$out;
+
+    my $head = "====>  $file  <====\n";
+    print $option{highlight} ? colored($head, 'green') : $head;
+    chomp $out;
+    print "$out\n";
 }
 
 sub lines {
@@ -93,6 +95,7 @@ sub lines {
     my $before = $option{before} ? $option{before} : $option{context} ? $option{context} : 0;
     my $after  = $option{after } ? $option{after } : $option{context} ? $option{context} : 0;
     my $width  = length ($line + $after);
+    my $out    = '';
 
     while (<$fh>) {
         if ( $fh->input_line_number() < $line && $before ) {
@@ -101,21 +104,21 @@ sub lines {
         }
         elsif ( $fh->input_line_number() == $line ) {
             for (@before) {
-                print colored( sprintf("%${width}d: ", $line - $before--), 'blue');
-                print $_;
+                $out .= colored( sprintf("%${width}d: ", $line - $before--), 'blue') if $option{highlight};
+                $out .= $_;
             }
-            print colored( sprintf("%${width}d: ", $line ), 'red');
-            print $_;
+            $out .= colored( sprintf("%${width}d: ", $line ), 'red') if $option{highlight};
+            $out .= $option{highlight} ? colored($_, 'bold') : $_;
             last if !$after;
         }
         elsif ( $fh->input_line_number() > $line && $after ) {
-            print colored( sprintf("%${width}d: ", ++$line ), 'blue');
-            print $_;
+            $out .= colored( sprintf("%${width}d: ", ++$line ), 'blue') if $option{highlight};
+            $out .= $_;
             last if !--$after;
         }
     }
 
-    return;
+    return $out;
 }
 
 __DATA__
@@ -142,6 +145,8 @@ This documentation refers to lines version 0.0.1
                     Display int lines before the --line of interest
   -A --after[=]int  Display int lines after the --line of interest
   -f --files        Treat STDIN as a list of files
+     --highlight    Turn on highlighting (Default)
+     --no-highlight Turn off highlighting
 
   -v --verbose      Show more detailed option
      --version      Prints the version information
