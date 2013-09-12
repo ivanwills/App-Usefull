@@ -80,6 +80,7 @@ sub main {
 sub files {
     my ($file) = @_;
     confess "No File\n" if !$file;
+    chomp $files;
     print "====> $file <====\n";
 
     return lines(file($file)->openr);
