@@ -46,6 +46,7 @@ sub main {
         },
         [
             'schema|s=s',
+            'auto_complete|auto-complete',
             'max|m=i',
             'test|t!',
             'tags|T!',
