@@ -122,17 +122,17 @@ sub open_perl {
     my $file_test = File::CodeSearch::Files->new( include_type => [qw/perl test/] );
 
     for my $dir ( sort { $dirs{$a}{order} <=> $dirs{$b}{order} } keys %dirs ) {
-        warn "Dir $dir\n" if $option{verbose} > 1;
+        warn "Dir $dir\n" if $option{verbose} && $option{verbose} > 1;
         next if !-d $dir;
         last if @files > $option{max};
 
         my @children = dir($dir)->children;
 
         while (my $file = shift @children) {
-            print {*STDERR} "  Found $file" if $option{verbose} > 2;
+            print {*STDERR} "  Found $file" if $option{verbose} && $option{verbose} > 2;
             if (-d $file) {
                 if ( $file =~ m{ /.(?: svn | bzr | git ) | CVS | RCS }xms ) {
-                    print {*STDERR} "\n" if $option{verbose} > 2;
+                    print {*STDERR} "\n" if $option{verbose} && $option{verbose} > 2;
                     next;
                 }
 
@@ -140,7 +140,7 @@ sub open_perl {
             }
             else {
                 if ( !$file_test->file_ok($file) ) {
-                    print {*STDERR} "\n" if $option{verbose} > 2;
+                    print {*STDERR} "\n" if $option{verbose} && $option{verbose} > 2;
                     next;
                 }
                 #next if $dirs{$dir}{extension} && $file !~ /[.] (?: pm | pl | pod | t ) $/xms;
@@ -149,9 +149,9 @@ sub open_perl {
 
                 push @files, $file;
                 warn "$file\n" if $option{verbose} && $option{verbose} <= 2;
-                print {*STDERR} " OK" if $option{verbose} > 2;
+                print {*STDERR} " OK" if $option{verbose} && $option{verbose} > 2;
             }
-            print {*STDERR} "\n" if $option{verbose} > 2;
+            print {*STDERR} "\n" if $option{verbose} && $option{verbose} > 2;
         }
     }
 
@@ -172,7 +172,7 @@ sub open_tests {
         my @children = dir($dir)->children;
 
         while (my $file = shift @children) {
-            warn "Found $file\n" if $option{verbose} > 1;
+            warn "Found $file\n" if $option{verbose} && $option{verbose} > 1;
             if (-d $file) {
                 next if $file =~ m{ /.(?: svn | bzr | git ) | /CSV }xms;
 
