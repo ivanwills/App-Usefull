@@ -46,7 +46,6 @@ sub main {
         },
         [
             'schema|s=s',
-            'auto_complete|auto-complete',
             'max|m=i',
             'test|t!',
             'tags|T!',
@@ -71,7 +70,11 @@ sub main {
     }
 
     if ( $option{auto_complete} ) {
-        my @auto = grep {/$ARGV[-1]/} qw/perl test tests templ static css js db all/, keys %$conf;
+        if ( !@ARGV ) {
+            @ARGV = ('.');
+        }
+
+        my @auto = grep {/^$ARGV[-1]/} qw/perl test tests templ static css js db all/, keys %$conf;
         print join " ", sort @auto;
         exit 0;
     }
