@@ -125,7 +125,7 @@ __DATA__
 
 =head1 NAME
 
-lines - Script to show file line number context
+lines - Script to show the contents of a file around a specified line number
 
 =head1 VERSION
 
