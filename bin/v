@@ -108,11 +108,12 @@ sub auto {
     my ($opt, $auto) = @_;
 
     my $conf = config();
-    if ( !@ARGV ) {
-        @ARGV = ('.');
+    my @auto = sort ( qw/perl test templ static css js db all/, keys %$conf );
+
+    if ( @ARGV ) {
+        @auto = grep {/^$ARGV[-1]/} @auto;
     }
 
-    my @auto = grep {/^$ARGV[-1]/} qw/perl test tests templ static css js db all/, keys %$conf;
     print join " ", sort @auto;
 }
 
