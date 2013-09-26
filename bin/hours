@@ -420,16 +420,30 @@ sub stats {
         for my $stat (@{ $stats }) {
             $bin{ time_trunc( $stat->{total}, $option{bin} ) }++;
         }
-        my $max = max values %bin;
-        print "\nTime  : Num days worked for that long\n";
-        for my $key ( sort { $a <=> $b } keys %bin ) {
+        my $max   = max values %bin;
+        my @times = sort { $a <=> $b } keys %bin;
+        my $total = @{ $stats };
+        my $ln ="+-------+-------+-------+----------------------------------------------------+\n";
+        print "\n$ln";
+        print   "| Time  |  Day  | Days  |          Number days worked for that long          |\n";
+        print   "|       | Count | More  |                                                    |\n";
+        print $ln;
+        for my $key (@times) {
             my $colour
                 = $key >= $option{work_day} * 8.5 / 8 ? 'green'
                 : $key <  $option{work_day} * 7.0 / 8 ? 'red'
                 : $key <  $option{work_day} * 7.8 / 8 ? 'yellow'
                 :                                              '';
-            printf "%s : %3i %s\n", time_str($key), $bin{$key}, colored( '*' x (($bin{$key} / $max) * 50), $colour );
+            my $width = +($bin{$key} / $max) * 50;
+            printf "| %s | %5i | %5i | %s%s|\n",
+                time_str($key),
+                $bin{$key},
+                $total,
+                colored( '*' x $width, $colour ),
+                ' ' x ( 52 - ( $width == 50 ? 51 : $width ));
+            $total -= $bin{$key};
         }
+        print $ln;
     }
     if ( $option{percent} || $option{verbose} > 3 ) {
         $option{percent} ||= $last->{stddev} / $option{work_day} * 100;
