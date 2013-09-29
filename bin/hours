@@ -435,12 +435,12 @@ sub stats {
                 : $key <  $option{work_day} * 7.8 / 8 ? 'yellow'
                 :                                              '';
             my $width = +($bin{$key} / $max) * 50;
-            printf "| %s | %5i | %5i | %s%s|\n",
+            printf "| %s | %5i | %5i | %s%s |\n",
                 time_str($key),
                 $bin{$key},
                 $total,
                 colored( '*' x $width, $colour ),
-                ' ' x ( 52 - ( $width == 50 ? 51 : $width ));
+                ' ' x ( 50 - int $width );
             $total -= $bin{$key};
         }
         print $ln;
