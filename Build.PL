@@ -11,6 +11,7 @@ my $builder = Module::Build->new(
         'perl'                            => 5.008,
         'Class::Date'                     => 0,
         'Config::General'                 => 0,
+        'DateTime'                        => 0,
         'DBI'                             => 0,
         'DBIx::Class::Schema::Loader'     => 0,
         'Data::Dump::Streamer'            => 0,
