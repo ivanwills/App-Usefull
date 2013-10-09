@@ -1,0 +1,27 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+my @packages;
+my @cpan;
+
+for my $module (@ARGV) {
+    my $package = lc "lib$module-perl";
+    $package =~ s/::/-/g;
+    $package =~ s/_/-/g;
+
+    my $cache = `apt-cache search $package`;
+    if ( $cache ) {
+        push @packages, $package;
+    }
+    else {
+        push @cpan, $module;
+    }
+}
+
+print "sudo apt-get install " . join ' ', @packages;
+print "\n\n";
+
+print "sudo cpanm " . join ' ', @cpan;
+print "\n\n";
