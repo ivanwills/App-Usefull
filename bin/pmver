@@ -36,7 +36,7 @@ sub main {
     my $opt = get_options(
         { helper => 1, default => \%option, },
         [
-            'verbose|v!',
+            'verbose|v+',
         ],
     );
 
@@ -45,6 +45,7 @@ sub main {
         $max = length $module if $max < length $module;
     }
 
+    my $show_inc = 0;
     for my $module (@ARGV) {
         my $file = $module;
         $file =~ s{::}{/}gxms;
@@ -55,16 +56,23 @@ sub main {
         my $ver = eval "\$$module\::VERSION";
         print "$module " . ' ' x ( $max - length $module) . "- $ver";
         if ( $opt->verbose ) {
+            my $found = 0;
             for my $inc (@INC) {
                 next if !-f "$inc/$file";
 
                 print " ($inc/$file)";
-                last;
+                last if $opt->verbose == 1;
+                $found++;
             }
+            $show_inc = 1 if $found > 1;
         }
         print "\n";
     }
 
+    if ($show_inc) {
+        print "\@INC:\n\t", join "\n\t", @INC;
+        print "\n";
+    }
 
     return;
 }
