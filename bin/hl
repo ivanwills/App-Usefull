@@ -106,7 +106,7 @@ This documentation refers to hl version 0.0.1
    hl [option] regex[=color] [regex[=color] ...]
 
  OPTIONS:
-  -o --other         other option
+  -l --log           Highlights standard log status levels
 
   -v --verbose       Show more detailed option
      --version       Prints the version information
