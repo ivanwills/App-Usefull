@@ -19,6 +19,7 @@ use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use Path::Class;
 use WWW::Mechanize;
+use IO::Socket::SSL();
 
 our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -73,7 +74,12 @@ sub main {
 
     # do stuff here
     my $url  = shift @ARGV;
-    my $mech = WWW::Mechanize->new;
+    my $mech = WWW::Mechanize->new(
+        ssl_opts => {
+            SSL_verify_mode => IO::Socket::SSL::SSL_VERIFY_NONE,
+            verify_hostname => 0,
+        }
+    );
 
     if ( $option{useragent} ) {
         my %agents = (
