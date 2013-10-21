@@ -134,6 +134,7 @@ sub main {
     : $level eq 'dist'      ? test() && dist()
     : $level eq 'release'   ? release()
     : !$level               ? return
+    : $level eq 'list'      ? print join "\t", qw/test testup testcover install dist release/, "\n"
     :                         die "No such command '$level'\n";
 
     return;
