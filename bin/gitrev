@@ -22,6 +22,7 @@ our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
+    backup  => 1,
     verbose => 0,
     man     => 0,
     help    => 0,
@@ -40,7 +41,7 @@ sub main {
     Getopt::Long::Configure('bundling');
     GetOptions(
         \%option,
-        'backup|b',
+        'backup|b!',
         'revision|r=s',
         'test|t!',
         'verbose|v+',
@@ -116,12 +117,15 @@ This documentation refers to gitrev version 0.1.
    gitrev [option] file1 [file2 ...]
 
  OPTIONS:
-  -b --backup        Create a backup copy of the file (uses ~ extension + a number if nessesary)
+  -b --backup      Create a backup copy of the file (uses ~ extension + a number if nessesary)
+     --no-backup   Don't create the backup file
+  -r --revision[=]str
+                   Revert to this version of the file
 
-  -v --verbose       Show more detailed option
-     --VERSION       Prints the version information
-     --help          Prints this help information
-     --man           Prints the full documentation for gitrev
+  -v --verbose     Show more detailed option
+     --VERSION     Prints the version information
+     --help        Prints this help information
+     --man         Prints the full documentation for gitrev
 
 =head1 DESCRIPTION
 
