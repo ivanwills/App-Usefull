@@ -49,6 +49,7 @@ sub main {
             'schema|s=s',
             'max|m=i',
             'test|t!',
+            'list|l',
             'tags|T!',
             'open|o',
             'open_vertical|O',
@@ -68,6 +69,7 @@ sub main {
             , -f $file          ? $file
             : $conf->{$file}    ? map { glob $_ } @{ $conf->{$file} }
             : $file eq 'perl'   ? open_perl()
+            : $file eq 'lib'    ? open_lib()
             : $file eq 'test'   ? open_tests()
             : $file eq 'tests'  ? open_tests()
             : $file =~ /templ/  ? open_templates()
@@ -85,8 +87,15 @@ sub main {
         : $option{open_vertical} ? '-O '
         :                          '';
 
-    warn        "vim $args'" . (join "' '", uniq @files) . "'" if $option{verbose} || $option{test};
-    return exec "vim $args'" . (join "' '", uniq @files) . "'" if !$option{test};
+    if ( $opt->list ) {
+        print join "\n", uniq @files, '';
+        return;
+    }
+
+    warn "vim $args'" . (join "' '", uniq @files) . "'" if $option{verbose} || $option{test};
+    exec "vim $args'" . (join "' '", uniq @files) . "'" if !$option{test};
+
+    return ;
 }
 
 sub config {
@@ -108,7 +117,7 @@ sub auto {
     my ($opt, $auto) = @_;
 
     my $conf = config();
-    my @auto = sort ( qw/perl test templ static css js db all/, keys %$conf );
+    my @auto = sort ( qw/perl lib test templ static css js db all/, keys %$conf );
 
     if ( @ARGV > 1 ) {
         @auto = grep {/^$ARGV[-1]/} @auto;
@@ -291,6 +300,7 @@ This documentation refers to v version 0.1.
   db        - Opens all files in the db directory
   all       - Open all of the above files
 
+  -l --list     List the files that will be opened
   -m --max=int  The maximum number of files to open before stopping
                 opening files for other directories
 
