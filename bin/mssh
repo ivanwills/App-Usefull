@@ -25,7 +25,6 @@ my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
     host    => [],
-    cssh    => '/usr/bin/cssh',
     verbose => 0,
     man     => 0,
     help    => 0,
@@ -40,6 +39,9 @@ main();
 exit 0;
 
 sub main {
+
+    $option{cssh} = `which cssh`;
+    chomp $option{cssh};
 
     Getopt::Long::Configure('bundling');
     GetOptions(
@@ -66,13 +68,12 @@ sub main {
     elsif ( $option{'help'} ) {
         pod2usage( -verbose => 1 );
     }
-    elsif ( !@ARGV && !-x $option{cssh} ) {
+    elsif ( !@ARGV && !( -x $option{cssh} ) ) {
         warn "You must specify a command or install or specify the location of cssh!\n";
         pod2usage( -verbose => 1 );
     }
 
     if ( !@ARGV ) {
-        warn "here";
         exec $option{cssh}, get_hosts($option{host});
     }
 
@@ -218,12 +219,19 @@ This documentation refers to mssh version 0.1.
    mssh [ --VERSION | --help | --man ]
    mssh [ -t | --test ] [ -v | --verbose ] -h host [-h host2 ..] 'remote command'
    mssh [ -t | --test ] [ -v | --verbose ] host [host2 ...] 'remote command'
+   mssh [ -t | --test ] [ -v | --verbose ] -h host [-h host2 ..]
 
  OPTIONS:
+  'remote command'
+                  The command to execute on the remote hosts.
+  host            See --host, only use if specifying a remote command
+
   -h --host[=]str Host or range of hosts to execute 'remote command' on
                   The range must be sourounded by [] and can be either comma
                   seperated integer/letters or .. for a range of all values
-                  from the first to last.
+                  from the first to last. Note if clusterssh (cssh) is
+                  installed and no 'remote command' specified C<cssh> will
+                  be run
                   EG [0..5] for 1,2,3,4 and 5
                      [0,5]      1 and 5
                      [0..3,5]   1,2,3 and 5
