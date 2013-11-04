@@ -49,6 +49,7 @@ sub main {
             'schema|s=s',
             'max|m=i',
             'test|t!',
+            'list|l',
             'tags|T!',
             'open|o',
             'open_vertical|O',
@@ -85,8 +86,15 @@ sub main {
         : $option{open_vertical} ? '-O '
         :                          '';
 
-    warn        "vim $args'" . (join "' '", uniq @files) . "'" if $option{verbose} || $option{test};
-    return exec "vim $args'" . (join "' '", uniq @files) . "'" if !$option{test};
+    if ( $opt->list ) {
+        print join "\n", uniq @files, '';
+        return;
+    }
+
+    warn "vim $args'" . (join "' '", uniq @files) . "'" if $option{verbose} || $option{test};
+    exec "vim $args'" . (join "' '", uniq @files) . "'" if !$option{test};
+
+    return ;
 }
 
 sub config {
@@ -291,9 +299,16 @@ This documentation refers to v version 0.1.
   db        - Opens all files in the db directory
   all       - Open all of the above files
 
+  -l --list     List the files that will be opened
   -m --max=int  The maximum number of files to open before stopping
                 opening files for other directories
+  -s --schema[=]str
+                Open files for the schema
+  -T --tags     Create ctags file
+  -o            vim -o
+  -O            vim -O
 
+  -t --test     Show the command that will be run
   -v --verbose  Show more detailed option
      --version  Prints the version information
      --help     Prints this help information
