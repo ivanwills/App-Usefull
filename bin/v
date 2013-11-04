@@ -69,6 +69,7 @@ sub main {
             , -f $file          ? $file
             : $conf->{$file}    ? map { glob $_ } @{ $conf->{$file} }
             : $file eq 'perl'   ? open_perl()
+            : $file eq 'lib'    ? open_lib()
             : $file eq 'test'   ? open_tests()
             : $file eq 'tests'  ? open_tests()
             : $file =~ /templ/  ? open_templates()
@@ -116,7 +117,7 @@ sub auto {
     my ($opt, $auto) = @_;
 
     my $conf = config();
-    my @auto = sort ( qw/perl test templ static css js db all/, keys %$conf );
+    my @auto = sort ( qw/perl lib test templ static css js db all/, keys %$conf );
 
     if ( @ARGV > 1 ) {
         @auto = grep {/^$ARGV[-1]/} @auto;
