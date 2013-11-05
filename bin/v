@@ -211,9 +211,10 @@ sub open_tests {
     return @files;
 }
 
-sub open_templates { return open_general([qw{template templates root html views}]); }
-sub open_css       { return open_general([qw{css public/css root/css}], [ qr{[.]css$} ] ); }
-sub open_js        { return open_general([qw{js javascript public/js public/javascripts root/js root/javascript }], [ qr{[.]js$} ] ); }
+sub open_lib       { return open_general( [qw{ lib                                                                }], [qr{ [.](?:pm|pod)$}] ); }
+sub open_templates { return open_general( [qw{ template templates root html views                                 }]); }
+sub open_css       { return open_general( [qw{ css public/css root/css                                            }], [qr{ [.]css$       }] ); }
+sub open_js        { return open_general( [qw{ js javascript public/js public/javascripts root/js root/javascript }], [qr{ [.]js$        }] ); }
 
 sub open_general {
     my ($dirs, $matches) = @_;
