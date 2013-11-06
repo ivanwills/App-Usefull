@@ -110,6 +110,20 @@ sub config {
         }
     }
 
+    # get current branch (if one)
+    my $branch = eval { file('.git/HEAD')->slurp };
+    if ( $branch ) {
+        chomp $branch;
+        $branch =~ s/^.*?(\w+)\n?$/$1/;
+
+        # merge branch specific key into main conf
+        if ( $conf->{$branch} && ref $conf->{$branch} ) {
+            for my $key ( keys %{ $conf->{$branch} } ) {
+                $conf->{$key} = $conf->{$branch}{$key};
+            }
+        }
+    }
+
     return $conf;
 }
 
