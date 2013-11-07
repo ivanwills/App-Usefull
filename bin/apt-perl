@@ -25,3 +25,8 @@ print "\n\n";
 
 print "sudo cpanm " . join ' ', @cpan;
 print "\n\n";
+
+sleep 1;
+
+system qw/sudo apt-get install/, @packages if @packages;
+system qw/sudo cpanm/, @cpan if @cpan;
