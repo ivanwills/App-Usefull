@@ -84,6 +84,14 @@ package Tidy::Perl {
     has '+command' => ( default => sub{[qw/perltidy -b/]} );
 }
 
+package Tidy::Html {
+    use Moose;
+    use Path::Class;
+    extends 'Tidy';
+
+    has '+command' => ( default => sub{[qw/tidy -indent -asxhtml -m/]} );
+}
+
 package Tidy::Json {
     use Moose;
     extends 'Tidy::STDIN';
@@ -134,6 +142,7 @@ sub main {
                 = $file =~ /[.](pl|pm|pod)$/        ? 'perl'
                 : $file =~ /[.](json|zoo|dc[.]js)$/ ? 'json'
                 : $file =~ /[.]ya?ml$/              ? 'yaml'
+                : $file =~ /[.]x?htm?l$/            ? 'html'
                 :                                     die "Unknown file type for '$file' specify type with --format!";
         }
         my $tidier = tidier($option{format});
@@ -183,7 +192,7 @@ This documentation refers to tidyup version 0.0.1
 perltidy        perltidy
 php5-tidy
 tidy
-csstidy
+csstidy         ! actually a compressor
 ruby-tidy
 libjson-xs-perl json_xs
 libjson-pp-perl json_pp
