@@ -1,0 +1,234 @@
+#!/usr/bin/perl
+
+# Created on: 2013-11-20 14:23:47
+# Create by:  dev
+# $Id$
+# $Revision$, $HeadURL$, $Date$
+# $Revision$, $Source$, $Date$
+
+use strict;
+use warnings;
+use version;
+use Scalar::Util;
+use List::Util;
+use Getopt::Long;
+use Pod::Usage;
+use Data::Dumper qw/Dumper/;
+use English qw/ -no_match_vars /;
+use FindBin qw/$Bin/;
+use Path::Class;
+
+our $VERSION = version->new('0.0.1');
+my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+
+my %option = (
+    out     => undef,
+    verbose => 0,
+    man     => 0,
+    help    => 0,
+    VERSION => 0,
+);
+
+if ( !@ARGV ) {
+    pod2usage( -verbose => 1 );
+}
+
+package Tidy {
+    use Moose;
+
+    has command => (
+        is       => 'rw',
+        isa      => 'ArrayRef[Str]',
+        required => 1,
+    );
+    has verbose => (
+        is      => 'rw',
+        isa     => 'Int',
+        default => 0,
+    );
+    has test => (
+        is  => 'rw',
+        isa => 'Bool',
+    );
+
+    sub tidy {
+        my ($self, $file) = @_;
+        print  join ' ', @{ $self->command }, $file, "\n" if $self->verbose;
+        system @{ $self->command }, $file;
+
+        return;
+    }
+};
+
+package Tidy::STDIN {
+    use Moose;
+    extends 'Tidy';
+
+    sub tidy {
+        my ($self, $file) = @_;
+        my $cmd = join ' ', @{ $self->command };
+        print  "$cmd < $file > $file.tdy\n" if $self->verbose;
+        system "$cmd < $file > $file.tdy";
+
+        print  "mv $file.tdy $file\n" if $self->verbose;
+        system "mv $file.tdy $file";
+        return "$file.tdy";
+    }
+}
+
+package Tidy::Perl {
+    use Moose;
+    use Path::Class;
+    extends 'Tidy';
+
+    has '+command' => ( default => sub{[qw/perltidy -b/]} );
+}
+
+package Tidy::Html {
+    use Moose;
+    use Path::Class;
+    extends 'Tidy';
+
+    has '+command' => ( default => sub{[qw/tidy -indent -asxhtml -m/]} );
+}
+
+package Tidy::Json {
+    use Moose;
+    extends 'Tidy::STDIN';
+
+    has '+command' => ( default => sub{[qw/json_pp -f json -t json -json_opt relaxed,pretty,allow_singlequote/]} );
+}
+
+package Tidy::Yaml {
+    use Moose;
+    extends 'Tidy::STDIN';
+
+    has '+command' => ( default => sub{[qw/json_xs -f yaml -t yaml/]} );
+}
+
+
+main();
+exit 0;
+
+sub main {
+
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,
+        'format|f=s',
+        'diff|d=s',
+        'verbose|v+',
+        'man',
+        'help',
+        'VERSION!',
+    ) or pod2usage(2);
+
+    if ( $option{'VERSION'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
+
+    # do stuff here
+    @ARGV = ('-') if !@ARGV;
+    for my $file (@ARGV) {
+        if ( !$option{format} ) {
+            $option{format}
+                = $file =~ /[.](pl|pm|pod)$/        ? 'perl'
+                : $file =~ /[.](json|zoo|dc[.]js)$/ ? 'json'
+                : $file =~ /[.]ya?ml$/              ? 'yaml'
+                : $file =~ /[.]x?htm?l$/            ? 'html'
+                :                                     die "Unknown file type for '$file' specify type with --format!";
+        }
+        my $tidier = tidier($option{format});
+
+        my $tidy_file = $tidier->tidy($file);
+        my $diff = $option{diff} || `which csvimdiff`;
+        chomp $diff;
+        $diff = 'git diff ' if !$diff || !-x $diff;
+        system "$diff $file";
+    }
+
+    return;
+}
+
+sub tidier {
+    my ($format) = @_;
+    my $package = 'Tidy::' . ucfirst $format;
+    return $package->new(%option);
+}
+
+__DATA__
+
+=head1 NAME
+
+tidyup - Tool to help tidy up files
+
+=head1 VERSION
+
+This documentation refers to tidyup version 0.0.1
+
+=head1 SYNOPSIS
+
+   tidyup [option] file1 [file1 ...]
+
+ OPTIONS:
+  -f --format[=]str
+                The type of file that should be tidied up known formats
+                include : perl, json, yaml
+
+  -v --verbose  Show more detailed option
+     --version  Prints the version information
+     --help     Prints this help information
+     --man      Prints the full documentation for tidyup
+
+=head1 DESCRIPTION
+
+perltidy        perltidy
+php5-tidy
+tidy
+csstidy         ! actually a compressor
+ruby-tidy
+libjson-xs-perl json_xs
+libjson-pp-perl json_pp
+libxml2-utils   xmllint
+
+=head1 SUBROUTINES/METHODS
+
+=head1 DIAGNOSTICS
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+=head1 DEPENDENCIES
+
+=head1 INCOMPATIBILITIES
+
+=head1 BUGS AND LIMITATIONS
+
+There are no known bugs in this module.
+
+Please report problems to dev (dev@localhost).
+
+Patches are welcome.
+
+=head1 AUTHOR
+
+dev - (dev@localhost)
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2013 dev (123 Timbuc Too).
+All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself. See L<perlartistic>.  This program is
+distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+=cut
