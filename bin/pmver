@@ -53,7 +53,8 @@ sub main {
 
         require $file;
 
-        my $ver = eval "\$$module\::VERSION";
+        my $VERSION = "\$$module\::VERSION";
+        my $ver = do { no strict 'refs'; $$VERSION }; ## no critic
         print "$module " . ' ' x ( $max - length $module) . "- $ver";
         if ( $opt->verbose ) {
             my $found = 0;
