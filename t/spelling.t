@@ -71,5 +71,17 @@ add_stopwords(qw/
     HEREDOCS
     evaled
     ie
+    perlmodver
+    xargs
+    yargs
+    du
+    duhs
+    hs
+    hl
+    incsearch
+    fv
+    pmver
+    vrc
+    yml
 /);
 all_pod_files_spelling_ok();
