@@ -189,14 +189,14 @@ This documentation refers to tidyup version 0.0.1
 
 =head1 DESCRIPTION
 
-perltidy        perltidy
-php5-tidy
-tidy
-csstidy         ! actually a compressor
-ruby-tidy
-libjson-xs-perl json_xs
-libjson-pp-perl json_pp
-libxml2-utils   xmllint
+    perltidy        perltidy
+    php5-tidy
+    tidy
+    csstidy         ! actually a compressor
+    ruby-tidy
+    libjson-xs-perl json_xs
+    libjson-pp-perl json_pp
+    libxml2-utils   xmllint
 
 =head1 SUBROUTINES/METHODS
 
@@ -212,17 +212,17 @@ libxml2-utils   xmllint
 
 There are no known bugs in this module.
 
-Please report problems to dev (dev@localhost).
+Please report problems to Ivan Wills (ivan.wills@gmail.com).
 
 Patches are welcome.
 
 =head1 AUTHOR
 
-dev - (dev@localhost)
+Ivan Wills - (ivan.wills@gmail.com)
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2013 dev (123 Timbuc Too).
+Copyright (c) 2013 Ivan Wills (14 Mullion Close, Hornsby Heights, NSW, Australia 2077)
 All rights reserved.
 
 This module is free software; you can redistribute it and/or modify it under

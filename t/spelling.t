@@ -83,5 +83,6 @@ add_stopwords(qw/
     pmver
     vrc
     yml
+    tidyup
 /);
 all_pod_files_spelling_ok();
