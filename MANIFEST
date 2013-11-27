@@ -30,7 +30,6 @@ bin/mssh
 bin/myget
 bin/ossh
 bin/partition-table.pl
-bin/perlmodver
 bin/pingfind
 bin/player-alarm
 bin/player-pause.pl
