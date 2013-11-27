@@ -63,6 +63,7 @@ MANIFEST.SKIP
 META.json
 META.yml
 README
+t/00-load.t
 t/critic.t
 t/kwalitee.t
 t/perlcriticrc
