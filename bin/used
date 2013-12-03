@@ -393,19 +393,16 @@ sub get_libraries {
             for my $ignore_file (qw/ .gitignore .bzrignore .csvignore /) {
                 next if !-f $ignore_file;
                 push @skips, qr/$ignore_file$/;
-                push @skips,
-                    map {
-                        s/[.]/\\./g; s/[*]/.*/g; s/[?]/.?/g;
-                        qr/$_/
-                    }
-                    grep {
-                        $_ ne ''
-                    }
-                    map {
-                        chomp;
-                        $_
-                    }
-                    file($ignore_file)->slurp;   ## no critic
+
+                for my $re ( file($ignore_file)->slurp ) {
+                    chomp $re;
+                    next if $re eq '';
+                    $re =~ s/[.]/\\./g;
+                    $re =~ s/[*]/.*/g;
+                    $re =~ s/[?]/.?/g;
+                    $re = qr/$re/;
+                    push @skips, $re;
+                }
             }
             push @skips, qr{templates?/};
         }

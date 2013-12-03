@@ -30,7 +30,6 @@ bin/mssh
 bin/myget
 bin/ossh
 bin/partition-table.pl
-bin/perlmodver
 bin/pingfind
 bin/player-alarm
 bin/player-pause.pl
@@ -63,6 +62,7 @@ MANIFEST.SKIP
 META.json
 META.yml
 README
+t/00-load.t
 t/critic.t
 t/kwalitee.t
 t/perlcriticrc

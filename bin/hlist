@@ -18,7 +18,7 @@ use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use Path::Class;
 use File::CodeSearch::Files;
-use File::chdir qw/$CWD/;
+use File::chdir;
 
 our $VERSION = version->new('0.0.1');
 my ($name) = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
