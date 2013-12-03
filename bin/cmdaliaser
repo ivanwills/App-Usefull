@@ -183,24 +183,24 @@ EXAMPLE
 
     $name = $command || $conf{command} || $name;
 
-    if ($pre_perl) {
-        my $pre_sub = eval("sub { $pre_perl }");  ## no critic
-        if ($pre_sub && ref $pre_sub eq 'CODE') {
-            return if !$pre_sub->();
-            die "pre returned " . $pre_sub->() . "\n" if $option{test};
-        }
-        else {
-            warn "Error in evaluating:\n$pre_perl";
-        }
-    }
-
     my $cmd = join ' ', $name, $alias;
     $cmd .= " | $post" if $post;
     $cmd .= $post_cmd  if $post_cmd;
 
+    if ($pre_perl) {
+        my $pre_sub = eval("sub { $pre_perl }");  ## no critic
+        if ($pre_sub && ref $pre_sub eq 'CODE') {
+            return if !(my $ans = $pre_sub->(\$cmd));
+            die "pre returned $ans\n" if $option{test};
+        }
+        else {
+            warn "Error ($@) evaluating:\n$pre_perl";
+        }
+    }
+
     $pager ||= $conf{pager};
     $pager = $ENV{PAGER} if $pager && $pager eq 'yes';
-    undef $pager if $pager && $pager eq 'no';
+    undef $pager   if $pager && $pager eq 'no';
     print "$cmd\n" if $option{verbose} || $option{test};
 
     if ( !$option{test} ) {
