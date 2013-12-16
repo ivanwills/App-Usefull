@@ -55,6 +55,7 @@ sub main {
             'open_vertical|O',
             'note|n!',
             'auto_complete|auto-complete',
+            'verbose|v+',
         ],
     );
     %option = %$opt;
@@ -97,8 +98,10 @@ sub main {
 
     note($config, @files) if $opt->note;
 
-    warn "vim $args'" . (join "' '", uniq @files) . "'" if $option{verbose} || $option{test};
-    exec "vim $args'" . (join "' '", uniq @files) . "'" if !$option{test};
+    my $cmd = "vim $args'" . (join "' '", uniq @files) . "'";
+
+    warn "$cmd\n" if $option{verbose} || $option{test};
+    exec $cmd if !$option{test};
 
     return ;
 }
