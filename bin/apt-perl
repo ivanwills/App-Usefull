@@ -96,11 +96,35 @@ sub main {
     return;
 }
 
+sub dependencies {
+    my ($module) = @_;
+    my $mcpan = MetaCPAN::API->new;
+
+    my $module_details = $mcpan->module($module);
+    my $dist_details   = $mcpan->release( distribution => $module_details->{distribution} );
+    my @dependencies   = @{ $dis_details->{dependency} };
+    my %depends;
+    my %seen;
+
+    while ( my $dependency = shift @dependencies) {
+        next if $seen{$dependency->{module}}++;
+
+        my $module_details = $mcpan->module($dependency->{module});
+
+        next if $depends{$module_details->{distribution}}++;
+
+        my $dist_details   = $mcpan->release( distribution => $module_details->{distribution} );
+        push @dependencies, @{ $dis_details->{dependency} };
+    }
+
+    return keys %depends;
+}
+
 __DATA__
 
 =head1 NAME
 
-apt-perl - <One-line description of commands purpose>
+apt-perl - Installs perl dependencies from apt (if possible) otherwise use cpanm.
 
 =head1 VERSION
 
@@ -108,7 +132,7 @@ This documentation refers to apt-perl version 0.0.1
 
 =head1 SYNOPSIS
 
-   apt-perl [option]
+   apt-perl [option] (module|dist|file) ...
 
  OPTIONS:
   -o --other         other option
