@@ -301,6 +301,11 @@ sub note {
     my $config_file = 'vrc.yml';
     my $config = {};
 
+    if ( !@files ) {
+        warn "No files to note!\n";
+        return;
+    }
+
     $name ||= 'note';
     require YAML::Syck;
 
@@ -318,8 +323,8 @@ sub note {
     }
 
     # make sure files are unique.
-    my %files = map {$_=>1} @files;
-    @files = grep { !$files{$_} } @files;
+    my %files = map {$_=>0} @files;
+    @files = grep { !$files{$_}++ } @files;
 
     # add to note tag
     if ( $location->{$name} ) {
