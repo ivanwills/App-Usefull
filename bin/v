@@ -364,6 +364,8 @@ This documentation refers to v version 0.1.
   -s --schema[=]str
                 Open files for the schema
   -T --tags     Create ctags file
+  -n --note     Add any extra files being opened to the saved config option (or note
+                if one isn't specified)
   -o            vim -o
   -O            vim -O
 
@@ -378,7 +380,6 @@ This documentation refers to v version 0.1.
 The purpose of the C<v> script is to make opening bunches of files easier by
 being able to store the lists of files in a configuration or by using the
 predefined lists.
-
 
 =head1 SUBROUTINES/METHODS
 
