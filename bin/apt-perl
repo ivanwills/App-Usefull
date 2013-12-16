@@ -41,7 +41,7 @@ sub main {
     Getopt::Long::Configure('bundling');
     GetOptions(
         \%option,
-        'out|o=s',
+        'test|t!',
         'verbose|v+',
         'man',
         'help',
@@ -60,27 +60,27 @@ sub main {
     }
 
     # do stuff here
-    my @packages;
-    my @cpan;
+    my @install = @ARGV;
+    my %packages;
 
-    for my $module (@ARGV) {
+    for my $module (@install) {
+
+        # normalize to standard Perl module names.
         if ( $module =~ /[.]pm$/ ) {
             $module =~ s/[.]pm$//;
             $module =~ s{/}{::}g;
         }
 
-        my $package = lc "lib$module-perl";
-        $package =~ s/::/-/g;
-        $package =~ s/_/-/g;
+        $packages{$module} = apt_package($module);
 
-        my $cache = `apt-cache search $package`;
-        if ( $cache ) {
-            push @packages, $package;
-        }
-        else {
-            push @cpan, $module;
+        # in no apt package check if any dependencies can be installed via apt
+        if ( !$packages{$module} ) {
+            push @install, dependencies($module);
         }
     }
+
+    my @packages = grep { $packages{$_} } keys %packages;
+    my @cpan     = grep {!$packages{$_} } keys %packages;
 
     print "sudo apt-get install " . join ' ', @packages;
     print "\n\n";
@@ -90,15 +90,38 @@ sub main {
 
     sleep 1;
 
-    system qw/sudo apt-get install/, @packages if @packages;
-    system qw/sudo cpanm/,           @cpan     if @cpan;
+    if ( !$option{test} ) {
+        system qw/sudo apt-get install/, @packages if @packages;
+        system qw/sudo cpanm/,           @cpan     if @cpan;
+    }
 
     return;
 }
 
+sub apt_package {
+    my ($module) = @_;
+    my $package = lc "lib$module-perl";
+    $package =~ s/::/-/g;
+    $package =~ s/_/-/g;
+
+    my $cache = `apt-cache search $package`;
+
+    return $cache =~ /^$package\s+-\s+/ ? $package : undef;
+}
+
+my $mcpan;
+my $failed;
 sub dependencies {
     my ($module) = @_;
-    my $mcpan = MetaCPAN::API->new;
+
+    # only run this if we can start MetaCPAN::API
+    eval { require MetaCPAN::API } if !$failed || $mcpan;
+    if ( $@ || $failed ) {
+        warn "MetaCPAN::API is not installed better results are acheived if it is\n" if !$failed++;
+        return;
+    }
+
+    $mcpan ||= MetaCPAN::API->new;
 
     my $module_details = $mcpan->module($module);
     my $dist_details   = $mcpan->release( distribution => $module_details->{distribution} );
@@ -124,7 +147,7 @@ __DATA__
 
 =head1 NAME
 
-apt-perl - Installs perl dependencies from apt (if possible) otherwise use cpanm.
+apt-perl - Installs perl dependencies from apt (if possible) otherwise uses cpanm.
 
 =head1 VERSION
 
