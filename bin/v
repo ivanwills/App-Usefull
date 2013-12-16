@@ -65,7 +65,9 @@ sub main {
 
     my @options = @ARGV ? @ARGV : ('perl');
     my @files;
+    my $config;
     for my $file ( @options ) {
+        $config = $file if !$config && !-f $file;
         push @files
             , -f $file          ? $file
             : $conf->{$file}    ? map { glob $_ } @{ $conf->{$file} }
@@ -93,7 +95,7 @@ sub main {
         return;
     }
 
-    note(@files) if $opt->note;
+    note($config, @files) if $opt->note;
 
     warn "vim $args'" . (join "' '", uniq @files) . "'" if $option{verbose} || $option{test};
     exec "vim $args'" . (join "' '", uniq @files) . "'" if !$option{test};
@@ -295,9 +297,11 @@ sub create_tags {
 }
 
 sub note {
-    my @files = @_;
+    my ($name, @files) = @_;
     my $config_file = 'vrc.yml';
     my $config = {};
+
+    $name ||= 'note';
     require YAML::Syck;
 
     if ( -f $config_file ) {
@@ -318,12 +322,12 @@ sub note {
     @files = grep { !$files{$_} } @files;
 
     # add to note tag
-    if ( $location->{note} ) {
-        my %old = map {$_=>1} @{ $location->{note} };
-        push @{ $location->{note} }, grep { !$old{$_} } @files;
+    if ( $location->{$name} ) {
+        my %old = map {$_=>1} @{ $location->{$name} };
+        push @{ $location->{$name} }, grep { !$old{$_} } @files;
     }
     else {
-        $location->{note} = \@files;
+        $location->{$name} = \@files;
     }
 
     YAML::Syck::DumpFile($config_file, $config);
