@@ -53,6 +53,7 @@ sub main {
             'tags|T!',
             'open|o',
             'open_vertical|O',
+            'note|n!',
             'auto_complete|auto-complete',
         ],
     );
@@ -91,6 +92,8 @@ sub main {
         print join "\n", uniq @files, '';
         return;
     }
+
+    note(@files) if $opt->note;
 
     warn "vim $args'" . (join "' '", uniq @files) . "'" if $option{verbose} || $option{test};
     exec "vim $args'" . (join "' '", uniq @files) . "'" if !$option{test};
@@ -289,6 +292,42 @@ sub create_tags {
         warn "$cmd\n" if $option{verbose} || $option{test};
         system $cmd if !$option{test};
     }
+}
+
+sub note {
+    my @files = @_;
+    my $config_file = 'vrc.yml';
+    my $config = {};
+    require YAML::Syck;
+
+    if ( -f $config_file ) {
+        $config = YAML::Syck::LoadFile($config_file);
+    }
+
+    my $location = $config;
+    if ( -f '.git/HEAD' ) {
+        my $head = file('.git/HEAD')->slurp;
+        chomp $head;
+        $head =~ s{.*/}{};
+        $config->{$head} ||= {};
+        $location = $config->{$head};
+    }
+
+    # make sure files are unique.
+    my %files = map {$_=>1} @files;
+    @files = grep { !$files{$_} } @files;
+
+    # add to note tag
+    if ( $location->{note} ) {
+        my %old = map {$_=>1} @{ $location->{note} };
+        push @{ $location->{note} }, grep { !$old{$_} } @files;
+    }
+    else {
+        $location->{note} = \@files;
+    }
+
+    YAML::Syck::DumpFile($config_file, $config);
+    return;
 }
 
 __DATA__
