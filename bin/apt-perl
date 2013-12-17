@@ -17,6 +17,12 @@ use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use Path::Class;
+use Module::CoreList;
+
+require CHI;
+require WWW::Mechanize::Cached;
+require HTTP::Tiny::Mech;
+require MetaCPAN::API;
 
 our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -71,6 +77,8 @@ sub main {
             $module =~ s{/}{::}g;
         }
 
+        next if exists $packages{$module};
+
         $packages{$module} = apt_package($module);
 
         # in no apt package check if any dependencies can be installed via apt
@@ -114,33 +122,50 @@ my $failed;
 sub dependencies {
     my ($module) = @_;
 
-    # only run this if we can start MetaCPAN::API
-    eval { require MetaCPAN::API } if !$failed || $mcpan;
-    if ( $@ || $failed ) {
-        warn "MetaCPAN::API is not installed better results are acheived if it is\n" if !$failed++;
-        return;
-    }
+    $mcpan ||= MetaCPAN::API->new(
+        ua => HTTP::Tiny::Mech->new(
+            mechua => WWW::Mechanize::Cached->new(
+                cache => CHI->new(
+                    driver => 'File',
+                    root_dir => '/tmp/metacpan-cache',
+                ),
+            ),
+        ),
+    );
 
-    $mcpan ||= MetaCPAN::API->new;
-
-    my $module_details = $mcpan->module($module);
-    my $dist_details   = $mcpan->release( distribution => $module_details->{distribution} );
-    my @dependencies   = @{ $dist_details->{dependency} };
+    my $dependencies = required_modules($module);
     my %depends;
-    my %seen;
+    my %seen = ( perl => 1 );
 
-    while ( my $dependency = shift @dependencies) {
-        next if $seen{$dependency->{module}}++;
+    while ( my $dependency = shift @$dependencies) {
+        my $module = $dependency->{module};
+        next if $seen{$module}++;
 
-        my $module_details = $mcpan->module($dependency->{module});
+        # Check if the module is a CORE module and skip if it is
+        my $core_version = Module::CoreList->first_release($module);
+        next if $core_version && $core_version <= $PERL_VERSION;
 
-        next if $depends{$module_details->{distribution}}++;
+        my ($dist, $depends) = required_modules($module);
 
-        my $dist_details   = $mcpan->release( distribution => $module_details->{distribution} );
-        push @dependencies, @{ $dist_details->{dependency} };
+        next if $depends{$dist}++;
+
+        push @$dependencies, @{ $depends };
     }
 
     return keys %depends;
+}
+
+my %required;
+sub required_modules {
+    my ($module) = @_;
+    return if exists $required{$module};
+    $required{$module}++;
+
+    warn "$module\n" if $option{verbose} > 1;
+    my $module_details = $mcpan->module($module);
+    my $dist_details   = $mcpan->release( distribution => $module_details->{distribution} );
+
+    return wantarray ? ( $module_details->{distribution}, $dist_details->{dependency} ) : $dist_details->{dependency};
 }
 
 __DATA__
