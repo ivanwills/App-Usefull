@@ -9,16 +9,12 @@
 use strict;
 use warnings;
 use version;
-use Scalar::Util;
-use List::Util;
-#use List::MoreUtils;
 use Getopt::Long;
 use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use Path::Class;
-
 require CHI;
 require WWW::Mechanize::Cached;
 require HTTP::Tiny::Mech;
@@ -33,10 +29,6 @@ my %option = (
     help    => 0,
     VERSION => 0,
 );
-
-if ( !@ARGV ) {
-    pod2usage( -verbose => 1 );
-}
 
 main();
 exit 0;
@@ -59,7 +51,7 @@ sub main {
     elsif ( $option{'man'} ) {
         pod2usage( -verbose => 2 );
     }
-    elsif ( $option{'help'} ) {
+    elsif ( $option{'help'} || !@ARGV ) {
         pod2usage( -verbose => 1 );
     }
 
