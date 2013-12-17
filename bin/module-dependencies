@@ -86,6 +86,8 @@ sub main {
 
         my $module_details = $mcpan->module($module);
         print scalar show_dependencies($mcpan, $module_details->{distribution});
+        print "\n";
+        required_reset();
     }
 
     return;
@@ -111,6 +113,7 @@ sub show_dependencies {
 }
 
 my %required;
+sub required_reset { return %required = () }
 sub required_dists {
     my ($mcpan, $dist) = @_;
     return if exists $required{$dist};
