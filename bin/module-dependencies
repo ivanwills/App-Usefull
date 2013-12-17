@@ -96,17 +96,18 @@ sub show_dependencies {
     $indent //= 0;
 
     my @depend = required_dists($mcpan, $dist);
-    my $count = @depend;
+    my %count = map {$_ => 1} @depend;
     my $out = '';
     for my $depend (@depend) {
         next if $depend eq 'perl';
         my ($found, $show) = show_dependencies($mcpan, $depend, $indent + 1);
         $out .= $show;
-        $count += $found;
+        %count = ( %count, %$found );
     }
 
+    my $count = keys %count;
     my $show = (' ' x ($indent * 4)) . "$dist ($count)\n$out";
-    return wantarray ? ($count, $show) : $show;
+    return wantarray ? (\%count, $show) : $show;
 }
 
 my %required;
