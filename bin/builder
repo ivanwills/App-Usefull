@@ -211,7 +211,7 @@ sub dist {
             for my $lib (`find lib | grep '[.]pm\$'`) {
                 $lib =~ s{lib/|[.]pm\n}{}g;
                 $lib =~ s{/}{::}g;
-                push @modules, "use_ok('$_');\n";
+                push @modules, "use_ok('$lib');\n";
             }
 
             unlink $tars[-1];
