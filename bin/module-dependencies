@@ -1,0 +1,180 @@
+#!/usr/bin/perl
+
+# Created on: 2013-12-17 21:15:02
+# Create by:  Ivan Wills
+# $Id$
+# $Revision$, $HeadURL$, $Date$
+# $Revision$, $Source$, $Date$
+
+use strict;
+use warnings;
+use version;
+use Getopt::Long;
+use Pod::Usage;
+use Data::Dumper qw/Dumper/;
+use English qw/ -no_match_vars /;
+use FindBin qw/$Bin/;
+use Path::Class;
+require CHI;
+require WWW::Mechanize::Cached;
+require HTTP::Tiny::Mech;
+require MetaCPAN::API;
+
+our $VERSION = version->new('0.0.1');
+my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+
+my %option = (
+    verbose => 0,
+    man     => 0,
+    help    => 0,
+    VERSION => 0,
+);
+
+main();
+exit 0;
+
+sub main {
+
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,
+        'verbose|v+',
+        'man',
+        'help',
+        'VERSION!',
+    ) or pod2usage(2);
+
+    if ( $option{'VERSION'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} || !@ARGV ) {
+        pod2usage( -verbose => 1 );
+    }
+
+    # do stuff here
+    my $mcpan = MetaCPAN::API->new(
+        ua => HTTP::Tiny::Mech->new(
+            mechua => WWW::Mechanize::Cached->new(
+                cache => CHI->new(
+                    driver => 'File',
+                    root_dir => '/tmp/metacpan-cache',
+                ),
+            ),
+        ),
+    );
+    for my $module (@ARGV) {
+
+        # normalize to standard Perl module names.
+        if ( $module =~ /[.]pm$/ ) {
+            $module =~ s/[.]pm$//;
+            $module =~ s{/}{::}g;
+        }
+
+        my $module_details = $mcpan->module($module);
+        print scalar show_dependencies($mcpan, $module_details->{distribution});
+        print "\n";
+    }
+
+    return;
+}
+
+sub show_dependencies {
+    my ($mcpan, $dist, $indent) = @_;
+    $indent //= 0;
+
+    my @depend = required_dists($mcpan, $dist);
+    my %count = map {$_ => 1} @depend;
+    my $out = '';
+    for my $depend (@depend) {
+        next if $depend eq 'perl';
+        my ($found, $show) = show_dependencies($mcpan, $depend, $indent + 1);
+        $out .= $show;
+        %count = ( %count, %$found );
+    }
+
+    my $count = keys %count;
+    my $show = (' ' x ($indent * 4)) . "$dist ($count)\n$out";
+    return wantarray ? (\%count, $show) : $show;
+}
+
+my %required;
+sub required_reset { return %required = () }
+sub required_dists {
+    my ($mcpan, $dist) = @_;
+    return if exists $required{$dist};
+    $required{$dist}++;
+
+    warn "$dist\n" if $option{verbose} > 1;
+    my $dist_details   = $mcpan->release( distribution => $dist );
+
+    my %dists;
+    for my $module (@{ $dist_details->{dependency} }) {
+        next if $module->{phase} ne 'runtime';
+        warn "$module->{module}\n" if $option{verbose} > 1;
+        my $module_details = $mcpan->module($module->{module});
+        $dists{$module_details->{distribution}}++;
+    }
+
+    return sort keys %dists;
+}
+
+__DATA__
+
+=head1 NAME
+
+module-dependencies - Shows the dependencies of a module
+
+=head1 VERSION
+
+This documentation refers to module-dependencies version 0.0.1
+
+=head1 SYNOPSIS
+
+   module-dependencies [option] module ...
+
+ OPTIONS:
+  -v --verbose       Show more detailed option
+     --version       Prints the version information
+     --help          Prints this help information
+     --man           Prints the full documentation for module-dependencies
+
+=head1 DESCRIPTION
+
+=head1 SUBROUTINES/METHODS
+
+=head1 DIAGNOSTICS
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+=head1 DEPENDENCIES
+
+=head1 INCOMPATIBILITIES
+
+=head1 BUGS AND LIMITATIONS
+
+There are no known bugs in this module.
+
+Please report problems to Ivan Wills (ivan.wills@gmail.com).
+
+Patches are welcome.
+
+=head1 AUTHOR
+
+Ivan Wills - (ivan.wills@gmail.com)
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2013 Ivan Wills (14 Mullion Close, Hornsby Heights, NSW Australia 2077).
+All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself. See L<perlartistic>.  This program is
+distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+=cut
