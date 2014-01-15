@@ -19,12 +19,14 @@ use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use Path::Class;
 use WWW::Mechanize;
+use HTTP::Cookies;
 use IO::Socket::SSL();
 
 our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
+    cookie_file  => "$ENV{HOME}/.myget.cookies",
     max_redirect => 10,
     verbose      => 0,
     man          => 0,
@@ -54,6 +56,7 @@ sub main {
         'proxy|p=s%',
         'timeout|to=i',
         'useragent|ua|u=s',
+        'cookie_file|cookie-file|C=s',
         'format|F=s',
         'verbose|v+',
         'man',
@@ -78,7 +81,11 @@ sub main {
         ssl_opts => {
             SSL_verify_mode => IO::Socket::SSL::SSL_VERIFY_NONE,
             verify_hostname => 0,
-        }
+        },
+        cookie_jar => HTTP::Cookies->new(
+            autosave => 1,
+            file     => $option{cookie_file},
+        ),
     );
 
     if ( $option{useragent} ) {
@@ -203,6 +210,8 @@ This documentation refers to myget version 0.1.
                  Set the HTTP time out (Default 60 sec)
   -u --ua[=]str  Set the user-agent string
                  shortcuts: ff, ie6, ie7, ie8, iphone3, galaxys3
+  -C --cookie-file[=]file
+                 The location of the cookie file to use (Default ~/.myget.cookies)
 
   -v --verbose   Show more detailed option
      --VERSION   Prints the version information
