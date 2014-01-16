@@ -63,9 +63,9 @@ sub main {
 
     # do stuff here
 
-    my $sha = $option{tag} ? tag_commit() : branch_commit();
+    warn join "\t", my ($branch, $sha, $time) = $option{tag} ? tag_commit() : branch_commit();
 
-    branches_contain($sha);
+    branches_contain($branch, $sha, $time);
 
     return;
 }
@@ -80,39 +80,64 @@ sub alphanum_sort {
 }
 
 sub branches_contain {
-    my ($sha) = @_;
+    my ($branch_name, $branch_sha, $branch_time) = @_;
     my @branches =  sort alphanum_sort
         map {chomp; s/^\s+//; $_}
         grep {!/HEAD/}
         `git branch -r`;
+    my $format = q/--format=format:'%H %at <%an><%ae>'/;
 
+    BRANCH:
     for my $branch (@branches) {
-        open my $pipe, '|-', 'git log 
+        open my $pipe, '-|', "git log $format '$branch'";
+        my ($first, $author, $found);
+
+        LOG:
+        while (my ($log) = <$pipe>) {
+            chomp $log;
+            my ($sha, $time, $user) = split /\s+/, $log, 3;
+            if ( !defined $first ) {
+                $first  = $time;
+                $author = $user;
+                warn "skipping $branch" if $time < $branch_time;
+                next BRANCH if $time < $branch_time;
+            }
+            if ( $sha eq $branch_sha ) {
+                $found = 1;
+                last LOG;
+            }
+        }
+
+        print "$branch\t$author\t" . ( $found ? 'up to date' : "missing $branch_name" ) . "\n";
+    }
 }
 
 sub tag_commit {
     my @tags = sort alphanum_sort
+        grep {/$option{tag}/}
         map {chomp; $_}
         `git tag`;
 
-    return sha_from_show($tags[-1]);
+    return ( $tags[-1], sha_from_show($tags[-1]) );
 }
 
 sub branch_commit {
     my @branches = sort alphanum_sort
+        grep {/$option{branch}/}
         map {chomp; s/^\s+//; $_}
         grep {!/HEAD/}
         `git branch -r`;
 
-    return sha_from_show($branches[-1]);
+    return ( $branches[-1], sha_from_show($branches[-1]) );
 }
 
 sub sha_from_show {
     my ($name) = @_;
-    my ($sha) = map { s/^commit\s+//; chomp; $_}
-        grep {/^commit\s+/}
-        `git show $name`;
-    return $sha;
+    my $format = q/--format=format:'%H %at'/;
+    warn "git show $format $name\n";
+    die my $log = `git show $format $name`;
+    chomp $log;
+    return split /\s+/, $log;
 }
 
 __DATA__
