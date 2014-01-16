@@ -29,10 +29,6 @@ my %option = (
     VERSION => 0,
 );
 
-if ( !@ARGV ) {
-    pod2usage( -verbose => 1 );
-}
-
 main();
 exit 0;
 
@@ -124,6 +120,7 @@ sub tag_commit {
 }
 
 sub branch_commit {
+    $option{branch} ||= 'master';
     my @branches = sort alphanum_sort
         grep {/$option{branch}/}
         map {chomp; s/^\s+//; $_}
