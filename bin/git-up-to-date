@@ -63,7 +63,7 @@ sub main {
 
     # do stuff here
 
-    warn join "\t", my ($branch, $sha, $time) = $option{tag} ? tag_commit() : branch_commit();
+    my ($branch, $sha, $time) = $option{tag} ? tag_commit() : branch_commit();
 
     branches_contain($branch, $sha, $time);
 
@@ -85,7 +85,7 @@ sub branches_contain {
         map {chomp; s/^\s+//; $_}
         grep {!/HEAD/}
         `git branch -r`;
-    my $format = q/--format=format:'%H %at <%an><%ae>'/;
+    my $format = q/--format=format:'%H %at <%an>%ae'/;
 
     BRANCH:
     for my $branch (@branches) {
@@ -99,8 +99,10 @@ sub branches_contain {
             if ( !defined $first ) {
                 $first  = $time;
                 $author = $user;
-                warn "skipping $branch" if $time < $branch_time;
-                next BRANCH if $time < $branch_time;
+                if ( $time < $branch_time ) {
+                    warn "skipping $branch\n" if $option{verbose};
+                    next BRANCH;
+                }
             }
             if ( $sha eq $branch_sha ) {
                 $found = 1;
@@ -134,8 +136,7 @@ sub branch_commit {
 sub sha_from_show {
     my ($name) = @_;
     my $format = q/--format=format:'%H %at'/;
-    warn "git show $format $name\n";
-    die my $log = `git show $format $name`;
+    my ($log) = grep {/^[0-9a-f]+\s+\d{10}$/xms} `git show $format $name`;
     chomp $log;
     return split /\s+/, $log;
 }
