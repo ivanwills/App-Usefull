@@ -37,6 +37,7 @@ sub main {
         'branch|b=s',
         'format|f=s',
         'quick|q!',
+        'cgit|c=s',
         'verbose|v+',
         'man',
         'help',
@@ -100,6 +101,10 @@ HTML
         for my $row (@$csv) {
             my ($name, $email) = $row->[2] =~ /^<([^>]+)>(.*)$/;
             $row->[2] = $row->[0] eq 'up to date' ? $name : qq{<a href="mailto:$email?subject=$row->[1]%20is%20out%20of%20date">$name</a>};
+            if ($option{cgit}) {
+                my ($branch) = $row->[1] =~ m{^[^/]+/(.+)$}xms;
+                $row->[1] = qq[<a href="$option{cgit}/log/?h=$branch" title="cgit log">$branch</a>];
+            }
             print "<tr><td>" . (join $sepperator, @$row), "</td></tr>\n";
         }
 
@@ -217,6 +222,15 @@ This documentation refers to git-up-to-date version 0.0.1
   -t --tab[=]str    Specify a tag that any branch with newer commits must contain
   -b --branch[=]str Similarly a branch that other branches with newer commits must
                     contain (Default origin/master)
+  -f --format[=](test|text|html|csv|tab)
+                    Set the out put style
+                      * test - TAP format output (default)
+                      * text - formatted text
+                      * html - HTML page
+                      * csv  - comma seperated values format file
+                      * tab  - tab seperated values format file
+  -c --cgit[=]url   When using --format=html this creates a link to the cgit log page for the branch
+  -q --quick        Print to STDERR the statuses as they are found (no formatting)
 
   -v --verbose       Shows changed branches that are upto date.
      --version       Prints the version information
