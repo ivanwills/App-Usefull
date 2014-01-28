@@ -9,20 +9,17 @@
 use strict;
 use warnings;
 use version;
-use Scalar::Util;
-use List::Util;
-#use List::MoreUtils;
 use Getopt::Long;
 use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
-use Path::Class;
 
 our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
+    format  => 'text',
     verbose => 0,
     man     => 0,
     help    => 0,
@@ -33,13 +30,13 @@ main();
 exit 0;
 
 sub main {
-
-
     Getopt::Long::Configure('bundling');
     GetOptions(
         \%option,
         'tag|t=s',
         'branch|b=s',
+        'format|f=s',
+        'quick|q!',
         'verbose|v+',
         'man',
         'help',
@@ -61,7 +58,53 @@ sub main {
 
     my ($branch, $sha, $time) = $option{tag} ? tag_commit() : branch_commit();
 
-    branches_contain($branch, $sha, $time);
+    warn "Branch : $branch\nSHA   : $sha\nTime   : $time\n\n" if $option{verbose};
+
+    my $csv = branches_contain($branch, $sha, $time);
+
+    if ( $option{format} eq 'text' ) {
+        my @max = (0,0);
+        for my $row (@$csv) {
+            $max[0] = length $row->[0] if $max[0] < length $row->[0];
+            $max[1] = length $row->[1] if $max[1] < length $row->[1];
+        }
+        for my $row (@$csv) {
+            printf "%$max[0]s %$max[1]s %s\n", @$row;
+        }
+    }
+    elsif ( $option{format} eq 'csv' || $option{format} eq 'tab' ) {
+        my $sepperator = $option{format} eq 'tab' ? "\t" : ',';
+        for my $row (@$csv) {
+            print +(join $sepperator, @$row), "\n";
+        }
+    }
+    elsif ( $option{format} eq 'html' ) {
+        my $sepperator = "</td><td>";
+        my $repo       = map {chomp; s/^\s*url\s*=\s*//; $_} `grep url .git/config | head -n 1`;
+        my $date       = localtime;
+        print <<"HTML";
+<doctype>
+<html>
+<head>
+    <title>Branch status for $repo</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <script type="text/javascript" href="script.js"></script>
+</head>
+<body>
+    <h1>Branch status for $repo ($date)</h1>
+    <table>
+HTML
+
+        for my $row (@$csv) {
+            print "<tr><td>" . (join $sepperator, @$row), "</td></tr>\n";
+        }
+
+        print <<"HTML";
+    </table>
+</body>
+</html>
+HTML
+    }
 
     return;
 }
@@ -82,6 +125,7 @@ sub branches_contain {
         grep {!/HEAD/}
         `git branch -r`;
     my $format = q/--format=format:'%H %at <%an>%ae'/;
+    my @csv;
 
     BRANCH:
     for my $branch (@branches) {
@@ -106,8 +150,13 @@ sub branches_contain {
             }
         }
 
-        print "$branch\t$author\t" . ( $found ? 'up to date' : "missing $branch_name" ) . "\n";
+        next BRANCH if !$option{verbose} && $found;
+
+        push @csv, [ ( $found ? 'up to date' : "missing $branch_name" ), $branch, $author ];
+        warn +( $found ? 'up to date' : "missing $branch_name" ) . "\t$branch\t$author\n" if $option{quick};
     }
+
+    return \@csv;
 }
 
 sub tag_commit {
@@ -142,85 +191,39 @@ __DATA__
 
 =head1 NAME
 
-bin/git-up-to-date - <One-line description of commands purpose>
+git-up-to-date - Check that git branches include latest production branch/tag
 
 =head1 VERSION
 
-This documentation refers to bin/git-up-to-date version 0.0.1
+This documentation refers to git-up-to-date version 0.0.1
 
 =head1 SYNOPSIS
 
-   bin/git-up-to-date [option]
+   git-up-to-date [option]
 
  OPTIONS:
-  -o --other         other option
+  -t --tab[=]str    Specify a tag that any branch with newer commits must contain
+  -b --branch[=]str Similarly a branch that other branches with newer commits must
+                    contain (Default origin/master)
 
   -v --verbose       Show more detailed option
      --version       Prints the version information
      --help          Prints this help information
-     --man           Prints the full documentation for bin/git-up-to-date
-
-
+     --man           Prints the full documentation for git-up-to-date
 
 =head1 DESCRIPTION
 
-A full description of the module and its features.
-
-May include numerous subsections (i.e., =head2, =head3, etc.).
-
-
 =head1 SUBROUTINES/METHODS
-
-A separate section listing the public components of the module's interface.
-
-These normally consist of either subroutines that may be exported, or methods
-that may be called on objects belonging to the classes that the module
-provides.
-
-Name the section accordingly.
-
-In an object-oriented module, this section should begin with a sentence (of the
-form "An object of this class represents ...") to give the reader a high-level
-context to help them understand the methods that are subsequently described.
 
 =head1 DIAGNOSTICS
 
-A list of every error and warning message that the module can generate (even
-the ones that will "never happen"), with a full explanation of each problem,
-one or more likely causes, and any suggested remedies.
-
 =head1 CONFIGURATION AND ENVIRONMENT
-
-A full explanation of any configuration system(s) used by the module, including
-the names and locations of any configuration files, and the meaning of any
-environment variables or properties that can be set. These descriptions must
-also include details of any configuration language used.
 
 =head1 DEPENDENCIES
 
-A list of all of the other modules that this module relies upon, including any
-restrictions on versions, and an indication of whether these required modules
-are part of the standard Perl distribution, part of the module's distribution,
-or must be installed separately.
-
 =head1 INCOMPATIBILITIES
 
-A list of any modules that this module cannot be used in conjunction with.
-This may be due to name conflicts in the interface, or competition for system
-or program resources, or due to internal limitations of Perl (for example, many
-modules that use source code filters are mutually incompatible).
-
 =head1 BUGS AND LIMITATIONS
-
-A list of known problems with the module, together with some indication of
-whether they are likely to be fixed in an upcoming release.
-
-Also, a list of restrictions on the features the module does provide: data types
-that cannot be handled, performance issues and the circumstances in which they
-may arise, practical limitations on the size of data sets, special cases that
-are not (yet) handled, etc.
-
-The initial template usually just has:
 
 There are no known bugs in this module.
 
