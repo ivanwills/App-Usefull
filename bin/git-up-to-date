@@ -19,7 +19,7 @@ our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
-    format  => 'text',
+    format  => 'test',
     verbose => 0,
     man     => 0,
     help    => 0,
@@ -56,9 +56,11 @@ sub main {
 
     # do stuff here
 
-    my ($branch, $sha, $time) = $option{tag} ? tag_commit() : branch_commit();
+    my ($branch, $sha, $time) = $option{tag} || ( !$option{branch} && $ENV{UP_TO_DATE_TAG} ) ? tag_commit() : branch_commit();
 
     warn "Branch : $branch\nSHA    : $sha\nTime   : $time\n\n" if $option{verbose};
+
+    $option{all} = 1 if $option{format} eq 'test';
 
     my $csv = branches_contain($branch, $sha, $time);
 
@@ -105,6 +107,13 @@ HTML
 </html>
 HTML
     }
+    elsif ( $option{format} eq 'test' ) {
+        require Test::More;
+        Test::More->import( tests => scalar @$csv );
+        for my $row (@$csv) {
+            ok( $row->[0] eq 'up to date', $row->[1] . ' is upto date');
+        }
+    }
 
     return;
 }
@@ -150,7 +159,7 @@ sub branches_contain {
             }
         }
 
-        next BRANCH if !$option{verbose} && $found;
+        next BRANCH if !$option{all} && !$option{verbose} && $found;
 
         push @csv, [ ( $found ? 'up to date' : "missing $branch_name" ), $branch, $author ];
         warn +( $found ? 'up to date' : "missing $branch_name" ) . "\t$branch\t$author\n" if $option{quick};
@@ -160,6 +169,7 @@ sub branches_contain {
 }
 
 sub tag_commit {
+    $option{tag} ||= $ENV{UP_TO_DATE_TAG} || 'master';
     my @tags = sort alphanum_sort
         grep {/$option{tag}/}
         map {chomp; $_}
@@ -169,7 +179,7 @@ sub tag_commit {
 }
 
 sub branch_commit {
-    $option{branch} ||= 'master';
+    $option{branch} ||= $ENV{UP_TO_DATE_BRANCH} || 'master';
     my @branches = sort alphanum_sort
         grep {/$option{branch}/}
         map {chomp; s/^\s+//; $_}
