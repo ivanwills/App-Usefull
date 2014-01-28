@@ -82,7 +82,7 @@ sub main {
     }
     elsif ( $option{format} eq 'html' ) {
         my $sepperator = "</td><td>";
-        my $repo       = map {chomp; s/^\s*url\s*=\s*//; $_} `grep url .git/config | head -n 1`;
+        my ($repo)     = map {chomp; s/^\s*url\s*=\s*//; $_} `grep url .git/config | head -n 1`;
         my $date       = localtime;
         print <<"HTML";
 <doctype>
@@ -98,6 +98,8 @@ sub main {
 HTML
 
         for my $row (@$csv) {
+            my ($name, $email) = $row->[2] =~ /^<([^>]+)>(.*)$/;
+            $row->[2] = $row->[0] eq 'up to date' ? $name : qq{<a href="mailto:$email?subject=$row->[1]%20is%20out%20of%20date">$name</a>};
             print "<tr><td>" . (join $sepperator, @$row), "</td></tr>\n";
         }
 
