@@ -58,7 +58,7 @@ sub main {
 
     my ($branch, $sha, $time) = $option{tag} ? tag_commit() : branch_commit();
 
-    warn "Branch : $branch\nSHA   : $sha\nTime   : $time\n\n" if $option{verbose};
+    warn "Branch : $branch\nSHA    : $sha\nTime   : $time\n\n" if $option{verbose};
 
     my $csv = branches_contain($branch, $sha, $time);
 
@@ -133,14 +133,14 @@ sub branches_contain {
         my ($first, $author, $found);
 
         LOG:
-        while (my ($log) = <$pipe>) {
+        while (my $log = <$pipe>) {
             chomp $log;
             my ($sha, $time, $user) = split /\s+/, $log, 3;
             if ( !defined $first ) {
                 $first  = $time;
                 $author = $user;
                 if ( $time < $branch_time ) {
-                    warn "skipping $branch\n" if $option{verbose};
+                    warn "skipping $branch\n" if $option{verbose} > 1;
                     next BRANCH;
                 }
             }
@@ -206,7 +206,7 @@ This documentation refers to git-up-to-date version 0.0.1
   -b --branch[=]str Similarly a branch that other branches with newer commits must
                     contain (Default origin/master)
 
-  -v --verbose       Show more detailed option
+  -v --verbose       Shows changed branches that are upto date.
      --version       Prints the version information
      --help          Prints this help information
      --man           Prints the full documentation for git-up-to-date
