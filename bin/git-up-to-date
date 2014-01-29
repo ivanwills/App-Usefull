@@ -94,7 +94,7 @@ sub main {
     <script type="text/javascript" href="script.js"></script>
 </head>
 <body>
-    <h1>Branch status for $repo ($date)</h1>
+    <h1>Branch statuses for <i>$repo</i> ($date)</h1>
     <table>
 HTML
 
