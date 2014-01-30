@@ -211,7 +211,7 @@ sub dist {
             for my $lib (`find lib | grep '[.]pm\$'`) {
                 $lib =~ s{lib/|[.]pm\n}{}g;
                 $lib =~ s{/}{::}g;
-                push @modules, "use_ok('$_');\n";
+                push @modules, "use_ok('$lib');\n";
             }
 
             unlink $tars[-1];
@@ -428,6 +428,7 @@ This documentation refers to builder version 0.1.0.
   testcover Run the distribution's test with code coverage
   install   Run the tests and if they pass install the distribution
   dist      Run the tests (with author tests) and if they pass create a new tar.gz for release
+  release   Make changes for performing a CPAN release
 
  OPTIONS:
   -c --dist-clean
