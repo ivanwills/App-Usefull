@@ -96,6 +96,13 @@ sub main {
 <body>
     <h1>Branch statuses for <i>$repo</i> ($date)</h1>
     <table>
+        <thead>
+            <tr>
+                <th>Production Branch/Tag Status</th>
+                <th>Branch Name</th>
+                <th>Last commit owner</th>
+            </tr>
+        </thead>
 HTML
 
         for my $row (@$csv) {
