@@ -152,6 +152,17 @@ sub get_coders {
             },
             decode_on => 'word',
         },
+        hex => {
+            # hex => dec
+            encode => sub {
+                sprintf "%x", $_;
+            },
+            encode_on => 'word',
+            # dec => hex
+            decode    => sub {
+                sprintf "%i", hex $_;
+            },
+        },
     );
 }
 
@@ -175,6 +186,7 @@ This documentation refers to coder version 0.1.
                     bash             Single quoted bash line (only encode)
                     base64           Base64 encoding/decoding
                     quoted_printable MIME quoted printable format
+                    hex              Decimal <=> hexadecimal conversion
                     html             HTML entity encoding
                     http             HTTP encoding (dumb all non work characters % encoded)
                     url              HTTP encoding smarter eg spaces to +
@@ -208,6 +220,11 @@ Does Base64 encoding and decoding
 =item quoted_printable
 
 Does (en|de)coding of the MIME Quoted Printable format
+
+=item hex
+
+Deecimal to hexadecimal conversion, if C<--direction decode> then hexadecimal
+to decimal conversion
 
 =item html
 
