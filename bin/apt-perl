@@ -18,6 +18,8 @@ use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use Path::Class;
 use Module::CoreList;
+use File::chdir;
+use YAML qw/LoadFile/;
 
 require CHI;
 require WWW::Mechanize::Cached;
@@ -69,7 +71,21 @@ sub main {
     my @install = @ARGV;
     my %packages;
 
+    MODULE:
     for my $module (@install) {
+
+        # check for git repositories/local folders
+        if ( -d $module ) {
+            local $CWD = $module;
+            my $yaml = LoadFile(-e 'MYMETA.yml' ? 'MYMETA.yml' : 'META.yml');
+
+            next MODULE if !ref $yaml || !$yaml->{requires};
+
+            push @install, grep {$_ ne 'perl'} keys %{ $yaml->{requires} };
+            next MODULE;
+        }
+        elsif ( $module =~ /git/ ) {
+        }
 
         # normalize to standard Perl module names.
         if ( $module =~ /[.]pm$/ ) {
@@ -183,12 +199,12 @@ This documentation refers to apt-perl version 0.0.1
    apt-perl [option] (module|dist|file) ...
 
  OPTIONS:
-  -o --other         other option
+  -t --test         Just show what would be installed don't actually install
 
-  -v --verbose       Show more detailed option
-     --version       Prints the version information
-     --help          Prints this help information
-     --man           Prints the full documentation for apt-perl
+  -v --verbose      Show more detailed option
+     --version      Prints the version information
+     --help         Prints this help information
+     --man          Prints the full documentation for apt-perl
 
 
 
