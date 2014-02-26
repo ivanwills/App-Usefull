@@ -70,6 +70,9 @@ sub main {
     $option{all} = 1 if $option{format} eq 'test';
 
     my $csv = branches_contain($branch, $sha, $time);
+    if ($option{verbose}) {
+        warn @$csv . " branches found\n";
+    }
 
     if ( $option{format} eq 'text' ) {
         my @max = (0,0);
@@ -86,6 +89,18 @@ sub main {
         for my $row (@$csv) {
             print +(join $sepperator, @$row), "\n";
         }
+    }
+    elsif ( $option{format} eq 'json' ) {
+        require JSON::XS;
+        my ($repo) = map {chomp; s/^\s*url\s*=\s*//; $_} `grep url .git/config | head -n 1`;
+        print JSON::XS::encode_json({
+            repository => $repo,
+            date       => '' . localtime,
+            branches   => [
+                map {{ status => $_->[0], name => $_->[1], last_author => $_->[2] }}
+                @$csv
+            ]
+        });
     }
     elsif ( $option{format} eq 'html' ) {
         my $sepperator = "</td><td>";
