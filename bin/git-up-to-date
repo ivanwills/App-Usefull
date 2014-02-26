@@ -210,7 +210,8 @@ sub tag_commit {
         map {chomp; $_}
         `git tag`;
 
-    return ( $tags[-1], sha_from_show($tags[-1]) );
+    my $oldest = @tags > $option{max_history} ? -$option{max_history} : scalar @tags;
+    return sha_from_show($tags[-1]);
 }
 
 sub branch_commit {
@@ -221,7 +222,8 @@ sub branch_commit {
         grep {!/HEAD/}
         `git branch -r`;
 
-    return ( $branches[-1], sha_from_show($branches[-1]) );
+    my $oldest = @branches > $option{max_history} ? -$option{max_history} : scalar @branches;
+    return sha_from_show($branches[-1]);
 }
 
 sub sha_from_show {
@@ -229,7 +231,7 @@ sub sha_from_show {
     my $format = q/--format=format:'%H %at'/;
     my ($log) = grep {/^[0-9a-f]+\s+\d{10}$/xms} `git show $format $name`;
     chomp $log;
-    return split /\s+/, $log;
+    return ( $name, split /\s+/, $log );
 }
 
 sub branch_age {
