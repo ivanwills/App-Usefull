@@ -20,11 +20,11 @@ our $VERSION = 0.001;
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
-    format  => 'test',
-    verbose => 0,
-    man     => 0,
-    help    => 0,
-    VERSION => 0,
+    format      => 'test',
+    verbose     => 0,
+    man         => 0,
+    help        => 0,
+    VERSION     => 0,
 );
 
 main();
@@ -165,7 +165,7 @@ sub alphanum_sort {
 sub branches_contain {
     my ($branch_name, $branch_sha, $branch_time) = @_;
     my @branches =  sort alphanum_sort
-        map {chomp; s/^\s+//; $_}
+        map {/^\s+(.*?)\s*$/xms}
         grep {!/HEAD/}
         `git branch -r`;
     my $format = q/--format=format:'%H %at <%an>%ae'/;
@@ -218,7 +218,7 @@ sub branch_commit {
     $option{branch} ||= $ENV{UP_TO_DATE_BRANCH} || 'master';
     my @branches = sort alphanum_sort
         grep {/$option{branch}/}
-        map {chomp; s/^\s+//; $_}
+        map {/^\s+(.*?)\s*$/xms}
         grep {!/HEAD/}
         `git branch -r`;
 
@@ -236,7 +236,7 @@ sub sha_from_show {
 
 sub branch_age {
     my @branches =  sort alphanum_sort
-        map {chomp; s/^\s+//; $_}
+        map {/^\s+(.*?)\s*$/xms}
         grep {!/HEAD/}
         `git branch -r`;
     my $format = q/--format=format:'%H %at <%an>%ae'/;
