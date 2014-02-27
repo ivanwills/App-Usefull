@@ -21,6 +21,7 @@ my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
     format      => 'test',
+    max_history => 1,
     verbose     => 0,
     man         => 0,
     help        => 0,
@@ -41,6 +42,7 @@ sub main {
         'cgit|c=s',
         'branch_age|branch-age|a',
         'age_limit|age-limit|l=s',
+        'max_history|max-history|h=i',
         'verbose|v+',
         'man',
         'help',
@@ -210,8 +212,8 @@ sub tag_commit {
         map {chomp; $_}
         `git tag`;
 
-    my $oldest = @tags > $option{max_history} ? -$option{max_history} : scalar @tags;
-    return sha_from_show($tags[-1]);
+    my $oldest = @tags > $option{max_history} ? -$option{max_history} : -scalar @tags;
+    return map { sha_from_show($_) } @tags[ $oldest .. -1 ];
 }
 
 sub branch_commit {
@@ -222,8 +224,8 @@ sub branch_commit {
         grep {!/HEAD/}
         `git branch -r`;
 
-    my $oldest = @branches > $option{max_history} ? -$option{max_history} : scalar @branches;
-    return sha_from_show($branches[-1]);
+    my $oldest = @branches > $option{max_history} ? -$option{max_history} : -scalar @branches;
+    return map { sha_from_show($_) } @branches[ $oldest .. -1 ];
 }
 
 sub sha_from_show {
