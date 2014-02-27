@@ -65,13 +65,13 @@ sub main {
         return branch_age();
     }
 
-    my ($branch, $sha, $time) = $option{tag} || ( !$option{branch} && $ENV{UP_TO_DATE_TAG} ) ? tag_commit() : branch_commit();
+    my ($release) = $option{tag} || ( !$option{branch} && $ENV{UP_TO_DATE_TAG} ) ? tag_commit() : branch_commit();
 
-    warn "Branch : $branch\nSHA    : $sha\nTime   : $time\n\n" if $option{verbose};
+    warn "Branch : $release->{name}\nSHA    : $release->{sha}\nTime   : $release->{time}\n\n" if $option{verbose};
 
     $option{all} = 1 if $option{format} eq 'test';
 
-    my $csv = branches_contain($branch, $sha, $time);
+    my $csv = branches_contain($release->{name}, $release->{sha}, $release->{time});
     if ($option{verbose}) {
         warn @$csv . " branches found\n";
     }
@@ -94,7 +94,8 @@ sub main {
     }
     elsif ( $option{format} eq 'json' ) {
         require JSON::XS;
-        my ($repo) = map {chomp; s/^\s*url\s*=\s*//; $_} `grep url .git/config | head -n 1`;
+        my $repo = `git config remote.origin.url`;
+        chomp $repo;
         print JSON::XS::encode_json({
             repository => $repo,
             date       => '' . localtime,
@@ -106,8 +107,9 @@ sub main {
     }
     elsif ( $option{format} eq 'html' ) {
         my $sepperator = "</td><td>";
-        my ($repo)     = map {chomp; s/^\s*url\s*=\s*//; $_} `grep url .git/config | head -n 1`;
         my $date       = localtime;
+        my $repo       = `git config remote.origin.url`;
+        chomp $repo;
         print <<"HTML";
 <doctype>
 <html>
@@ -233,7 +235,8 @@ sub sha_from_show {
     my $format = q/--format=format:'%H %at'/;
     my ($log) = grep {/^[0-9a-f]+\s+\d{10}$/xms} `git show $format $name`;
     chomp $log;
-    return ( $name, split /\s+/, $log );
+    my ($sha, $time) = split /\s+/, $log;
+    return { name => $name, sha => $sha, time => $time };
 }
 
 sub branch_age {
