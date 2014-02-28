@@ -65,13 +65,13 @@ sub main {
         return branch_age();
     }
 
-    my ($release) = $option{tag} || ( !$option{branch} && $ENV{UP_TO_DATE_TAG} ) ? tag_commit() : branch_commit();
+    my @releases = $option{tag} || ( !$option{branch} && $ENV{UP_TO_DATE_TAG} ) ? tag_commit() : branch_commit();
 
-    warn "Branch : $release->{name}\nSHA    : $release->{sha}\nTime   : $release->{time}\n\n" if $option{verbose};
+    warn "Branch : $releases->[-1]{name}\nSHA    : $releases->[-1]{sha}\nTime   : $releases->[-1]{time}\n\n" if $option{verbose};
 
     $option{all} = 1 if $option{format} eq 'test';
 
-    my $csv = branches_contain($release->{name}, $release->{sha}, $release->{time});
+    my $csv = branches_contain($releases->[-1]);
     if ($option{verbose}) {
         warn @$csv . " branches found\n";
     }
@@ -152,6 +152,7 @@ HTML
         for my $row (@$csv) {
             ok( $row->[0] eq 'up to date', $row->[1] . ' is upto date');
         }
+        Test::More::done_testing;
     }
 
     return;
@@ -167,7 +168,7 @@ sub alphanum_sort {
 }
 
 sub branches_contain {
-    my ($branch_name, $branch_sha, $branch_time) = @_;
+    my ($branch) = @_;
     my @branches =  sort alphanum_sort
         map {/^\s+(.*?)\s*$/xms}
         grep {!/HEAD/}
@@ -187,12 +188,12 @@ sub branches_contain {
             if ( !defined $first ) {
                 $first  = $time;
                 $author = $user;
-                if ( $time < $branch_time ) {
+                if ( $time < $branch->{time} ) {
                     warn "skipping $branch\n" if $option{verbose} > 1;
                     next BRANCH;
                 }
             }
-            if ( $sha eq $branch_sha ) {
+            if ( $sha eq $branch->{sha} ) {
                 $found = 1;
                 last LOG;
             }
@@ -200,8 +201,8 @@ sub branches_contain {
 
         next BRANCH if !$option{all} && !$option{verbose} && $found;
 
-        push @csv, [ ( $found ? 'up to date' : "missing $branch_name" ), $branch, $author ];
-        warn +( $found ? 'up to date' : "missing $branch_name" ) . "\t$branch\t$author\n" if $option{quick};
+        push @csv, [ ( $found ? 'up to date' : "missing $branch->{name}" ), $branch, $author ];
+        warn +( $found ? 'up to date' : "missing $branch->{name}" ) . "\t$branch\t$author\n" if $option{quick};
     }
 
     return \@csv;
