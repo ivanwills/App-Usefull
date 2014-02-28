@@ -100,7 +100,7 @@ sub init {
     }
 
     my @branches =
-        map {chomp; s/^[*]?\s+//; $_}
+        map  {chomp; s{^ [*]? \s+ (?: remotes/ )? }{}xms; $_}
         grep {!/HEAD/}
         `git branch -a`;
 
