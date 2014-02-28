@@ -20,11 +20,12 @@ our $VERSION = 0.001;
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
-    format  => 'test',
-    verbose => 0,
-    man     => 0,
-    help    => 0,
-    VERSION => 0,
+    format      => 'test',
+    max_history => 1,
+    verbose     => 0,
+    man         => 0,
+    help        => 0,
+    VERSION     => 0,
 );
 
 main();
@@ -41,6 +42,7 @@ sub main {
         'cgit|c=s',
         'branch_age|branch-age|a',
         'age_limit|age-limit|l=s',
+        'max_history|max-history|h=i',
         'verbose|v+',
         'man',
         'help',
@@ -63,13 +65,13 @@ sub main {
         return branch_age();
     }
 
-    my ($branch, $sha, $time) = $option{tag} || ( !$option{branch} && $ENV{UP_TO_DATE_TAG} ) ? tag_commit() : branch_commit();
+    my ($release) = $option{tag} || ( !$option{branch} && $ENV{UP_TO_DATE_TAG} ) ? tag_commit() : branch_commit();
 
-    warn "Branch : $branch\nSHA    : $sha\nTime   : $time\n\n" if $option{verbose};
+    warn "Branch : $release->{name}\nSHA    : $release->{sha}\nTime   : $release->{time}\n\n" if $option{verbose};
 
     $option{all} = 1 if $option{format} eq 'test';
 
-    my $csv = branches_contain($branch, $sha, $time);
+    my $csv = branches_contain($release->{name}, $release->{sha}, $release->{time});
     if ($option{verbose}) {
         warn @$csv . " branches found\n";
     }
@@ -92,7 +94,8 @@ sub main {
     }
     elsif ( $option{format} eq 'json' ) {
         require JSON::XS;
-        my ($repo) = map {chomp; s/^\s*url\s*=\s*//; $_} `grep url .git/config | head -n 1`;
+        my $repo = `git config remote.origin.url`;
+        chomp $repo;
         print JSON::XS::encode_json({
             repository => $repo,
             date       => '' . localtime,
@@ -104,8 +107,9 @@ sub main {
     }
     elsif ( $option{format} eq 'html' ) {
         my $sepperator = "</td><td>";
-        my ($repo)     = map {chomp; s/^\s*url\s*=\s*//; $_} `grep url .git/config | head -n 1`;
         my $date       = localtime;
+        my $repo       = `git config remote.origin.url`;
+        chomp $repo;
         print <<"HTML";
 <doctype>
 <html>
@@ -165,7 +169,7 @@ sub alphanum_sort {
 sub branches_contain {
     my ($branch_name, $branch_sha, $branch_time) = @_;
     my @branches =  sort alphanum_sort
-        map {chomp; s/^\s+//; $_}
+        map {/^\s+(.*?)\s*$/xms}
         grep {!/HEAD/}
         `git branch -r`;
     my $format = q/--format=format:'%H %at <%an>%ae'/;
@@ -210,20 +214,20 @@ sub tag_commit {
         map {chomp; $_}
         `git tag`;
 
-    my $oldest = @tags > $option{max_history} ? -$option{max_history} : scalar @tags;
-    return sha_from_show($tags[-1]);
+    my $oldest = @tags > $option{max_history} ? -$option{max_history} : -scalar @tags;
+    return map { sha_from_show($_) } @tags[ $oldest .. -1 ];
 }
 
 sub branch_commit {
     $option{branch} ||= $ENV{UP_TO_DATE_BRANCH} || 'master';
     my @branches = sort alphanum_sort
         grep {/$option{branch}/}
-        map {chomp; s/^\s+//; $_}
+        map {/^\s+(.*?)\s*$/xms}
         grep {!/HEAD/}
         `git branch -r`;
 
-    my $oldest = @branches > $option{max_history} ? -$option{max_history} : scalar @branches;
-    return sha_from_show($branches[-1]);
+    my $oldest = @branches > $option{max_history} ? -$option{max_history} : -scalar @branches;
+    return map { sha_from_show($_) } @branches[ $oldest .. -1 ];
 }
 
 sub sha_from_show {
@@ -231,12 +235,13 @@ sub sha_from_show {
     my $format = q/--format=format:'%H %at'/;
     my ($log) = grep {/^[0-9a-f]+\s+\d{10}$/xms} `git show $format $name`;
     chomp $log;
-    return ( $name, split /\s+/, $log );
+    my ($sha, $time) = split /\s+/, $log;
+    return { name => $name, sha => $sha, time => $time };
 }
 
 sub branch_age {
     my @branches =  sort alphanum_sort
-        map {chomp; s/^\s+//; $_}
+        map {/^\s+(.*?)\s*$/xms}
         grep {!/HEAD/}
         `git branch -r`;
     my $format = q/--format=format:'%H %at <%an>%ae'/;
