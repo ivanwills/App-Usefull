@@ -137,7 +137,7 @@ sub branches_contain {
 
         next BRANCH if !$option{all} && !$option{verbose} && $found;
 
-        push @csv, [ $release || "missing $releases[-1]{name}", $branch, $author, int $age / 60 / 60 / 24];
+        push @csv, [ $release || "Out of date", $branch, $author, int $age / 60 / 60 / 24];
         warn +( $found ? 'up to date' : "missing $releases[-1]{name}" ) . "\t$branch\t$author\n" if $option{quick};
     }
 
