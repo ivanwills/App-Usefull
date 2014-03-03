@@ -42,6 +42,7 @@ sub main {
         'cgit|c=s',
         'branch_age|branch-age|a',
         'age_limit|age-limit|l=s',
+        'all',
         'max_history|max-history|h=i',
         'verbose|v+',
         'man',
@@ -321,11 +322,14 @@ This documentation refers to git-up-to-date version 0.0.1
                       * html - HTML page
                       * csv  - comma seperated values format file
                       * tab  - tab seperated values format file
-  -c --cgit[=]url   When using --format=html this creates a link to the cgit log page for the branch
+  -c --cgit[=]url   When using --format=html this creates a link to the cgit
+                    log page for the branch
   -q --quick        Print to STDERR the statuses as they are found (no formatting)
+     --all          Show the status of all branches not just current ones.
   -m --max-history[=]int
-                    Set the maximum number of release branches/tags to go back (if more than one)
-                    to find where a branch was created from. (Default 1)
+                    Set the maximum number of release branches/tags to go back
+                    (if more than one) to find where a branch was created from.
+                    (Default 1)
 
   -v --verbose       Shows changed branches that are upto date.
      --version       Prints the version information
@@ -333,6 +337,20 @@ This documentation refers to git-up-to-date version 0.0.1
      --man           Prints the full documentation for git-up-to-date
 
 =head1 DESCRIPTION
+
+The C<git up-to-date> command can tell you the status of "active" branches as
+compared to a release tag or branch. It does this by finding all tags or
+branches that match the regular expression passed to C<--tag> or C<--branch>,
+sorts them alphanumerically assuming that the largest is the most recent.
+
+ eg release_1, release_1_1
+
+The branch release_1_1 would be considered the most recent. With the found
+tag/branch the date/time it was created is used to find all branches that
+have newer commits (unless C<--all> is used). These branches are then searched
+to see if they contain the found release tag or branch (and if C<--max-history>
+is secified and the branch doesn't contain the relase branch or tag the older
+releases are searched for).
 
 =head1 SUBROUTINES/METHODS
 
