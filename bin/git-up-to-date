@@ -44,7 +44,7 @@ sub main {
         'exclude|e=s',
         'all',
         'max_history|max-history|h=i',
-        'fetch|f',
+        'fetch|F',
         'branch_status|branch-status|s',
         'age_limit|age-limit|a=s',
         'verbose|v+',
@@ -384,6 +384,7 @@ This documentation refers to git-up-to-date version 0.0.1
   -a --age-limit[=]date
                     With --branch-status limit to only branches created after
                     date (a YYYY-MM-DD formatted date)
+  -F --fetch        Do a fetch before anything else.
 
   -v --verbose      Shows changed branches that are upto date.
      --VERSION      Prints the version information
