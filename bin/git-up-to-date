@@ -83,7 +83,7 @@ sub main {
             $max[1] = length $row->[1] if $max[1] < length $row->[1];
         }
         for my $row (@$csv) {
-            printf "%$max[0]s %$max[1]s %s\n", @$row;
+            printf "%$max[0]s %$max[1]s %s (%.0f days old)\n", @$row;
         }
     }
     elsif ( $option{format} eq 'csv' || $option{format} eq 'tab' ) {
@@ -101,7 +101,7 @@ sub main {
             release    => $releases[-1]{name},
             date       => '' . localtime,
             branches   => [
-                map {{ status => $_->[0], name => $_->[1], last_author => $_->[2] }}
+                map {{ status => $_->[0], name => $_->[1], last_author => $_->[2], release_age => $_->[3] }}
                 @$csv
             ]
         });
@@ -127,6 +127,7 @@ sub main {
                 <th>Production Branch/Tag Status</th>
                 <th>Branch Name</th>
                 <th>Last commit owner</th>
+                <th>Included release age (days)</th>
             </tr>
         </thead>
 HTML
@@ -152,7 +153,8 @@ HTML
         require Test::More;
         Test::More->import( tests => scalar @$csv );
         for my $row (@$csv) {
-            is( $row->[0], $releases[-1]{name}, $row->[1] . ' is upto date');
+            is( $row->[0], $releases[-1]{name}, $row->[1] . ' is upto date')
+                or note("Release is $row->[3] days old");
         }
         Test::More::done_testing();
     }
@@ -193,17 +195,19 @@ sub branches_contain {
             }
         }
 
+        my $age = time - $releases[0]{time} + 10 * 60 * 60 * 24;
         RELEASE:
         for my $released (reverse @releases) {
             next RELEASE if !$released->{branches}{$branch};
 
             $release = $released->{name};
+            $age = $released == $releases[-1] ? 0 : time - $released->{time};
             last RELEASE;
         }
 
         next BRANCH if !$option{all} && !$option{verbose} && $found;
 
-        push @csv, [ $release || "missing $releases[-1]{name}", $branch, $author ];
+        push @csv, [ $release || "missing $releases[-1]{name}", $branch, $author, int $age / 60 / 60 / 24];
         warn +( $found ? 'up to date' : "missing $releases[-1]{name}" ) . "\t$branch\t$author\n" if $option{quick};
     }
 
