@@ -40,8 +40,8 @@ sub main {
         'format|f=s',
         'quick|q!',
         'cgit|c=s',
-        'branch_age|branch-age|a',
-        'age_limit|age-limit|l=s',
+        'branch_status|branch-status|s',
+        'age_limit|age-limit|a=s',
         'include|i=s',
         'exclude|e=s',
         'all',
@@ -310,7 +310,7 @@ sub format_test {
     return;
 }
 
-sub branch_age {
+sub branch_status {
     my @branches = git_branches();
     my $format = q/--format=format:'%H %at <%an>%ae'/;
     my $before = $option{age_limit} || Time::Piece->new->ymd;
@@ -375,10 +375,17 @@ This documentation refers to git-up-to-date version 0.0.1
                     (if more than one) to find where a branch was created from.
                     (Default 1)
 
-  -v --verbose       Shows changed branches that are upto date.
-     --version       Prints the version information
-     --help          Prints this help information
-     --man           Prints the full documentation for git-up-to-date
+  -s --branch-status
+                    Shows the status (name, last commiter, last commit date) of
+                    all branches.
+  -a --age-limit[=]date
+                    With --branch-status limit to only branches created after
+                    date (a YYYY-MM-DD formatted date)
+
+  -v --verbose      Shows changed branches that are upto date.
+     --VERSION      Prints the version information
+     --help         Prints this help information
+     --man          Prints the full documentation for git-up-to-date
 
 =head1 DESCRIPTION
 
