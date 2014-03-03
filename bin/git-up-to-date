@@ -42,6 +42,8 @@ sub main {
         'cgit|c=s',
         'branch_age|branch-age|a',
         'age_limit|age-limit|l=s',
+        'include|i=s',
+        'exclude|e=s',
         'all',
         'max_history|max-history|h=i',
         'verbose|v+',
@@ -180,6 +182,9 @@ sub branches_contain {
 
     BRANCH:
     for my $branch (@branches) {
+        next BRANCH if $option{include} && $branch !~ /$option{include}/;
+        next BRANCH if $option{exclude} && $branch =~ /$option{exclude}/;
+
         open my $pipe, '-|', "git log $format -n 1 '$branch'";
         my ($first, $author, $found, $release);
 
@@ -316,15 +321,19 @@ This documentation refers to git-up-to-date version 0.0.1
   -b --branch[=]str Similarly a branch that other branches with newer commits must
                     contain (Default origin/master)
   -f --format[=](test|text|html|csv|tab)
-                    Set the out put style
-                      * test - TAP format output (default)
-                      * text - formatted text
-                      * html - HTML page
-                      * csv  - comma seperated values format file
-                      * tab  - tab seperated values format file
+                    Set the out put format
+                      * test - TAP test formatted output (default)
+                      * text - Simple formatted text
+                      * html - A basic HTML page
+                      * csv  - Comma seperated values formatted output
+                      * tab  - Tab seperated values formatted output
+  -q --quick        Print to STDERR the statuses as they are found (no formatting)
   -c --cgit[=]url   When using --format=html this creates a link to the cgit
                     log page for the branch
-  -q --quick        Print to STDERR the statuses as they are found (no formatting)
+  -i --include[=]regexp
+                    Include only "neweer" branches that match this regexp
+  -e --exclude[=]regexp
+                    Exclude any "neweer" branches that match this regexp
      --all          Show the status of all branches not just current ones.
   -m --max-history[=]int
                     Set the maximum number of release branches/tags to go back
