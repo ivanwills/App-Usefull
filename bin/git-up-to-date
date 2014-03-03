@@ -51,6 +51,7 @@ sub main {
         'help',
         'VERSION!',
     ) or pod2usage(2);
+    my $format = 'format_' . $option{format};
 
     if ( $option{'VERSION'} ) {
         print "$name Version = $VERSION\n";
@@ -60,6 +61,10 @@ sub main {
         pod2usage( -verbose => 2 );
     }
     elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
+    elsif ( !main->can($format) ) {
+        warn "Unknown format '$option{format}'!\n";
         pod2usage( -verbose => 1 );
     }
 
@@ -79,88 +84,7 @@ sub main {
         warn @$csv . " branches found\n";
     }
 
-    if ( $option{format} eq 'text' ) {
-        my @max = (0,0);
-        for my $row (@$csv) {
-            $max[0] = length $row->[0] if $max[0] < length $row->[0];
-            $max[1] = length $row->[1] if $max[1] < length $row->[1];
-        }
-        for my $row (@$csv) {
-            printf "%$max[0]s %$max[1]s %s (%.0f days old)\n", @$row;
-        }
-    }
-    elsif ( $option{format} eq 'csv' || $option{format} eq 'tab' ) {
-        my $sepperator = $option{format} eq 'tab' ? "\t" : ',';
-        for my $row (@$csv) {
-            print +(join $sepperator, @$row), "\n";
-        }
-    }
-    elsif ( $option{format} eq 'json' ) {
-        require JSON::XS;
-        my $repo = `git config remote.origin.url`;
-        chomp $repo;
-        print JSON::XS::encode_json({
-            repository => $repo,
-            release    => $releases[-1]{name},
-            date       => '' . localtime,
-            branches   => [
-                map {{ status => $_->[0], name => $_->[1], last_author => $_->[2], release_age => $_->[3] }}
-                @$csv
-            ]
-        });
-    }
-    elsif ( $option{format} eq 'html' ) {
-        my $sepperator = "</td><td>";
-        my $date       = localtime;
-        my $repo       = `git config remote.origin.url`;
-        chomp $repo;
-        print <<"HTML";
-<doctype>
-<html>
-<head>
-    <title>Branch status for $repo</title>
-    <link rel="stylesheet" type="text/css" href="style.css" />
-    <script type="text/javascript" href="script.js"></script>
-</head>
-<body>
-    <h1>Branch statuses for <i>$repo</i> ($date)</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Production Branch/Tag Status</th>
-                <th>Branch Name</th>
-                <th>Last commit owner</th>
-                <th>Included release age (days)</th>
-            </tr>
-        </thead>
-HTML
-
-        for my $row (@$csv) {
-            my ($name, $email) = $row->[2] =~ /^<([^>]+)>(.*)$/;
-            $row->[0] = $row->[0] eq $releases[-1]{name} ? $row->[0] : qq{<span class="old">$row->[0]</span>};
-            $row->[2] = $row->[0] eq $releases[-1]{name} ? $name : qq{<a href="mailto:$email?subject=$row->[1]%20is%20out%20of%20date">$name</a>};
-            if ($option{cgit}) {
-                my ($branch) = $row->[1] =~ m{^[^/]+/(.+)$}xms;
-                $row->[1] = qq[<a href="$option{cgit}/log/?h=$branch" title="cgit log">$branch</a>];
-            }
-            print "<tr><td>" . (join $sepperator, @$row), "</td></tr>\n";
-        }
-
-        print <<"HTML";
-    </table>
-</body>
-</html>
-HTML
-    }
-    elsif ( $option{format} eq 'test' ) {
-        require Test::More;
-        Test::More->import( tests => scalar @$csv );
-        for my $row (@$csv) {
-            is( $row->[0], $releases[-1]{name}, $row->[1] . ' is upto date')
-                or note("Release is $row->[3] days old");
-        }
-        Test::More::done_testing();
-    }
+    main->$format($csv, @releases);
 
     return;
 }
@@ -273,6 +197,117 @@ sub sha_from_show {
         time     => $time,
         branches => { map { $_ => 1 } git_branches($sha) },
     };
+}
+
+sub format_text {
+    my (undef, $csv, @releases) = @_;
+
+    my @max = (0,0);
+    for my $row (@$csv) {
+        $max[0] = length $row->[0] if $max[0] < length $row->[0];
+        $max[1] = length $row->[1] if $max[1] < length $row->[1];
+    }
+    for my $row (@$csv) {
+        printf "%$max[0]s %$max[1]s %s (%.0f days old)\n", @$row;
+    }
+
+    return;
+}
+
+sub format_csv {
+    my (undef, $csv, @releases) = @_;
+
+    my $sepperator = $option{format} eq 'tab' ? "\t" : ',';
+    for my $row (@$csv) {
+        print +(join $sepperator, @$row), "\n";
+    }
+
+    return;
+}
+{
+    no warnings qw/once/;
+    *format_tab = *format_csv;
+}
+
+sub format_json {
+    my (undef, $csv, @releases) = @_;
+
+    require JSON::XS;
+    my $repo = `git config remote.origin.url`;
+    chomp $repo;
+    print JSON::XS::encode_json({
+        repository => $repo,
+        release    => $releases[-1]{name},
+        date       => '' . localtime,
+        branches   => [
+            map {{ status => $_->[0], name => $_->[1], last_author => $_->[2], release_age => $_->[3] }}
+            @$csv
+        ]
+    });
+
+    return;
+}
+
+sub format_html {
+    my (undef, $csv, @releases) = @_;
+
+    my $sepperator = "</td><td>";
+    my $date       = localtime;
+    my $repo       = `git config remote.origin.url`;
+    chomp $repo;
+    print <<"HTML";
+<doctype>
+<html>
+<head>
+<title>Branch status for $repo</title>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<script type="text/javascript" href="script.js"></script>
+</head>
+<body>
+<h1>Branch statuses for <i>$repo</i> ($date)</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Production Branch/Tag Status</th>
+            <th>Branch Name</th>
+            <th>Last commit owner</th>
+            <th>Included release age (days)</th>
+        </tr>
+    </thead>
+HTML
+
+    for my $row (@$csv) {
+        my ($name, $email) = $row->[2] =~ /^<([^>]+)>(.*)$/;
+        $row->[0] = $row->[0] eq $releases[-1]{name} ? $row->[0] : qq{<span class="old">$row->[0]</span>};
+        $row->[2] = $row->[0] eq $releases[-1]{name} ? $name : qq{<a href="mailto:$email?subject=$row->[1]%20is%20out%20of%20date">$name</a>};
+        if ($option{cgit}) {
+            my ($branch) = $row->[1] =~ m{^[^/]+/(.+)$}xms;
+            $row->[1] = qq[<a href="$option{cgit}/log/?h=$branch" title="cgit log">$branch</a>];
+        }
+        print "<tr><td>" . (join $sepperator, @$row), "</td></tr>\n";
+    }
+
+    print <<"HTML";
+</table>
+</body>
+</html>
+HTML
+
+    return;
+}
+
+sub format_test {
+    my (undef, $csv, @releases) = @_;
+
+    require Test::More;
+    Test::More->import( tests => scalar @$csv );
+    for my $row (@$csv) {
+        is( $row->[0], $releases[-1]{name}, $row->[1] . ' is upto date')
+            or note("Release is $row->[3] days old");
+    }
+    Test::More::done_testing();
+
+    return;
 }
 
 sub branch_age {
