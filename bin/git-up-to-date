@@ -40,12 +40,13 @@ sub main {
         'format|f=s',
         'quick|q!',
         'cgit|c=s',
-        'branch_status|branch-status|s',
-        'age_limit|age-limit|a=s',
         'include|i=s',
         'exclude|e=s',
         'all',
         'max_history|max-history|h=i',
+        'fetch|f',
+        'branch_status|branch-status|s',
+        'age_limit|age-limit|a=s',
         'verbose|v+',
         'man',
         'help',
@@ -67,6 +68,8 @@ sub main {
         warn "Unknown format '$option{format}'!\n";
         pod2usage( -verbose => 1 );
     }
+
+    qx/git fetch/ if $option{fetch};
 
     # do stuff here
     if ($option{branch_age}) {
