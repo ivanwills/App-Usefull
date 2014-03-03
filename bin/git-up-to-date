@@ -238,8 +238,11 @@ sub format_json {
     require JSON::XS;
     my $repo = `git config remote.origin.url`;
     chomp $repo;
+    my ($name) = $repo =~ m{[/:](.*?)(?:[.]git)?$}xms;
+
     print JSON::XS::encode_json({
         repository => $repo,
+        name       => $name,
         release    => $releases[-1]{name},
         date       => '' . localtime,
         branches   => [
