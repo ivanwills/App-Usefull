@@ -190,10 +190,9 @@ sub branch_commit {
 
 sub sha_from_show {
     my ($name) = @_;
-    my $format = q/--format=format:'%H %at'/;
-    my ($log) = grep {/^[0-9a-f]+\s+\d{10}$/xms} `git show $format $name`;
+    my ($log) = `git rev-list -1 --timestamp $name`;
     chomp $log;
-    my ($sha, $time) = split /\s+/, $log;
+    my ($time, $sha) = split /\s+/, $log;
     return {
         name     => $name,
         sha      => $sha,
