@@ -241,11 +241,11 @@ sub format_json {
     my ($name) = $repo =~ m{[/:](.*?)(?:[.]git)?$}xms;
 
     print JSON::XS::encode_json({
-        repository => $repo,
-        name       => $name,
-        release    => $releases[-1]{name},
-        date       => '' . localtime,
-        branches   => [
+        repository   => $repo,
+        name         => $name,
+        release      => $releases[-1]{name},
+        release_date => '' . localtime($releases[-1]{time}),
+        branches     => [
             map {{ status => $_->[0], name => $_->[1], last_author => $_->[2], release_age => $_->[3] }}
             @$csv
         ]
