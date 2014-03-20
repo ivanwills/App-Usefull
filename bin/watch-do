@@ -38,11 +38,11 @@ exit 0;
 
 sub main {
 
-
     Getopt::Long::Configure('bundling');
     GetOptions(
         \%option,
         'watch|w=s@',
+        'git|g',
         'test|t!',
         'verbose|v+',
         'man',
@@ -57,18 +57,41 @@ sub main {
     elsif ( $option{'man'} ) {
         pod2usage( -verbose => 2 );
     }
-    elsif ( $option{'help'} || !$option{watch} ) {
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
+    elsif ( !$option{watch} && !$option{git} ) {
+        warn "You must specify files to watch!\n";
+        pod2usage( -verbose => 1 );
+    }
+    elsif ( !@ARGV ) {
+        warn "No command to run!\n";
         pod2usage( -verbose => 1 );
     }
 
     # do stuff here
-    my %watch = map { $_ => modified($_) } @{ $option{watch} };
+    my %watch;
+    my $vcs;
+    if ( $option{watch} ) {
+        %watch = map { $_ => modified($_) } @{ $option{watch} };
+    }
+    if ( $option{git} ) {
+        require VCS::Which;
+        $vcs = VCS::Which->new;
+    }
+
     my $cmd   = join ' ', @ARGV;
+    my $count = 0;
     while (1) {
         my $changed = 0;
         my $message = '';
+        if ( $vcs && ( !%watch || $count++ % 5 == 0 ) ) {
+            my $status = $vcs->status('.');
+            %watch = ( %watch, map { $_ => modified($_) } map { @{ $status->{$_} } } grep {$_ ne 'merge'} keys %{ $status } );
+        }
+
         for my $name (keys %watch) {
-            my $mod = modified($name);
+            my $mod = modified($name) || 0;
             if ( $watch{$name} ne $mod ) {
                 $message .= "\n$name has changed, running command\n" if $option{verbose};
                 $message .= "\tModified time $mod (was $watch{$name})\n" if $option{verbose} > 1;
@@ -102,7 +125,7 @@ __DATA__
 
 =head1 NAME
 
-watch-do - <One-line description of commands purpose>
+watch-do - Run a command when watched files change
 
 =head1 VERSION
 
@@ -116,6 +139,7 @@ This documentation refers to watch-do version 0.0.1
  OPTIONS:
   cmd               Command to run when file changes
   -w --watch[=]file File to be watched for changes
+  -g --git          Use git to find what to watch (ie monitor files that git see have changed)
 
   -v --verbose      Show more detailed option
      --version      Prints the version information
