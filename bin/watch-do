@@ -9,9 +9,7 @@
 use strict;
 use warnings;
 use version;
-use Scalar::Util;
-use List::Util;
-#use List::MoreUtils;
+use Carp;
 use Getopt::Long;
 use Pod::Usage;
 use Data::Dumper qw/Dumper/;
@@ -92,6 +90,14 @@ sub main {
 
         for my $name (keys %watch) {
             my $mod = modified($name) || 0;
+            if ( !$watch{$name} ) {
+                if ($mod) {
+                    $watch{$name} = $mod;
+                }
+                else {
+                    delete $watch{$name};
+                }
+            }
             if ( $watch{$name} ne $mod ) {
                 $message .= "\n$name has changed, running command\n" if $option{verbose};
                 $message .= "\tModified time $mod (was $watch{$name})\n" if $option{verbose} > 1;
@@ -100,9 +106,10 @@ sub main {
         }
 
         if ($changed) {
+            print "\n";
             system $cmd if !$option{test};
-            warn $message;
-            print {*STDERR} "\a";
+            warn $message if $message;
+            print {*STDERR} "\a\n";
         }
 
         # reset modified times (incase $cmd further modifies those files)
@@ -118,7 +125,8 @@ sub main {
 }
 
 sub modified {
-    return -e $_[0] && (stat($_[0]))[9];
+    confess "No file passed!\n" if !$_[0];
+    return -e $_[0] && (stat $_[0])[9];
 }
 
 __DATA__
