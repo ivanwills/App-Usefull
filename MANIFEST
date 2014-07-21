@@ -41,7 +41,7 @@ bin/psqlout2csv.pl
 bin/rhythmbox-ctl.pl
 bin/schema-loader
 bin/set-title
-bin/spchk
+bin/chkspell
 bin/ssh-forwards
 bin/ssh-to
 bin/stop-watch
