@@ -23,16 +23,11 @@ our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
-    out     => undef,
     verbose => 0,
     man     => 0,
     help    => 0,
     VERSION => 0,
 );
-
-if ( !@ARGV ) {
-    pod2usage( -verbose => 1 );
-}
 
 main();
 exit 0;
@@ -61,7 +56,7 @@ sub main {
     }
 
     # do stuff here
-    my $dirs = join ' ', map { "\"$_\"" } @ARGV;
+    my $dirs = join ' ', map { "\"$_\"" } ( @ARGV ? @ARGV : ('.') );
     my $cmd = 'du -bs';
     $cmd .= ' --one-file-system' if $option{'one-file-system'};
 
