@@ -39,6 +39,7 @@ sub main {
     Getopt::Long::Configure('bundling');
     GetOptions(
         \%option,
+        'first|f!',
         'watch|w=s@',
         'git|g',
         'test|t!',
@@ -83,7 +84,8 @@ sub main {
     while (1) {
         my $changed = 0;
         my $message = '';
-        if ( $vcs && ( !%watch || $count++ % 5 == 0 ) ) {
+        $count++;
+        if ( $vcs && ( !%watch || $count % 5 == 0 ) ) {
             my $status = $vcs->status('.');
             %watch = ( %watch, map { $_ => modified($_) } map { @{ $status->{$_} } } grep {$_ ne 'merge'} keys %{ $status } );
         }
@@ -105,8 +107,9 @@ sub main {
             }
         }
 
-        if ($changed) {
+        if ( $changed || ( $option{first} && $count == 1 ) ) {
             print "\n";
+            warn "--\n$cmd\n--\n" if $option{verbose} > 2;
             system $cmd if !$option{test};
             warn $message if $message;
             print {*STDERR} "\a\n";
