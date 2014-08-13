@@ -335,8 +335,10 @@ sub release {
     my $new_re = $new;
     $old_re =~ s/[.]/[.]/g;
 
+    my $details = sha_from_show($old);
+    my $old_date = DateTime->from_epoch( epoch => $details->{time} )->ymd('-');
     system "cs $old_re -r $new_re --yes -Nperl -Xbuild\n";
-    my @all_log = `git log --format=format:'%s (%an) -%d'`;
+    my @all_log = `git log --format=format:'%s (%an) -%d' --since=$old_date`;
     my @log;
     for my $line (@all_log) {
         my ($log, $branches_tags) = $line =~ /^(.*) \s - \s (?: [(] (.*) [)] )? $/xms;
@@ -368,6 +370,19 @@ sub create_tags {
         warn "$cmd\n" if $opt->verbose || $opt->test;
         system $cmd if !$opt->test;
     }
+}
+
+sub sha_from_show {
+    my ($name) = @_;
+    my ($log) = qx/git rev-list -1 --timestamp $name/;
+    chomp $log;
+    my ($time, $sha) = split /\s+/, $log;
+
+    return {
+        name     => $name,
+        sha      => $sha,
+        time     => $time,
+    };
 }
 
 {
