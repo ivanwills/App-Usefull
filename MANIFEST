@@ -5,6 +5,7 @@ bin/build-all
 bin/builder
 bin/char2line
 bin/chkfacl
+bin/chkspell
 bin/cmdaliaser
 bin/coder
 bin/csv2html-table.pl
@@ -35,13 +36,13 @@ bin/pingfind
 bin/player-alarm
 bin/player-pause.pl
 bin/pmver
+bin/pom-checker
 bin/posture
 bin/project-mgr
 bin/psqlout2csv.pl
 bin/rhythmbox-ctl.pl
 bin/schema-loader
 bin/set-title
-bin/chkspell
 bin/ssh-forwards
 bin/ssh-to
 bin/stop-watch
@@ -53,6 +54,7 @@ bin/used
 bin/v
 bin/validate_json
 bin/vims
+bin/watch-do
 bin/yargs
 Build.PL
 Changes
