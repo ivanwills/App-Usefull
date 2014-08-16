@@ -293,8 +293,9 @@ sub process_file {
 
     $contents =~ s{^__DATA__\n.*\Z}{}xms;
 
+    # TODO need to make the extends logic work for multiple extended modules
     my @modules = grep { $_ ne 'ok' } $contents =~ m{^ \s* (?: use | require ) \s+ ( [\w:]+ ) }gxms;
-    push @modules, $contents =~ m{^ \s* (?: use | require ) \s+ ok \s+ ['"]( [\w:]+ )['"] }gxms;
+    push @modules, $contents =~ m{^ \s* (?: (?: use | require ) \s+ ok | extends ) \s+ ['"]( [\w:]+ )['"] }gxms;
 
     for my $module (@modules) {
         $used->{$module}++;

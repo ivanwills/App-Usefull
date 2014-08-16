@@ -18,7 +18,7 @@ __END__
 
 =head1 NAME
 
-App::Useful - Package to provide useful commands
+App::Useful - Package to provide useful command line programs
 
 =head1 VERSION
 
@@ -26,51 +26,62 @@ This documentation refers to App::Useful version 0.1.
 
 =head1 SYNOPSIS
 
+    $ apt-perl
     $ bigfiles
+    $ blame-line
     $ build-all
     $ builder
+    $ char2line
     $ chkfacl
+    $ chkspell
     $ cmdaliaser
     $ coder
     $ csv2html-table.pl
-    $ devmode
-    $ devremote
     $ df-colour
     $ diffdir
     $ duhs
     $ duuser
     $ everything
     $ fdiff
+    $ fv
     $ gitrev
     $ highlight
+    $ hl
     $ hlist
-    $ hours
     $ html-cleaner
     $ httprecorder
     $ img-resize
     $ img-size
+    $ incsearch
     $ itop
+    $ lines
+    $ module-dependencies
+    $ mssh
     $ myget
-    $ ossh
     $ partition-table.pl
     $ pingfind
     $ player-alarm
     $ player-pause.pl
+    $ pmver
+    $ pom-checker
     $ posture
     $ psqlout2csv.pl
     $ rhythmbox-ctl.pl
     $ schema-loader
     $ set-title
-    $ spchk
+    $ ssh-forwards
     $ ssh-to
     $ stop-watch
     $ suggest-tests
     $ svntouch.pl
     $ swapfiles
+    $ tidyup
     $ used
     $ v
     $ validate_json
     $ vims
+    $ watch-do
+    $ yargs
 
 =head1 DESCRIPTION
 

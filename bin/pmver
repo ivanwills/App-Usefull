@@ -82,7 +82,7 @@ __DATA__
 
 =head1 NAME
 
-pmver - <One-line description of commands purpose>
+pmver - Show the version of a Perl Module
 
 =head1 VERSION
 
@@ -99,8 +99,6 @@ This documentation refers to pmver version 0.1.
      --version       Prints the version information
      --help          Prints this help information
      --man           Prints the full documentation for pmver
-
-
 
 =head1 DESCRIPTION
 
