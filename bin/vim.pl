@@ -39,7 +39,7 @@ sub main {
             'verbose|v+',
         ]
     );
-    unshift @ARGV, $cmd;
+    unshift @ARGV, $cmd if $cmd;
 
     if ( $opt->find ) {
         my @dirs  = ( dir('.') );
