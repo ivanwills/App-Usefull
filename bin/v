@@ -73,6 +73,7 @@ sub main {
             , -f $file          ? $file
             : $conf->{$file}    ? map { glob $_ } @{ $conf->{$file} }
             : $file eq 'perl'   ? open_perl()
+            : $file eq 'bin'    ? open_bin()
             : $file eq 'lib'    ? open_lib()
             : $file eq 'test'   ? open_tests()
             : $file eq 'tests'  ? open_tests()
@@ -233,6 +234,7 @@ sub open_tests {
     return @files;
 }
 
+sub open_bin       { return open_general( [qw{ bin                                                                }],                           ); }
 sub open_lib       { return open_general( [qw{ lib                                                                }], [qr{ [.](?:pm|pod)$ }xms] ); }
 sub open_templates { return open_general( [qw{ template templates root html views                                 }]); }
 sub open_css       { return open_general( [qw{ css public/css root/css                                            }], [qr{ [.]css$        }xms] ); }
