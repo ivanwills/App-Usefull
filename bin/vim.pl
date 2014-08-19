@@ -134,7 +134,7 @@ sub create_tags {
     my $tag = file('/usr', 'bin', 'ctags');
     return if !-x $tag;
 
-    my @exclude = qw/blib _build Build tmp/;
+    my @exclude = qw/blib _build Build tmp node_modules/;
     my $cmd = "$tag -R --exclude=" . join ' --exclude=', @exclude;
 
     warn "$cmd\n" if $opt->verbose || $opt->test;
