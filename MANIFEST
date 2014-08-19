@@ -20,7 +20,6 @@ bin/gitrev
 bin/highlight
 bin/hl
 bin/hlist
-bin/hours
 bin/httprecorder
 bin/img-resize
 bin/img-size
@@ -30,7 +29,6 @@ bin/lines
 bin/module-dependencies
 bin/mssh
 bin/myget
-bin/ossh
 bin/partition-table.pl
 bin/pingfind
 bin/player-alarm
@@ -38,7 +36,6 @@ bin/player-pause.pl
 bin/pmver
 bin/pom-checker
 bin/posture
-bin/project-mgr
 bin/psqlout2csv.pl
 bin/rhythmbox-ctl.pl
 bin/schema-loader
@@ -53,6 +50,7 @@ bin/tidyup
 bin/used
 bin/v
 bin/validate_json
+bin/vim.pl
 bin/vims
 bin/watch-do
 bin/yargs

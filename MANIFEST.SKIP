@@ -74,3 +74,5 @@ temp*
 errors.err
 bin/.builder.swp
 vrc.yml
+.perl.tag
+test_repo/.*
