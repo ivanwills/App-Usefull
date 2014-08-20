@@ -88,6 +88,7 @@ sub main {
             'lib|I=s@',
             'tags|t!',
             'force|f+',
+            'do|d',
             'brews|b',
             'pre_commands|pre-commands|p=s@',
             'perl=s',
@@ -99,6 +100,10 @@ sub main {
         ]
     );
     my $level = shift @ARGV || '';
+
+    if ($opt->do && $opt->force) {
+        die "Won't --do with --force!\n";
+    }
 
     # Determine weather the package is using Module::Build or make files
 
@@ -127,12 +132,12 @@ sub main {
         $ENV{TEST_POD}    = defined $ENV{TEST_POD}    ? $ENV{TEST_POD}    : 1;
     }
 
-      $level eq 'test'      ? test()
-    : $level eq 'testup'    ? testup()
-    : $level eq 'testcover' ? testcover()
-    : $level eq 'install'   ? test() && install()
-    : $level eq 'dist'      ? test() && dist()
-    : $level eq 'release'   ? release()
+      $level eq 'test'      ? test($opt)
+    : $level eq 'testup'    ? testup($opt)
+    : $level eq 'testcover' ? testcover($opt)
+    : $level eq 'install'   ? test($opt) && install($opt)
+    : $level eq 'dist'      ? test($opt) && dist($opt)
+    : $level eq 'release'   ? release($opt)
     : !$level               ? return
     : $level eq 'list'      ? print join "\t", qw/test testup testcover install dist release/, "\n"
     :                         die "No such command '$level'\n";
@@ -317,6 +322,8 @@ CHANGES
 }
 
 sub release {
+    my ($opt) = @_;
+
     my $changes   = file('Changes');
     my $changelog = $changes->slurp;
     my ($version) = $changelog =~ /\r?\n\r?\n(\S+)\s+/;
@@ -326,7 +333,7 @@ sub release {
         $new = $version;
         $new =~ s/(\d+)$/sprintf '%0'.(length $1).'d', $1+1/egxms;
         print "builder release $version $new\n";
-        return;
+        return if !$opt->do;
     }
 
     test() || return;
