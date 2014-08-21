@@ -292,25 +292,41 @@ CHANGES
         my $tags = $vcs->exec('tag');
         chomp $tags;
 
-        if ( $tags && $tags !~ /$ver/ ) {
+        # finialise commands
+        my $tag    = "git tag -a -m 'Tagging version $ver' '$ver'";
+        my $push   = "git push origin master --tags";
+        my $upload = "cpan-upload-http -verbose $tars[-1]";
+        my $dch    = "git dch --auto";
+
+        if ( $opt->do && ( !$tags || $tags !~ /$ver/ ) ) {
+            for ($tag, $push, $upload) {
+                my $error = system $_;
+                if ($error) {
+                    warn "'$_' returned " . ($error >> 8) . "\n";
+                    return;
+                }
+            }
+            system $dch if -d 'debian';
+        }
+        elsif ( $tags && $tags !~ /$ver/ ) {
             unlink $tars[-1];
             die "There are no tags for this version!\nUse:\n"
-                . "    git tag -a -m 'Tagging version $ver' '$ver'\n"
-                . "    git push origin master --tags\n";
+                . "    $tag\n"
+                . "    $push\n";
         }
         elsif (!$tags) {
             warn "No tags were found!\n\n"
                 . "Use:\n"
-                . "    git tag -a -m 'Tagging version $ver' '$ver'\n"
-                . "    git push origin master --tags\n"
-                . "    cpan-upload-http -verbose $tars[-1]\n";
+                . "    $tag\n"
+                . "    $push\n"
+                . "    $upload\n";
         }
         else {
             print "Upload to CPAN\n"
-                . "    cpan-upload-http -verbose $tars[-1]\n";
+                . "    $upload\n";
 
             if ( -d 'debian' ) {
-                print "    git dch --auto\n";
+                print "    $dch\n";
             }
         }
     }
@@ -330,13 +346,15 @@ sub release {
     my ($old, $new) = @ARGV;
 
     if ( !$old && !$new ) {
-        $new = $version;
+        $old = $version;
+        $old =~ s/^v//;
+        $new = $old;
         $new =~ s/(\d+)$/sprintf '%0'.(length $1).'d', $1+1/egxms;
         print "builder release $version $new\n";
         return if !$opt->do;
     }
 
-    test() || return;
+    test($opt) || return if !$opt->do;
 
     my $old_re = $old;
     my $new_re = $new;
@@ -353,7 +371,7 @@ sub release {
 
         last if $branches_tags{$old} || $branches_tags{ version->new($old) };
 
-        push @log, "       $log\n";
+        push @log, "       $log\n" if $log;
     }
 
     my $now = DateTime->now->ymd('-');
@@ -365,8 +383,19 @@ sub release {
         system "git dch --auto --release";
     }
 
-    print "git commit -am 'Updating for release of version $new'\n";
+    my $cmd = "git commit -am 'Updating for release of version $new'";
+    print "$cmd'\n";
     print "$name -c dist\n";
+
+    if ($opt->do) {
+        system "vim Changes";
+        system $cmd;
+        builder('distclean');
+        system $opt->perl . ' ' . build_pl();
+        builder();
+        test($opt);
+        dist($opt);
+    }
 }
 
 sub create_tags {
