@@ -9,6 +9,7 @@
 use strict;
 use warnings;
 use version;
+use Carp qw/carp croak cluck confess longmess/;
 use Getopt::Alt qw/get_options/;
 use Pod::Usage;
 use Data::Dumper qw/Dumper/;
@@ -411,6 +412,7 @@ sub create_tags {
 sub sha_from_show {
     my ($name) = @_;
     my ($log) = qx/git rev-list -1 --timestamp $name/;
+    confess "No commitish found for '$name'\n" if !$log;
     chomp $log;
     my ($time, $sha) = split /\s+/, $log;
 
