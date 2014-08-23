@@ -490,6 +490,9 @@ This documentation refers to builder version 0.1.0.
                 Turn on author tests, sets ENV TEST_AUTHOR to true (Default with dist)
      --no-author
                 Turns off author tests (Default with all other levels)
+  -d --do       When used with release it will perform version number changes and then
+                kick of dist. When used with dist if everything is OK it will add the
+                tag, push the code and send the code to PAUSE.
   -f --force    Force the continuation apon encountering an error
                 (normally processin would stop). Use multiple times to
                 get past multiple errors.
