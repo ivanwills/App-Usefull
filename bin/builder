@@ -9,6 +9,7 @@
 use strict;
 use warnings;
 use version;
+use Carp qw/carp croak cluck confess longmess/;
 use Getopt::Alt qw/get_options/;
 use Pod::Usage;
 use Data::Dumper qw/Dumper/;
@@ -88,6 +89,7 @@ sub main {
             'lib|I=s@',
             'tags|t!',
             'force|f+',
+            'do|d',
             'brews|b',
             'pre_commands|pre-commands|p=s@',
             'perl=s',
@@ -99,6 +101,10 @@ sub main {
         ]
     );
     my $level = shift @ARGV || '';
+
+    if ($opt->do && $opt->force) {
+        die "Won't --do with --force!\n";
+    }
 
     # Determine weather the package is using Module::Build or make files
 
@@ -127,12 +133,12 @@ sub main {
         $ENV{TEST_POD}    = defined $ENV{TEST_POD}    ? $ENV{TEST_POD}    : 1;
     }
 
-      $level eq 'test'      ? test()
-    : $level eq 'testup'    ? testup()
-    : $level eq 'testcover' ? testcover()
-    : $level eq 'install'   ? test() && install()
-    : $level eq 'dist'      ? test() && dist()
-    : $level eq 'release'   ? release()
+      $level eq 'test'      ? test($opt)
+    : $level eq 'testup'    ? testup($opt)
+    : $level eq 'testcover' ? testcover($opt)
+    : $level eq 'install'   ? test($opt) && install($opt)
+    : $level eq 'dist'      ? test($opt) && dist($opt)
+    : $level eq 'release'   ? release($opt)
     : !$level               ? return
     : $level eq 'list'      ? print join "\t", qw/test testup testcover install dist release/, "\n"
     :                         die "No such command '$level'\n";
@@ -287,25 +293,41 @@ CHANGES
         my $tags = $vcs->exec('tag');
         chomp $tags;
 
-        if ( $tags && $tags !~ /$ver/ ) {
+        # finialise commands
+        my $tag    = "git tag -a -m 'Tagging version $ver' '$ver'";
+        my $push   = "git push origin master --tags";
+        my $upload = "cpan-upload-http -verbose $tars[-1]";
+        my $dch    = "git dch --auto";
+
+        if ( $opt->do && ( !$tags || $tags !~ /$ver/ ) ) {
+            for ($tag, $push, $upload) {
+                my $error = system $_;
+                if ($error) {
+                    warn "'$_' returned " . ($error >> 8) . "\n";
+                    return;
+                }
+            }
+            system $dch if -d 'debian';
+        }
+        elsif ( $tags && $tags !~ /$ver/ ) {
             unlink $tars[-1];
             die "There are no tags for this version!\nUse:\n"
-                . "    git tag -a -m 'Tagging version $ver' '$ver'\n"
-                . "    git push origin master --tags\n";
+                . "    $tag\n"
+                . "    $push\n";
         }
         elsif (!$tags) {
             warn "No tags were found!\n\n"
                 . "Use:\n"
-                . "    git tag -a -m 'Tagging version $ver' '$ver'\n"
-                . "    git push origin master --tags\n"
-                . "    cpan-upload-http -verbose $tars[-1]\n";
+                . "    $tag\n"
+                . "    $push\n"
+                . "    $upload\n";
         }
         else {
             print "Upload to CPAN\n"
-                . "    cpan-upload-http -verbose $tars[-1]\n";
+                . "    $upload\n";
 
             if ( -d 'debian' ) {
-                print "    git dch --auto\n";
+                print "    $dch\n";
             }
         }
     }
@@ -317,19 +339,23 @@ CHANGES
 }
 
 sub release {
+    my ($opt) = @_;
+
     my $changes   = file('Changes');
     my $changelog = $changes->slurp;
     my ($version) = $changelog =~ /\r?\n\r?\n(\S+)\s+/;
     my ($old, $new) = @ARGV;
 
     if ( !$old && !$new ) {
-        $new = $version;
+        $old = $version;
+        $old =~ s/^v//;
+        $new = $old;
         $new =~ s/(\d+)$/sprintf '%0'.(length $1).'d', $1+1/egxms;
         print "builder release $version $new\n";
-        return;
+        return if !$opt->do;
     }
 
-    test() || return;
+    test($opt) || return if !$opt->do;
 
     my $old_re = $old;
     my $new_re = $new;
@@ -346,7 +372,7 @@ sub release {
 
         last if $branches_tags{$old} || $branches_tags{ version->new($old) };
 
-        push @log, "       $log\n";
+        push @log, "       $log\n" if $log;
     }
 
     my $now = DateTime->now->ymd('-');
@@ -358,8 +384,19 @@ sub release {
         system "git dch --auto --release";
     }
 
-    print "git commit -am 'Updating for release of version $new'\n";
+    my $cmd = "git commit -am 'Updating for release of version $new'";
+    print "$cmd'\n";
     print "$name -c dist\n";
+
+    if ($opt->do) {
+        system "vim Changes";
+        system $cmd;
+        builder('distclean');
+        system $opt->perl . ' ' . build_pl();
+        builder();
+        test($opt);
+        dist($opt);
+    }
 }
 
 sub create_tags {
@@ -375,6 +412,7 @@ sub create_tags {
 sub sha_from_show {
     my ($name) = @_;
     my ($log) = qx/git rev-list -1 --timestamp $name/;
+    confess "No commitish found for '$name'\n" if !$log;
     chomp $log;
     my ($time, $sha) = split /\s+/, $log;
 
@@ -452,6 +490,9 @@ This documentation refers to builder version 0.1.0.
                 Turn on author tests, sets ENV TEST_AUTHOR to true (Default with dist)
      --no-author
                 Turns off author tests (Default with all other levels)
+  -d --do       When used with release it will perform version number changes and then
+                kick of dist. When used with dist if everything is OK it will add the
+                tag, push the code and send the code to PAUSE.
   -f --force    Force the continuation apon encountering an error
                 (normally processin would stop). Use multiple times to
                 get past multiple errors.
