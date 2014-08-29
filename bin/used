@@ -16,6 +16,7 @@ use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use File::Find qw/find/;
+use File::chdir;
 use Path::Class;
 use Module::CoreList;
 use Perl::MinimumVersion;
@@ -312,7 +313,7 @@ sub process_file {
     }
 
     my $minver = Perl::MinimumVersion->new($file);
-    warn "Perl " . $minver->minimum_version . " $file\n" if $option{verbose} > 3;
+    warn "Perl " . $minver->minimum_version . " $CWD/$file\n" if $option{verbose} > 3;
     if (!$minver) {
         warn "Could not get the minimum version of $file!\n";
         return;
