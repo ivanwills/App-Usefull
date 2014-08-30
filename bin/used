@@ -292,7 +292,11 @@ sub process_file {
 
     my $contents = file($file)->slurp;
 
-    $contents =~ s{^__DATA__\n.*\Z}{}xms;
+    # remove any data or end sections
+    $contents =~ s{^__(?:DATA|END)__\n.*\Z}{}xms;
+
+    # remove any POD
+    $contents =~ s/^=.*?^=cut$//gxms;
 
     # TODO need to make the extends logic work for multiple extended modules
     my @modules = grep { $_ ne 'ok' } $contents =~ m{^ \s* (?: use | require ) \s+ ( [\w:]+ ) }gxms;
