@@ -34,7 +34,6 @@ bin/pingfind
 bin/player-alarm
 bin/player-pause.pl
 bin/pmver
-bin/pom-checker
 bin/posture
 bin/psqlout2csv.pl
 bin/rhythmbox-ctl.pl
