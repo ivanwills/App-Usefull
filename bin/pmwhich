@@ -85,25 +85,23 @@ __DATA__
 
 =head1 NAME
 
-bin/pmwhich - <One-line description of commands purpose>
+pmwhich - Finds which file will be loaded for a Perl module
 
 =head1 VERSION
 
-This documentation refers to bin/pmwhich version HASH(0x17faa98)
+This documentation refers to pmwhich version HASH(0x17faa98)
 
 =head1 SYNOPSIS
 
-   bin/pmwhich [option]
+   pmwhich [option] Module [Module2 ...]
 
  OPTIONS:
-  -o --other         other option
+   Module       The Perl module you want to find the file for
 
-  -v --verbose       Show more detailed option
-     --version       Prints the version information
-     --help          Prints this help information
-     --man           Prints the full documentation for bin/pmwhich
-
-
+  -v --verbose  Show more detailed option
+     --version  Prints the version information
+     --help     Prints this help information
+     --man      Prints the full documentation for pmwhich
 
 =head1 DESCRIPTION
 
