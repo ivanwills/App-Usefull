@@ -15,7 +15,7 @@ use List::Util qw/max/;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
-use File::Find qw/find/;
+use File::chdir;
 use Path::Class;
 use Module::CoreList;
 use Perl::MinimumVersion;
@@ -74,33 +74,30 @@ sub main {
 
     my %used;
     my %versions;
-    for my $dir (@dirs) {
-        if ( -f $dir ) {
-            process_file($dir, \%used, \%versions);
+    while ( my $file = shift @dirs ) {
+        #for my $dir (@dirs) {
+        warn '' . @dirs if @dirs > 100;
+        next if $file =~ m{/ (?: blib | _build | [.](?: git | svn | bzr) | CVS | RCS ) /}xms;
+        next if skip($file);
+
+        if ( -f $file ) {
+            next if $file !~ /[.](?:pm|pod|pl|cgi|t)$/ || file($file)->basename !~ /[.]/;
+            next if $option{exclude} && $file =~ m{/ $option{exclude} /}xms;
+
+            if ( file($file)->basename !~ /[.]/xms ) {
+                next if file($file)->slurp !~ /\A.*perl/;
+            }
+
+            process_file($file, \%used, \%versions);
         }
         else {
-            find(
-                sub {
-                    return if -d $_;
-                    return if $File::Find::name =~ m{/ (?: blib | _build | [.](?: git | svn | bzr) | CVS | RCS ) /}xms;
-                    return if skip($File::Find::name);
-                    return unless /[.](?:pm|pod|pl|cgi|t)$/ || !/[.]/;
-                    return if $option{exclude} && $File::Find::name =~ m{/ $option{exclude} /}xms;
-
-                    if (!/[.]/xms) {
-                        return if file($_)->slurp !~ /\A.*perl/;
-                    }
-
-                    process_file($_, \%used, \%versions);
-                },
-                $dir
-            );
+            push @dirs, dir($file)->children;
         }
     }
 
     # remove modules that available from the maximum of the minimum versions of Perl required for these files
     my $max_ver = max map { version->parse($_) } keys %versions;
-    warn "Files with the hightest version:\n", join "\n\t", @{ $versions{$max_ver} }, '' if $option{verbose} > 1 && !$option{update};
+    warn "Files with the hightest version:\n\t", join "\n\t", @{ $versions{$max_ver} }, "\n" if $option{verbose} > 1 && !$option{update};
     for my $module (keys %used) {
         my $rel_ver = Module::CoreList->first_release($module);
         if ( $rel_ver && $rel_ver <= $max_ver ) {
@@ -291,7 +288,11 @@ sub process_file {
 
     my $contents = file($file)->slurp;
 
-    $contents =~ s{^__DATA__\n.*\Z}{}xms;
+    # remove any data or end sections
+    $contents =~ s{^__(?:DATA|END)__\n.*\Z}{}xms;
+
+    # remove any POD
+    $contents =~ s/^=.*?^=cut$//gxms;
 
     # TODO need to make the extends logic work for multiple extended modules
     my @modules = grep { $_ ne 'ok' } $contents =~ m{^ \s* (?: use | require ) \s+ ( [\w:]+ ) }gxms;
@@ -311,7 +312,7 @@ sub process_file {
         }
     }
 
-    my $minver = Perl::MinimumVersion->new($file);
+    my $minver = Perl::MinimumVersion->new("$file");
     warn "Perl " . $minver->minimum_version . " $file\n" if $option{verbose} > 3;
     if (!$minver) {
         warn "Could not get the minimum version of $file!\n";
@@ -350,7 +351,7 @@ sub pre_specified {
 
     get_libraries(\%requires);
 
-    if ( $option{verbose} > 2 ) {
+    if ( $option{verbose} > 4 ) {
         print join "\n", sort keys %requires;
         print "\n\n";
     }

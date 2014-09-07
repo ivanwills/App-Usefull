@@ -8,7 +8,6 @@ bin/chkfacl
 bin/chkspell
 bin/cmdaliaser
 bin/coder
-bin/csv2html-table.pl
 bin/df-colour
 bin/diffdir
 bin/duhs
@@ -25,6 +24,7 @@ bin/img-resize
 bin/img-size
 bin/incsearch
 bin/itop
+bin/jshtml
 bin/lines
 bin/module-dependencies
 bin/mssh
@@ -34,7 +34,7 @@ bin/pingfind
 bin/player-alarm
 bin/player-pause.pl
 bin/pmver
-bin/pom-checker
+bin/pmwhich
 bin/posture
 bin/psqlout2csv.pl
 bin/rhythmbox-ctl.pl
@@ -60,7 +60,6 @@ lib/App/Useful.pm
 LICENSE
 Makefile.PL
 MANIFEST
-MANIFEST.SKIP
 META.json
 META.yml
 README
