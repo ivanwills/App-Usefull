@@ -227,6 +227,26 @@ sub dist {
             $opt->force($opt->force - 1);
         }
 
+        ## Check t/boilerplate.t tests all modules
+        my $files = `find bin -type f | grep -P '[.]sw.\$' | wc -l`;
+        $tested = `grep 'module_boilerplate_ok[(]' t/boilerplate.t | wc -l`;
+        if ( $modules + $files == $tested ) {
+            my @modules;
+            for my $file (`find lib bin -type f | grep -Pv '[.]sw.\$'`) {
+                if ($file =~ /[.]pm$/) {
+                    $file =~ s{lib/|[.]pm\n}{}g;
+                    $file =~ s{/}{::}g;
+                }
+                push @modules, "module_boilerplate_ok('$file');\n";
+            }
+
+            unlink $tars[-1];
+            warn "t/boilerplate.t doesn't appear to test all found modules and scripts!\n";
+            warn join '', @modules;
+            return if !$opt->force;
+            $opt->force($opt->force - 1);
+        }
+
         my $vcs = VCS::Which->new(dir => '.');
 
         # check that the code is all checked in
