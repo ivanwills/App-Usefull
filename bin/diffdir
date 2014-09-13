@@ -88,8 +88,7 @@ sub main {
         $dir = dir $dir;
 
         # get the list of all files in the dir
-        my @files    = get_files($dir);
-        $files{$dir} = { map { s{^$dir/}{}; $_ => 1 } sort @files };  ## no critic
+        $files{$dir} = { get_files($dir) };
     }
 
     my %uniq;
@@ -257,25 +256,25 @@ sub diff {
 
 sub get_files {
     my ($dir, $skip_missing) = @_;
-    my @found;
+    my %found;
 
     die "The directory '$dir' does not exist!\n" if !$skip_missing && !-d $dir;
     warn "$dir\n" if $option{verbose};
 
     FILE:
     for my $file ( $dir->children ) {
-        next FILE if $file =~ /^[.].*[.]sw[p-z]$|^[.](?:svn|bzr|git)$/;
+        next FILE if $file =~ /^[.].*[.]sw[n-z]$|^[.](?:svn|bzr|git)$|CVS|RCS$/;
         next FILE if $option{exclude} && $file =~ /$option{exclude}/;
 
         if ( -d $file && ($option{follow} || !-l $file) ) {
-            push @found, get_files($file, 1);
+            %found = ( %found, get_files($file, 1) );
         }
         elsif ( !-d $file ) {
-            push @found, $file;
+            $found{$file} = 1;
         }
     }
 
-    return @found;
+    return %found;
 }
 
 sub shell_quote {
