@@ -81,7 +81,7 @@ sub main {
         next if skip($file);
 
         if ( -f $file ) {
-            next if $file !~ /[.](?:pm|pod|pl|cgi|t)$/ || file($file)->basename !~ /[.]/;
+            next if $file !~ /[.](?:pm|pod|pl|cgi|t)$/ && file($file)->basename =~ /[.]/;
             next if $option{exclude} && $file =~ m{/ $option{exclude} /}xms;
 
             if ( file($file)->basename !~ /[.]/xms ) {
