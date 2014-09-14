@@ -27,7 +27,6 @@ bin/itop
 bin/jshtml
 bin/lines
 bin/module-dependencies
-bin/mssh
 bin/myget
 bin/partition-table.pl
 bin/pingfind
