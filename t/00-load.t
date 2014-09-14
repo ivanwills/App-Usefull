@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Test::More;
 use Path::Class;
+use File::Spec;
 
 my $base = file($0)->parent->parent;
 my $lib  = $base->subdir('lib');
@@ -18,6 +19,7 @@ while ( my $file = shift @files ) {
     }
 }
 
+my $perl = File::Spec->rel2abs($^X);
 my $bin = $base->subdir('bin');
 @files = $bin->children;
 
@@ -28,7 +30,7 @@ while ( my $file = shift @files ) {
     elsif ( $file !~ /[.]sw[ponx]$/ ) {
         my ($bang) = $file->slurp;
         next if $bang !~ /perl/;
-        ok !(system qw/perl -Ilib -c /, $file), "$file compiles";
+        ok !(system $perl, qw/-Ilib -c /, $file), "$file compiles";
     }
 }
 
