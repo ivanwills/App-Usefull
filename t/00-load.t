@@ -23,6 +23,7 @@ my $perl = File::Spec->rel2abs($^X);
 my $bin = $base->subdir('bin');
 @files = $bin->children;
 
+my $perl = File::Spec->rel2abs($^X);
 while ( my $file = shift @files ) {
     if ( -d $file ) {
         push @files, $file->children;
