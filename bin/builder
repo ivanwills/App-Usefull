@@ -212,6 +212,8 @@ sub dist {
         ## Check t/00-load.t tests all modules
         my $modules = `find lib | grep '[.]pm\$' | wc -l`;
         my $tested  = `grep use_ok t/00-load.t | wc -l`;
+        chomp $modules;
+        chomp $tested;
         if ( $modules ne $tested ) {
             my @modules;
             for my $lib (`find lib | grep '[.]pm\$'`) {
@@ -230,7 +232,9 @@ sub dist {
         ## Check t/boilerplate.t tests all modules
         my $files = `find bin -type f | grep -Pv '[.]sw.\$' | wc -l`;
         $tested = `grep 'module_boilerplate_ok[(]' t/boilerplate.t | wc -l`;
-        if ( $modules + $files == $tested ) {
+        chomp $files;
+        chomp $tested;
+        if ( $modules + $files != $tested ) {
             my @modules;
             for my $file (`find lib bin -type f | grep -Pv '[.]sw.\$'`) {
                 chomp $file;
