@@ -112,6 +112,11 @@ sub main {
         push @ARGV, "-$vim_opt" if $opt->$vim_opt;
     }
 
+    my @libs = split ':', $ENV{PERL5LIB} || '';
+    push @libs, 'lib' if -d 'lib';
+    push @libs, 't/lib' if -d 't/lib';
+    $ENV{PERL5LIB} = join ':', @libs;
+
     $cmd = '/usr/bin/vim ' . join ' ',  map { shell_quote($_) } @ARGV;
     warn "$cmd\n" if $opt->verbose || $opt->test;
 
