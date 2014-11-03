@@ -49,6 +49,7 @@ sub main {
         'decending|d',
         'exclude|x=s',
         'quiet|q+',
+        'perl_version|perl-version|p!',
         'verbose|v+',
         'man',
         'help',
@@ -97,7 +98,7 @@ sub main {
 
     # remove modules that available from the maximum of the minimum versions of Perl required for these files
     my $max_ver = max map { version->parse($_) } keys %versions;
-    warn "Files with the hightest version:\n\t", join "\n\t", @{ $versions{$max_ver} }, "\n" if $option{verbose} > 1 && !$option{update};
+    warn "Files with the hightest Perl version:\n\t", join "\n\t", @{ $versions{$max_ver} }, "\n" if $option{perl_version};
     for my $module (keys %used) {
         my $rel_ver = Module::CoreList->first_release($module);
         if ( $rel_ver && $rel_ver <= $max_ver ) {
@@ -324,7 +325,7 @@ sub process_file {
     return;
 }
 
-# finds modules prespecified in the Build.PL file
+# finds modules pre-specified in the Build.PL file
 sub pre_specified {
     return if !-f $option{build};
     my $build = file($option{build})->slurp;
@@ -437,6 +438,8 @@ This documentation refers to used version 0.1.
   -U --update     Update the requires section of the Build.PL file
   -d --decending  Reverse the sort order
 
+  -p --perl-version
+                  Show files that require the highest version of Perl to be used
   -v --verbose    Show more detailed option
                     Specified once shows module verion numbers verses required
                     versions.
