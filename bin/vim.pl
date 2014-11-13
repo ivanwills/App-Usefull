@@ -35,6 +35,7 @@ sub main {
             'skip|s=s',
             'O',
             'o',
+            'R',
             'test|t!',
             'verbose|v+',
         ]
@@ -108,7 +109,7 @@ sub main {
         }
     }
 
-    for my $vim_opt (qw/ o O /) {
+    for my $vim_opt (qw/ o O R /) {
         push @ARGV, "-$vim_opt" if $opt->$vim_opt;
     }
 
