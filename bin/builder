@@ -179,7 +179,7 @@ sub testcover {
 sub install {
 
     # Check that there are no vim files in bin directories
-    if (my @vims = glob 'bin/.*.sw[poxmn]') {
+    if (-d 'bin' && (my @vims = glob 'bin/.*.sw[poxmn]')) {
         warn "There are vim swap files in the bin dir:\n" . ( join "\n", @vims ) . "\n";
         return if !$opt->force;
         $opt->force($opt->force - 1);
@@ -191,7 +191,7 @@ sub install {
 sub dist {
 
     # Check that there are no vim files in bin directories
-    if (my @vims = glob 'bin/.*.sw[poxmn]') {
+    if (-d 'bin' && (my @vims = glob 'bin/.*.sw[poxmn]')) {
         warn "There are vim swap files in the bin dir:\n" . ( join "\n", @vims ) . "\n";
         return if !$opt->force;
         $opt->force($opt->force - 1);
@@ -230,13 +230,17 @@ sub dist {
         }
 
         ## Check t/boilerplate.t tests all modules
-        my $files = `find bin -type f | grep -Pv '[.]sw.\$' | wc -l`;
+        my $files = -d 'bin' ? `find bin -type f | grep -Pv '[.]sw.\$' | wc -l` : 0;
+        $modules = `find lib | grep -P '[.]p(m|od)\$' | wc -l`;
         $tested = `grep 'module_boilerplate_ok[(]' t/boilerplate.t | wc -l`;
         chomp $files;
+        chomp $modules;
         chomp $tested;
         if ( $modules + $files != $tested ) {
+            warn "Found $modules modules and $files files but only $tested tests\n";
             my @modules;
-            for my $file (`find lib bin -type f | grep -Pv '[.]sw.\$'`) {
+            my $dirs = -d 'bin' ? 'lib bin' : 'lib';
+            for my $file (`find $dirs -type f | grep -Pv '[.]sw.\$'`) {
                 chomp $file;
                 push @modules, "module_boilerplate_ok('$file');\n";
             }
