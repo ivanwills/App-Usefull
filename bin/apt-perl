@@ -161,9 +161,9 @@ sub dependencies {
         my $core_version = Module::CoreList->first_release($module);
         next if $core_version && $core_version <= $PERL_VERSION;
 
-        my ($dist, $depends) = required_modules($module);
+        my ($dist, $depends) = eval { required_modules($module) };
 
-        next if $depends{$dist}++;
+        next if $@ || $depends{$dist}++;
 
         push @$dependencies, @{ $depends };
     }
