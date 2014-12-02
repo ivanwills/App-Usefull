@@ -93,7 +93,7 @@ sub run {
     my ($cmd) = @_;
     my $result;
 
-    print "$cmd\n"      if $option{test} || $option{verbose};
+    print "$cmd\n"   if  $option{test} || $option{verbose};
     $result = `$cmd` if !$option{test};
 
     return $result;
