@@ -9,13 +9,8 @@
 use strict;
 use warnings;
 use version;
-use Scalar::Util;
-use List::Util;
-#use List::MoreUtils;
 use Carp qw/carp croak cluck confess longmess/;
 use Getopt::Long;
-use Pod::Usage;
-use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use Config::General;
@@ -213,6 +208,11 @@ EXAMPLE
     }
 
     return;
+}
+
+sub pod2usage {
+    require Pod::Usage;
+    Pod::Usage::pod2usage(@_);
 }
 
 sub shell_quote {
