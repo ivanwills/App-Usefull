@@ -72,7 +72,7 @@ sub main {
     my %packages;
 
     MODULE:
-    for my $module (@install) {
+    while ( my $module = shift @install ) {
 
         # check for git repositories/local folders
         if ( -d $module ) {
@@ -106,7 +106,7 @@ sub main {
     my @packages = grep { $packages{$_} } keys %packages;
     my @cpan     = grep {!$packages{$_} } keys %packages;
 
-    print "sudo apt-get install " . join ' ', map {s/(?:_|::)/-/g; lc "lib${_}-perl"} @packages;
+    print "sudo apt-get install " . join ' ', map {my $a = lc "lib${_}-perl"; $a =~ s/(?:_|::)/-/g; $a} @packages;
     print "\n\n";
 
     print "sudo cpanm " . join ' ', @cpan;
