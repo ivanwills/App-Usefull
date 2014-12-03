@@ -10,16 +10,13 @@ use strict;
 use warnings;
 use v5.12;
 use version;
-use Scalar::Util;
-use List::Util;
-#use List::MoreUtils;
 use Getopt::Long;
 use Pod::Usage;
-use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use File::Find;
 use Path::Class;
+use File::TypeCategories;
 
 our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -59,7 +56,9 @@ sub main {
     }
 
     # do stuff here
+    my $tc = File::TypeCategories->new(%option);
     my @files;
+
     for my $file (@ARGV) {
         if ( -f $file ) {
             push @files, $file;
@@ -67,7 +66,10 @@ sub main {
         }
         my @found;
         find(
-            sub { push @found, $File::Find::name if $File::Find::name =~ /$file/ },
+            sub {
+                return if $tc->types_match($File::Find::name, 'ignore');
+                push @found, $File::Find::name if $File::Find::name =~ /$file/;
+            },
             '.'
         );
 
