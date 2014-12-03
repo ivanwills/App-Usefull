@@ -12,10 +12,8 @@ bin/df-colour
 bin/diffdir
 bin/duhs
 bin/duuser
-bin/everything
 bin/fdiff
 bin/fv
-bin/gitrev
 bin/highlight
 bin/hl
 bin/hlist
@@ -43,7 +41,6 @@ bin/ssh-forwards
 bin/ssh-to
 bin/stop-watch
 bin/suggest-tests
-bin/svntouch.pl
 bin/swapfiles
 bin/tidyup
 bin/used
