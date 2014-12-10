@@ -18,6 +18,7 @@ my $builder = Module::Build->new(
         'Data::Dump::Streamer'            => 0,
         'DateTime'                        => 0,
         'File::CodeSearch::Files'         => 0,
+        'File::TypeCategories'            => 0,
         'File::Slurp'                     => 0,
         'File::Touch'                     => 0,
         'File::chdir'                     => 0,
