@@ -17,7 +17,7 @@ use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use Path::Class;
-use File::CodeSearch::Files;
+use File::TypeCategories;
 use File::chdir;
 
 our $VERSION = version->new('0.0.1');
@@ -83,7 +83,7 @@ sub main {
         );
     }
 
-    $files = File::CodeSearch::Files->new(%option);
+    $files = File::TypeCategories->new(%option);
 
     my @files = @ARGV ? @ARGV : qw/./;
 
@@ -220,10 +220,10 @@ This documentation refers to hlist version 0.1.
   -i --include=regex
                  Include files & directories matching the regex
   -E --exclude-type=str
-                 Exclude files of this type (see L<File::CodeSearch::Files>
+                 Exclude files of this type (see L<File::TypeCategories>
                  for details)
   -I --include-type=str
-                 Include files of this type (see L<File::CodeSearch::Files>
+                 Include files of this type (see L<File::TypeCategories>
                  for details)
 
   -v --verbose   Show more detailed option

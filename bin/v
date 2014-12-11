@@ -17,7 +17,7 @@ use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use File::Find;
 use Path::Class;
-use File::CodeSearch::Files;
+use File::TypeCategories;
 use Config::Any;
 use Hash::Merge qw/merge/;
 
@@ -161,7 +161,7 @@ sub open_perl {
         t       => { order => 3, extension => 1 },
         tx      => { order => 4, extension => 1 },
     );
-    my $file_test = File::CodeSearch::Files->new( include_type => [qw/perl test/] );
+    my $file_test = File::TypeCategories->new( include_type => [qw/perl test/] );
 
     for my $dir ( sort { $dirs{$a}{order} <=> $dirs{$b}{order} } keys %dirs ) {
         warn "Dir $dir\n" if $option{verbose} && $option{verbose} > 1;
