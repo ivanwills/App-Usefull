@@ -391,6 +391,8 @@ sub release {
     system "cs $old_re -r $new_re --yes -Nperl -Xbuild\n";
     my @all_log = `git log --format=format:'%s (%an) -%d' --since=$old_date`;
     my @log;
+    my $log_message = "Updating for release of version $new";
+    push @log, "       $log_message\n";
     for my $line (@all_log) {
         my ($log, $branches_tags) = $line =~ /^(.*) \s - \s (?: [(] (.*) [)] )? $/xms;
         my %branches_tags = map {$_ => 1} split /,\s/, $branches_tags || '';
@@ -409,7 +411,7 @@ sub release {
         system "git dch --auto --release";
     }
 
-    my $cmd = "git commit -am 'Updating for release of version $new'";
+    my $cmd = "git commit -am '$log_message'";
     print "$cmd'\n";
     print "$name -c dist\n";
 
