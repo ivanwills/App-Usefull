@@ -17,7 +17,6 @@ my $builder = Module::Build->new(
         'DBIx::Class::Schema::Loader'     => 0,
         'Data::Dump::Streamer'            => 0,
         'DateTime'                        => 0,
-        'File::CodeSearch::Files'         => 0,
         'File::TypeCategories'            => 0,
         'File::Slurp'                     => 0,
         'File::Touch'                     => 0,
