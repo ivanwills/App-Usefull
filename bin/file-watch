@@ -158,6 +158,9 @@ This documentation refers to file-watch version 0.001
 
 =head1 DESCRIPTION
 
+C<file-watch> uses iNotify to track when files change. The types of changes
+can be found in L<Linux::Inotify2>.
+
 =head1 SUBROUTINES/METHODS
 
 =head1 DIAGNOSTICS
