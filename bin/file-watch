@@ -21,6 +21,21 @@ use File::TypeCategories;
 
 our $VERSION = 0.001;
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+my $types = [qw/
+    IN_ACCESS
+    IN_MODIFY
+    IN_ATTRIB
+    IN_CLOSE_WRITE
+    IN_CLOSE_NOWRITE
+    IN_OPEN
+    IN_ALL_EVENTS
+    IN_MOVED_FROM
+    IN_MOVED_TO
+    IN_CREATE
+    IN_DELETE
+    IN_DELETE_SELF
+    IN_MOVE_SELF
+/];
 
 my %option = (
     dir     => 0,
@@ -41,6 +56,7 @@ sub main {
         \%option,
         'dir|d!',
         'type|t=s@',
+        'report|r',
         'verbose|v+',
         'man',
         'help',
@@ -79,24 +95,15 @@ sub main {
     }
 
     if ( $option{type} && $option{type} == 1 && $option{type}[0] eq 'ALL' ) {
-        $option{type} = [qw/
-            IN_ACCESS
-            IN_MODIFY
-            IN_ATTRIB
-            IN_CLOSE_WRITE
-            IN_CLOSE_NOWRITE
-            IN_OPEN
-            IN_ALL_EVENTS
-            IN_MOVED_FROM
-            IN_MOVED_TO
-            IN_CREATE
-            IN_DELETE
-            IN_DELETE_SELF
-            IN_MOVE_SELF
-        /];
+        $option{type} = $types;
     }
     else {
         $option{type} ||= ['IN_MODIFY'];
+    }
+
+    if ( $option{report} ) {
+        #push @watchers, AE::signal INT => \&report;
+        $SIG{INT} = \&report;
     }
 
     AnyEvent::Loop::run;
@@ -109,11 +116,25 @@ sub changed {
     my ($evt) = @_;
     my $file = $evt->{w}{name};
 
-    if ( !$changed{$file} || $changed{$file} != time ) {
+    if ( !$changed{$file} || $changed{$file}{time} != time ) {
         my @match = grep { $evt->$_() } @{ $option{type} };
         warn "$file - @match\n" if @match;
     }
-    $changed{$file} = time;
+    $changed{$file}{time} = time;
+    $changed{$file}{types} = {
+        %{ $changed{$file}{types} || {} },
+        map { $_ => 1 } grep { $evt->$_() } @$types
+    };
+
+    return;
+}
+
+sub report {
+    for my $file ( sort keys %changed ) {
+        print "$file\t", ( join ', ', sort keys %{ $changed{$file}{types} } ), "\n";
+    }
+
+    exit;
 }
 
 __DATA__
