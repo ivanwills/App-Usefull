@@ -94,7 +94,7 @@ sub main {
         push @watchers, AE::io $inotify->fileno, 0, sub { $inotify->poll };
     }
 
-    if ( $option{type} && $option{type} == 1 && $option{type}[0] eq 'ALL' ) {
+    if ( $option{type} && @{ $option{type} } == 1 && $option{type}[0] eq 'ALL' ) {
         $option{type} = $types;
     }
     else {
