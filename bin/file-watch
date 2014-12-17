@@ -170,12 +170,14 @@ This documentation refers to file-watch version 0.001
                  - IN_DELETE
                  - IN_DELETE_SELF
                  - IN_MOVE_SELF
-                 - ALL - special pseudo event setting all events on so you can see which ones are actually fired
+                 - ALL - special pseudo event setting all events on so you can
+                         see which ones are actually fired
+  -r --report   When killed, a report will be generated of all files modified
 
-  -v --verbose       Show more detailed option
-     --version       Prints the version information
-     --help          Prints this help information
-     --man           Prints the full documentation for file-watch
+  -v --verbose  Show more detailed option
+     --version  Prints the version information
+     --help     Prints this help information
+     --man      Prints the full documentation for file-watch
 
 =head1 DESCRIPTION
 
