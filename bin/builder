@@ -136,8 +136,8 @@ sub main {
       $level eq 'test'      ? test($opt)
     : $level eq 'testup'    ? testup($opt)
     : $level eq 'testcover' ? testcover($opt)
-    : $level eq 'install'   ? test($opt) && install($opt)
-    : $level eq 'dist'      ? test($opt) && dist($opt)
+    : $level eq 'install'   ? install($opt)
+    : $level eq 'dist'      ? dist($opt)
     : $level eq 'release'   ? release($opt)
     : $level eq 'manifest'  ? manifest($opt)
     : !$level               ? return
@@ -178,6 +178,10 @@ sub testcover {
 }
 
 sub install {
+    if ( !test($opt) ) {
+        return if !$opt->force;
+        $opt->force($opt->force - 1);
+    }
 
     # Check that there are no vim files in bin directories
     if (-d 'bin' && (my @vims = glob 'bin/.*.sw[poxmn]')) {
@@ -190,6 +194,10 @@ sub install {
 }
 
 sub dist {
+    if ( !test($opt) ) {
+        return if !$opt->force;
+        $opt->force($opt->force - 1);
+    }
 
     # Check that there are no vim files in bin directories
     if (-d 'bin' && (my @vims = glob 'bin/.*.sw[poxmn]')) {
