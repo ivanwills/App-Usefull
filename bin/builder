@@ -139,6 +139,7 @@ sub main {
     : $level eq 'install'   ? test($opt) && install($opt)
     : $level eq 'dist'      ? test($opt) && dist($opt)
     : $level eq 'release'   ? release($opt)
+    : $level eq 'manifest'  ? manifest($opt)
     : !$level               ? return
     : $level eq 'list'      ? print join "\t", qw/test testup testcover install dist release/, "\n"
     :                         die "No such command '$level'\n";
@@ -426,6 +427,11 @@ sub release {
     }
 }
 
+sub manifest {
+    builder('manifest');
+    unlink 'MANIFEST.bak' if -e 'MANIFEST.bak';
+}
+
 sub create_tags {
     my $tag = file('usr', 'bin', 'ctags');
     if ( $opt->tags && -x $tag ) {
@@ -509,6 +515,7 @@ This documentation refers to builder version 0.1.0.
   install   Run the tests and if they pass install the distribution
   dist      Run the tests (with author tests) and if they pass create a new tar.gz for release
   release   Make changes for performing a CPAN release
+  manifest  Update MANIFEST and MANIFEST.SKIP files with all the current files
 
  OPTIONS:
   -c --dist-clean
