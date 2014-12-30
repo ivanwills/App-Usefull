@@ -17,7 +17,7 @@ use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
-use JSON::XS qw/from_json/;
+use JSON::XS qw/decode_json/;
 use Path::Class;
 
 our $VERSION = version->new('0.0.1');
@@ -66,14 +66,14 @@ sub main {
         chomp $json;
     }
 
-    my $perl = eval { from_json($json) };
+    my $perl = eval { decode_json($json) };
     my $e = $@;
 
     if ($e) {
         my $retry_json = $json;
         $retry_json =~ s/\n//gxms;
 
-        my $retry = eval { from_json($retry_json) };
+        my $retry = eval { decode_json($retry_json) };
         if (!$@) {
             $json = $retry_json;
             $perl = $retry;
