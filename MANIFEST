@@ -13,6 +13,8 @@ bin/diffdir
 bin/duhs
 bin/duuser
 bin/fdiff
+bin/file-watch
+bin/fspot-cp
 bin/fv
 bin/highlight
 bin/hl
@@ -22,7 +24,6 @@ bin/img-resize
 bin/img-size
 bin/incsearch
 bin/itop
-bin/jshtml
 bin/lines
 bin/module-dependencies
 bin/myget
