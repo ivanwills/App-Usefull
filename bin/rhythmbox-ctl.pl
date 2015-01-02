@@ -45,11 +45,11 @@ sub main {
         'verbose|v+',
         'man',
         'help',
-        'VERSION!',
+        'version',
     ) or pod2usage(2);
     #my $file = join ' ', @ARGV;
 
-    if ( $option{'VERSION'} ) {
+    if ( $option{'version'} ) {
         print "$name Version = $VERSION\n";
         exit 1;
     }

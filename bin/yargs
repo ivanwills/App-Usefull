@@ -47,10 +47,6 @@ sub main {
             sub_command => 1,
         },
         [
-            'verbose|v+',
-            'man',
-            'help',
-            'VERSION!',
         ]
     );
 

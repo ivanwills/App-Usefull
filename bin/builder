@@ -94,10 +94,6 @@ sub main {
             'pre_commands|pre-commands|p=s@',
             'perl=s',
             'brew=s',
-            'verbose|v+',
-            'man',
-            'help',
-            'VERSION!',
         ]
     );
     my $level = shift @ARGV || '';

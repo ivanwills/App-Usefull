@@ -42,7 +42,7 @@ sub main {
         'version',
     ) or pod2usage(2);
 
-    if ( $option{'VERSION'} ) {
+    if ( $option{'version'} ) {
         print "$name Version = $VERSION\n";
         exit 1;
     }

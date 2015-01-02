@@ -11,10 +11,12 @@ use List::Util;
 use Getopt::Long;
 use Pod::Usage;
 use Data::Dumper qw/Dumper/;
+use English qw/ -no_match_vars /;
 
 use Text::CSV_XS;
 
 our $VERSION = 0.1;
+my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
     win     => undef,
@@ -40,13 +42,20 @@ sub main {
         'man|m',
         'help|h',
         'verbose|v!',
-        'VERSION|V'
+        'version'
     ) or pod2usage(2);
     my $file = pop @ARGV;
 
-    print "psqlout2csv Version = $VERSION\n" and exit(1) if $option{VERSION};
-    pod2usage( -verbose => 2 ) if $option{man};
-    pod2usage( -verbose => 1 ) if $option{help};
+    if ( $option{'version'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
 
     # do stuff here
     my $in_fh;
