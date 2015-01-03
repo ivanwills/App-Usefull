@@ -104,7 +104,7 @@ sub main {
 
     # Determine weather the package is using Module::Build or make files
 
-    if ( ( $opt->clean || $level eq 'dist' ) && built() ) {
+    if ( ( $opt->clean || $level eq 'release' || $level eq 'dist' ) && built() ) {
         builder('distclean');
         system q{find blib 2>/dev/null | grep '[.][^/]+[.]sw[poxnm]$' | xargs rm};
         return if !$level;
@@ -137,7 +137,7 @@ sub main {
     : $level eq 'release'   ? release($opt)
     : $level eq 'manifest'  ? manifest($opt)
     : !$level               ? return
-    : $level eq 'list'      ? print join "\t", qw/test testup testcover install dist release/, "\n"
+    : $level eq 'list'      ? print join "\t", qw/test testup testcover install dist release manifest/, "\n"
     :                         die "No such command '$level'\n";
 
     return;
