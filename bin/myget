@@ -49,7 +49,7 @@ sub main {
         'out|o=s',
         'content|c=s',
         'header|h=s%',
-        'header_file|header-file|f=s',
+        'header_file|header-file|F=s',
         'max_lines|max-lines|l=i',
         'max_size|max-size|m=i',
         'max_redirect|max-redirect|r=i',
@@ -57,7 +57,7 @@ sub main {
         'timeout|to=i',
         'useragent|ua|u=s',
         'cookie_file|cookie-file|C=s',
-        'format|F=s',
+        'format|f=s',
         'verbose|v+',
         'man',
         'help',
@@ -192,7 +192,7 @@ This documentation refers to myget version 0.1.
                  str as the POST body.
   -h --header[=]str
                  Any header variables you want to set
-  -f --header-file[=]str
+  -F --header-file[=]str
                  A file containing headders to set
   -l --max-lines[=]int
                  Show only int lines of output
