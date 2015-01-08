@@ -56,9 +56,7 @@ sub main {
     # do stuff here
     my $package = shift @ARGV;
 
-    exec 'lynx https://www.npmjs.com/package/$package';
-
-    return;
+    return exec 'lynx', '-accept_all_cookies', "https://www.npmjs.com/package/$package";
 }
 
 __DATA__
