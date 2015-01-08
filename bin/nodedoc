@@ -56,7 +56,7 @@ sub main {
     # do stuff here
     my $package = shift @ARGV;
 
-    exec 'lynks https://www.npmjs.com/package/$package';
+    exec 'lynx https://www.npmjs.com/package/$package';
 
     return;
 }
