@@ -119,7 +119,8 @@ sub required_dists {
         $dists{$module_details->{distribution}}++;
     }
 
-    return sort keys %dists;
+    my @distributions = sort keys %dists;
+    return @distributions;
 }
 
 __DATA__
