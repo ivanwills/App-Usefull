@@ -223,7 +223,7 @@ Does (en|de)coding of the MIME Quoted Printable format
 
 =item hex
 
-Deecimal to hexadecimal conversion, if C<--direction decode> then hexadecimal
+Decimal to hexadecimal conversion, if C<--direction decode> then hexadecimal
 to decimal conversion
 
 =item html

@@ -84,5 +84,21 @@ add_stopwords(qw/
     vrc
     yml
     tidyup
+    cpanm
+    iNotify
+    rhythmbox
+    chkspell
+    pl
+    colour
+    df
+    itop
+    psql
+    pmwhich
+    com
+    npmjs
+    nodedoc
+    cp
+    fspot
+    swapfiles
 /);
 all_pod_files_spelling_ok();

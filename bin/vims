@@ -92,7 +92,7 @@ __DATA__
 
 =head1 NAME
 
-vims - Determin which Screen is running a vim session.
+vims - Determine which Screen is running a vim session.
 
 =head1 VERSION
 
