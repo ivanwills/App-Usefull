@@ -27,6 +27,7 @@ bin/itop
 bin/lines
 bin/module-dependencies
 bin/myget
+bin/nodedoc
 bin/partition-table.pl
 bin/pingfind
 bin/player-alarm
