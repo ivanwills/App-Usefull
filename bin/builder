@@ -16,9 +16,8 @@ use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use POSIX qw/strftime/;
-use File::Slurp qw/write_file/;
 use VCS::Which;
-use Path::Class;
+use Path::Tiny;
 use Config::General;
 use DateTime;
 
@@ -153,7 +152,7 @@ sub test {
 }
 
 sub testup {
-    my $dir      = dir('lib');
+    my $dir      = path('lib');
     my @children = $dir->children;
     while ( my $child = shift @children ) {
         if ( -d $child ) {
@@ -269,14 +268,14 @@ sub dist {
             $opt->force($opt->force - 1);
         }
 
-        my $changes = file('Changes');
+        my $changes = path('Changes');
 
         die "Could not determine the current version of package!\n"
             if !defined $ver;
 
         if ( !-f $changes ) {
             my $date = strftime('%Y-%m-%d', localtime);
-            write_file($changes, <<"CHANGES");
+            path($changes)->spew(<<"CHANGES");
 Revision history for $dist
 
 $ver    $date
@@ -372,7 +371,7 @@ CHANGES
 sub release {
     my ($opt) = @_;
 
-    my $changes   = file('Changes');
+    my $changes   = path('Changes');
     my $changelog = $changes->slurp;
     my ($version) = $changelog =~ /\r?\n\r?\n(\S+)\s+/;
     my ($old, $new) = @ARGV;
@@ -438,7 +437,7 @@ sub manifest {
 }
 
 sub create_tags {
-    my $tag = file('usr', 'bin', 'ctags');
+    my $tag = path('usr', 'bin', 'ctags');
     if ( $opt->tags && -x $tag ) {
         my @exclude = qw/blib _build Build tmp/;
         my $cmd = "$tag -R --exclude=" . join ' --exlude=', @exclude;
