@@ -138,6 +138,7 @@ sub config {
     return $conf;
 }
 
+my $tc;
 sub auto {
     my ($opt, $auto) = @_;
 
@@ -154,10 +155,22 @@ sub auto {
         @auto = grep {/^$ARGV[-1]/} @auto;
     }
 
+    if (!@auto) {
+        $tc ||= File::TypeCategories->new(%option);
+        find(
+            sub {
+                return if -d $_ || $tc->types_match($File::Find::name, 'ignore');
+                my $name = $File::Find::name;
+                $name =~ s{^[.]/}{};
+                push @auto, $name if $name =~ m{^$ARGV[-1]};
+            },
+            '.'
+        );
+    }
+
     print join " ", sort @auto;
 }
 
-my $tc;
 sub open_perl {
     my @files;
     my %dirs = (
