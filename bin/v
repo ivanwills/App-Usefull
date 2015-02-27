@@ -52,8 +52,9 @@ sub main {
             'test|t!',
             'list|l',
             'tags|T!',
-            'open|o',
-            'open_vertical|O',
+            'o',
+            'O',
+            'R',
             'note|n!',
             'name|N=s',
             'find|f',
@@ -89,11 +90,6 @@ sub main {
     }
     die "Could not find any files!\n" if !@files;
 
-    my $args
-        = $option{open}          ? '-o '
-        : $option{open_vertical} ? '-O '
-        :                          '';
-
     if ( $opt->list ) {
         print join "\n", uniq @files, '';
         return;
@@ -103,7 +99,13 @@ sub main {
         note($opt->name || 'note', @files);
     }
 
-    my @cmd = ('vim', $args, uniq @files);
+    set_env();
+
+    my @cmd = qw/vim/;
+    for (qw/o O R/) {
+        push @cmd, $_ if $opt->$_;
+    }
+    push @cmd, uniq @files;
 
     warn join ' ', @cmd, "\n" if $option{verbose} || $option{test};
     exec @cmd if !$option{test};
@@ -348,6 +350,13 @@ sub create_tags {
         warn "$cmd\n" if $option{verbose} || $option{test};
         system $cmd if !$option{test};
     }
+}
+
+sub set_env {
+    my @libs = split ':', $ENV{PERL5LIB} || '';
+    push @libs, 'lib' if -d 'lib';
+    push @libs, 't/lib' if -d 't/lib';
+    $ENV{PERL5LIB} = join ':', @libs;
 }
 
 sub note {
