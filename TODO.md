@@ -1,1 +1,1 @@
-* Combine vim.pl, v and fv to one file
+* Combine vim.pl and v into one file
