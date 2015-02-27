@@ -54,6 +54,7 @@ sub main {
             'open|o',
             'open_vertical|O',
             'note|n!',
+            'find|f',
             'auto_complete|auto-complete',
             'verbose|v+',
         ],
@@ -83,6 +84,7 @@ sub main {
             : $file eq 'js'     ? open_js()
             : $file eq 'db'     ? open_database()
             : $file eq 'all'    ? ( open_perl(), open_templates(), open_database() )
+            : $opt->find        ? open_found($file)
             :                     $file;
     }
     die "Could not find any files!\n" if !@files;
@@ -99,10 +101,10 @@ sub main {
 
     note($config, @files) if $opt->note;
 
-    my $cmd = "vim $args'" . (join "' '", uniq @files) . "'";
+    my @cmd = ('vim', $args, uniq @files);
 
-    warn "$cmd\n" if $option{verbose} || $option{test};
-    exec $cmd if !$option{test};
+    warn join ' ', @cmd, "\n" if $option{verbose} || $option{test};
+    exec @cmd if !$option{test};
 
     return ;
 }
@@ -155,6 +157,7 @@ sub auto {
     print join " ", sort @auto;
 }
 
+my $tc;
 sub open_perl {
     my @files;
     my %dirs = (
@@ -167,7 +170,7 @@ sub open_perl {
         t       => { order => 3, extension => 1 },
         tx      => { order => 4, extension => 1 },
     );
-    my $file_test = File::TypeCategories->new( include_type => [qw/perl test/] );
+    $tc = File::TypeCategories->new( include_type => [qw/perl test/] );
 
     for my $dir ( sort { $dirs{$a}{order} <=> $dirs{$b}{order} } keys %dirs ) {
         warn "Dir $dir\n" if $option{verbose} && $option{verbose} > 1;
@@ -187,7 +190,7 @@ sub open_perl {
                 push @children, $file->children;
             }
             else {
-                if ( !$file_test->file_ok($file) ) {
+                if ( !$tc->file_ok($file) ) {
                     print {*STDERR} "\n" if $option{verbose} && $option{verbose} > 2;
                     next;
                 }
@@ -298,6 +301,30 @@ sub open_database {
     return @files;
 }
 
+sub open_found {
+    my $file = shift;
+    $tc ||= File::TypeCategories->new(%option);
+    my @found;
+    find(
+        sub {
+            return if -d $_ || $tc->types_match($File::Find::name, 'ignore');
+            push @found, $File::Find::name if $File::Find::name =~ /$file/;
+        },
+        '.'
+    );
+
+    if ( @found != 1 ) {
+        if (!@found) {
+            warn "No match for $file\n";
+        }
+        else {
+            warn "'$file' matched " . (join ', ', @found) . "\n";
+        }
+    }
+
+    return @found;
+}
+
 sub create_tags {
     my $tag = file('/usr', 'bin', 'ctags');
     if ( $option{tags} && -x $tag ) {
@@ -383,6 +410,7 @@ This documentation refers to v version 0.1.
   -T --tags     Create ctags file
   -n --note     Add any extra files being opened to the saved config option (or note
                 if one isn't specified)
+  -f --find     Find any unmatched categories
   -o            vim -o
   -O            vim -O
 
