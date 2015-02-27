@@ -422,8 +422,10 @@ This documentation refers to v version 0.1.
   -s --schema[=]str
                 Open files for the schema
   -T --tags     Create ctags file
-  -n --note     Add any extra files being opened to the saved config option (or note
-                if one isn't specified)
+  -N --name[=]str
+                Name a notes "str" (implies --note)
+  -n --note     Add any extra files being opened to the saved config option
+                (or create a note if one isn't specified)
   -f --find     Find any unmatched categories
   -o            vim -o
   -O            vim -O
