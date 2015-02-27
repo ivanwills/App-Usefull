@@ -15,7 +15,6 @@ bin/duuser
 bin/fdiff
 bin/file-watch
 bin/fspot-cp
-bin/fv
 bin/highlight
 bin/hl
 bin/hlist
