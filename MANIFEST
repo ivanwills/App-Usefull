@@ -47,7 +47,6 @@ bin/tidyup
 bin/used
 bin/v
 bin/validate_json
-bin/vim.pl
 bin/vims
 bin/watch-do
 bin/yargs
