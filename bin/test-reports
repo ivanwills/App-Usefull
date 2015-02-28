@@ -32,10 +32,6 @@ my %option = (
     VERSION  => 0,
 );
 
-if ( !@ARGV ) {
-    pod2usage( -verbose => 1 );
-}
-
 main();
 exit 0;
 
@@ -46,7 +42,7 @@ sub main {
         'version|v=s',
         'distiname|d=s',
         'dir|D=s',
-        'verbose|v+',
+        'verbose|V+',
         'man',
         'help',
         'VERSION!',
@@ -60,6 +56,14 @@ sub main {
         pod2usage( -verbose => 2 );
     }
     elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
+    elsif ( !$option{version} || !$option{distname} ) {
+        warn <<'HELP';
+The arguments --version and --distname must be specified if you are not
+running from this script from the distribution's directory.
+
+HELP
         pod2usage( -verbose => 1 );
     }
 
@@ -85,6 +89,10 @@ sub main {
             $file_name .= "-nt";
         }
 
+        # add the GUID to the file to make determining if the report has been
+        # previously downloaded easy.
+        $file_name .= ".$guid";
+
         $text =~ s/^.*<pre>\nFrom:/From/sm;
         $text =~ s{<hr class="clear-contentunit" />.*$}{}s;
         decode_entities($text);
@@ -98,7 +106,11 @@ sub main {
 my $meta;
 sub meta {
     return $meta if $meta;
-    my $file = -f 'MYMETA.yml' ? path('MYMETA.yml') : path('META.yml');
+    my $file
+        = -f 'MYMETA.yml'               ? path('MYMETA.yml')
+        : -f '.build/latest/MYMETA.yml' ? path('.build/latest/MYMETA.yml')
+        :                                 path('META.yml');
+
     $meta = eval { LoadFile $file } || {};
     return $meta;
 }
@@ -124,25 +136,36 @@ __DATA__
 
 =head1 NAME
 
-bin/test-reports - <One-line description of commands purpose>
+test-reports - Download test reports for a CPAN package
 
 =head1 VERSION
 
-This documentation refers to bin/test-reports version 0.0.1
+This documentation refers to test-reports version 0.0.1
 
 =head1 SYNOPSIS
 
-   bin/test-reports [option]
+   test-reports [option]
 
  OPTIONS:
-  -o --other         other option
+  -v --version[=]version
+                The version of the distributions who's reports you want. If not
+                specified it is attempted to be determined from the by assuming
+                that you are in the current directory of that distribution.
+                Looks for the meta file in the following way:
+                 - MYMETA.yml
+                 - .build/latest/MYMETA.yml (for dzil)
+                 - META.yml
+  -d --distiname[=]distribution
+                The name of the distribution who's reports you want. If not
+                specified it is attempted to be found via the name attribute
+                of the meta file (see --version for details)
+  -D --dir[=]report-dir
+                The base directory to stort the reports int (Default is t/reports)
 
-  -v --verbose       Show more detailed option
-     --version       Prints the version information
-     --help          Prints this help information
-     --man           Prints the full documentation for bin/test-reports
-
-
+  -V --verbose  Show more detailed option
+     --VERSION  Prints the version information
+     --help     Prints this help information
+     --man      Prints the full documentation for test-reports
 
 =head1 DESCRIPTION
 
