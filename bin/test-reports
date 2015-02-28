@@ -42,6 +42,7 @@ sub main {
         'version|v=s',
         'distiname|d=s',
         'dir|D=s',
+        'state|s=s',
         'verbose|V+',
         'man',
         'help',
@@ -74,6 +75,7 @@ HELP
 
     for my $report (@$test_reports) {
         next if $report->{version} ne $option{version};
+        next if $option{state} && $report->{state} eq $option{state};
 
         my $guid = $report->{guid};
         next if glob "$dir/*.$guid";
@@ -161,6 +163,8 @@ This documentation refers to test-reports version 0.0.1
                 of the meta file (see --version for details)
   -D --dir[=]report-dir
                 The base directory to stort the reports int (Default is t/reports)
+  -s --state[=](pass|fail|invalid|na|unknown)
+                Only download tests in this state
 
   -V --verbose  Show more detailed option
      --VERSION  Prints the version information
