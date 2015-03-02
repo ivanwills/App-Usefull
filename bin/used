@@ -110,6 +110,7 @@ sub main {
 
     # remove any modules defined in the local lib directory
     for my $lib ( @{ $option{lib} } ) {
+        next if !-d $lib;
         $lib =~ s{/$}{};
         my @files = eval { dir($lib)->children };
         while (my $file = shift @files) {
@@ -361,6 +362,8 @@ sub pre_specified {
 
 sub get_libraries {
     my ($requires) = @_;
+
+    return if !-d 'lib';
 
     my $dir = dir('lib');
     my @files = $dir->children;
