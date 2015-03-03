@@ -19,7 +19,7 @@ use FindBin qw/$Bin/;
 use Path::Class;
 use Module::CoreList;
 use File::chdir;
-use YAML qw/LoadFile/;
+use YAML::Syck qw/LoadFile/;
 
 require CHI;
 require WWW::Mechanize::Cached;
