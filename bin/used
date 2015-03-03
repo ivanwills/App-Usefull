@@ -20,6 +20,7 @@ use Path::Class;
 use Module::CoreList;
 use Perl::MinimumVersion;
 use Term::ANSIColor qw/colored/;
+use YAML::Syck qw/LoadFile/;
 
 our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -327,28 +328,58 @@ sub process_file {
 
 # finds modules pre-specified in the Build.PL file
 sub pre_specified {
-    return if !-f $option{build};
-    my $build = file($option{build})->slurp;
+    my %requires;
 
-    my ($required)      = $build =~ /\brequires     \s* (?: => | , ) \s* ( { [^}]*? } )/xms;
-    my ($recommends)    = $build =~ /recommends     \s* (?: => | , ) \s* ( { [^}]*? } )/xms;
-    my ($test_required) = $build =~ /build_requires \s* (?: => | , ) \s* ( { [^}]*? } )/xms;
-
-    $required      = eval $required      if $required;        ## no critic
-    $recommends    = eval $recommends    if $recommends;      ## no critic
-    $test_required = eval $test_required if $test_required;   ## no critic
-
-    my %requires = map { $_ => { version => $required->{$_} } } keys %$required;
-    for my $module ( keys %$recommends ) {
-        $requires{$module}{version} = $recommends->{$module};
-        $requires{$module}{recommended} = 1;
+    if (-f 'META.yml') {
+        my $meta = LoadFile('META.yml');
+        %requires = map {( $_ => { version => $meta->{requires}{$_} } )} keys %{ $meta->{requires} || {} };
+        %requires = (
+            %requires,
+            map {(
+                $_ => {
+                    recommended => 1,
+                    version     => $meta->{recommends}{$_},
+                },
+            )}
+            keys %{ $meta->{recommends} || {} },
+        );
+        %requires = (
+            %requires,
+            map {(
+                $_ => {
+                    build_only => 1,
+                    version    => $meta->{build_requires}{$_},
+                },
+            )}
+            keys %{ $meta->{build_requires} || {} },
+        );
     }
-    for my $module ( keys %$test_required ) {
-        $requires{$module}{version} = $test_required->{$module};
-        $requires{$module}{build_only} = 1;
-    }
+    elsif (-f $option{build} ) {
+        my $build = file($option{build})->slurp;
 
-    $requires{'Module::Build'}{version} ||= 0;
+        my ($required)      = $build =~ /\brequires     \s* (?: => | , ) \s* ( { [^}]*? } )/xms;
+        my ($recommends)    = $build =~ /recommends     \s* (?: => | , ) \s* ( { [^}]*? } )/xms;
+        my ($test_required) = $build =~ /build_requires \s* (?: => | , ) \s* ( { [^}]*? } )/xms;
+
+        $required      = eval $required      if $required;        ## no critic
+        $recommends    = eval $recommends    if $recommends;      ## no critic
+        $test_required = eval $test_required if $test_required;   ## no critic
+
+        %requires = map { $_ => { version => $required->{$_} } } keys %$required;
+        for my $module ( keys %$recommends ) {
+            $requires{$module}{version} = $recommends->{$module};
+            $requires{$module}{recommended} = 1;
+        }
+        for my $module ( keys %$test_required ) {
+            $requires{$module}{version} = $test_required->{$module};
+            $requires{$module}{build_only} = 1;
+        }
+
+        $requires{'Module::Build'}{version} ||= 0;
+    }
+    else {
+        return;
+    }
 
     get_libraries(\%requires);
 
