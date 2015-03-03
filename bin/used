@@ -76,8 +76,7 @@ sub main {
     my %used;
     my %versions;
     while ( my $file = shift @dirs ) {
-        warn '' . @dirs if @dirs > 100;
-        next if $file =~ m{ (?: [._]build | blib | _build | [.](?: git | svn | bzr) | CVS | RCS ) /}xms;
+        next if $file =~ m{ (?: [._]build | blib | [.](?: git | svn | bzr) | CVS | RCS ) }xms;
         next if skip($file);
 
         if ( -f $file ) {
@@ -91,6 +90,7 @@ sub main {
             process_file($file, \%used, \%versions);
         }
         else {
+            warn "$file\n" if $option{verbose} > 1;
             push @dirs, dir($file)->children;
         }
     }
