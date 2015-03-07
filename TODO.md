@@ -3,5 +3,4 @@
 ** diffdir
 ** chkfacl
 ** swapfiles
-** used
 ** watch-do
