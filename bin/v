@@ -103,7 +103,7 @@ sub main {
 
     my @cmd = qw/vim/;
     for (qw/o O R/) {
-        push @cmd, $_ if $opt->$_;
+        push @cmd, "-$_" if $opt->$_;
     }
     push @cmd, uniq @files;
 
