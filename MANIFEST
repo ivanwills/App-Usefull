@@ -3,7 +3,6 @@ bin/blame-line
 bin/build-all
 bin/builder
 bin/char2line
-bin/chkfacl
 bin/chkspell
 bin/cmdaliaser
 bin/coder
