@@ -33,7 +33,7 @@ sub module_boilerplate_ok {
         not_in_file_ok($module =>
             'the great new $MODULENAME' => qr/ - The great new /,
             'boilerplate description'   => qr/Quick summary of what the module/,
-            'stub function definition'  => qr/function[12]/,
+            'stub function definition'  => qr/sub\s+function[12]/,
             'module description'        => qr/One-line description of module/,
             'description'               => qr/A full description of the module/,
             'subs / methods'            => qr/section listing the public components/,

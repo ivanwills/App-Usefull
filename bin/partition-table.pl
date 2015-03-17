@@ -255,21 +255,12 @@ aims to help speed up that process.
 
 =head1 DIAGNOSTICS
 
-A list of every error and warning message that the module can generate (even
-the ones that will "never happen"), with a full explanation of each problem,
-one or more likely causes, and any suggested remedies.
-
 =head1 DEPENDENCIES
 
 There may be issues with different versions of DBD::Pg in the way that it
 handles COPY.
 
 =head1 INCOMPATIBILITIES
-
-A list of any modules that this module cannot be used in conjunction with.
-This may be due to name conflicts in the interface, or competition for system
-or program resources, or due to internal limitations of Perl (for example, many
-modules that use source code filters are mutually incompatible).
 
 =head1 BUGS AND LIMITATIONS
 

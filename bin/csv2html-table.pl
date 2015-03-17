@@ -38,14 +38,13 @@ This documentation refers to csv2html-table version 0.1.
 
 There are no known bugs in this module.
 
-Please report problems to <Maintainer name(s)> (<contact address>)
+Please report problems to Ivan Wills (ivan.wills@gmail.com)
 
 Patches are welcome.
 
 =head1 AUTHOR
 
 Ivan Wills - (ivan.wills@gmail.com)
-<Author name(s)> - (<contact address>)
 
 =head1 LICENSE AND COPYRIGHT
 
