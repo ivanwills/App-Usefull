@@ -37,6 +37,7 @@ my $builder = Module::Build->new(
         'Net::DBus::Reactor'              => 0,
         'Number::Bytes::Human'            => 0,
         'Path::Class'                     => 0,
+        'Path::Tiny'                      => 0,
         'Perl::MinimumVersion'            => 0,
         'Proc::ProcessTable'              => 0,
         'Syntax::Highlight::Engine::Kate' => 0,
@@ -55,8 +56,8 @@ my $builder = Module::Build->new(
         'Module::Build' => 0.38,
     },
     build_requires => {
-        'Test::More'       => 0,
-        'Test::NoWarnings' => 0,
+        'Test::More'     => 0,
+        'Test::Warnings' => 0,
     },
     add_to_cleanup     => [ 'App-Useful-*' ],
     create_makefile_pl => 'traditional',
