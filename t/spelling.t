@@ -100,5 +100,7 @@ add_stopwords(qw/
     cp
     fspot
     swapfiles
+    jshint
+    jshtml
 /);
 all_pod_files_spelling_ok();

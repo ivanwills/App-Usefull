@@ -111,4 +111,5 @@ module_boilerplate_ok('bin/validate_json');
 module_boilerplate_ok('bin/vims');
 module_boilerplate_ok('bin/watch-do');
 module_boilerplate_ok('bin/yargs');
+module_boilerplate_ok('lib/App/Useful.pm');
 done_testing();

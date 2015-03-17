@@ -6,6 +6,8 @@ use Test::More;
 use Path::Class;
 use File::Spec;
 
+use_ok('App::Useful');
+
 my $base = file($0)->parent->parent;
 my $lib  = $base->subdir('lib');
 my @files = $lib->children;
