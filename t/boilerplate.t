@@ -62,7 +62,6 @@ subtest 'Changes' => sub {
 
 module_boilerplate_ok('bin/bigfiles');
 module_boilerplate_ok('bin/blame-line');
-module_boilerplate_ok('bin/build-all');
 module_boilerplate_ok('bin/builder');
 module_boilerplate_ok('bin/char2line');
 module_boilerplate_ok('bin/chkspell');
@@ -70,7 +69,6 @@ module_boilerplate_ok('bin/cmdaliaser');
 module_boilerplate_ok('bin/coder');
 module_boilerplate_ok('bin/csv2html-table.pl');
 module_boilerplate_ok('bin/df-colour');
-module_boilerplate_ok('bin/diffdir');
 module_boilerplate_ok('bin/duhs');
 module_boilerplate_ok('bin/duuser');
 module_boilerplate_ok('bin/fdiff');
