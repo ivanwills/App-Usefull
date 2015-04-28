@@ -18,6 +18,7 @@ use FindBin qw/$Bin/;
 use POSIX qw/strftime/;
 use VCS::Which;
 use Path::Tiny;
+use File::Copy qw/copy/;
 use Config::General;
 use DateTime;
 
@@ -485,6 +486,12 @@ sub sha_from_show {
               $builder eq 'build' ? ' ./Build'
             : $builder eq 'make'  ? ' make'
             :                       0;
+
+        if ($builder eq 'build' && !-f 'META.json') {
+            system "$cmd dist";
+            copy 'MYMETA.json', 'META.json' if -e 'META.json';
+            copy 'MYMETA.yml' , 'META.yml'  if -e 'META.yml';
+        }
 
         return $action ? system "$cmd $action" : $cmd;
     }
