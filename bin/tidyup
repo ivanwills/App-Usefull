@@ -16,7 +16,6 @@ use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
-use Path::Class;
 
 our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -78,7 +77,6 @@ package Tidy::STDIN {
 
 package Tidy::Perl {
     use Moose;
-    use Path::Class;
     extends 'Tidy';
 
     has '+command' => ( default => sub{[qw/perltidy -b/]} );
@@ -86,7 +84,6 @@ package Tidy::Perl {
 
 package Tidy::Html {
     use Moose;
-    use Path::Class;
     extends 'Tidy';
 
     has '+command' => ( default => sub{[qw/tidy -indent -asxhtml -m/]} );

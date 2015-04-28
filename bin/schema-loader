@@ -13,14 +13,14 @@ use Getopt::Long;
 use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
-use Path::Class;
+use Path::Tiny;
 use DBIx::Class::Schema::Loader qw/ make_schema_at /;
 
 our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
-    dir     => dir('lib')->absolute . '',
+    dir     => path('lib')->absolute . '',
     verbose => 0,
     man     => 0,
     help    => 0,

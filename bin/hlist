@@ -16,7 +16,7 @@ use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
-use Path::Class;
+use Path::Tiny;
 use File::TypeCategories;
 use File::chdir;
 
@@ -89,7 +89,7 @@ sub main {
 
     for my $file (@files) {
         my $start = start($file);
-        list( file => dir($file), line_start => $start, depth => 1 );
+        list( file => path($file), line_start => $start, depth => 1 );
     }
 }
 

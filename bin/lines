@@ -15,7 +15,7 @@ use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
-use Path::Class;
+use Path::Tiny;
 use Term::ANSIColor qw/colored/;
 
 our $VERSION = version->new('0.0.1');
@@ -79,7 +79,7 @@ sub files {
     confess "No File\n" if !$file;
     chomp $file;
 
-    my $out = lines(file($file)->openr);
+    my $out = lines(path($file)->openr);
     return if !$out;
 
     my $head = "====>  $file  <====\n";

@@ -14,7 +14,6 @@ use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
-use Path::Class;
 require CHI;
 require WWW::Mechanize::Cached;
 require HTTP::Tiny::Mech;

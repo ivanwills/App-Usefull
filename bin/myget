@@ -17,7 +17,7 @@ use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
-use Path::Class;
+use Path::Tiny;
 use WWW::Mechanize;
 use HTTP::Cookies;
 use IO::Socket::SSL();
@@ -105,7 +105,7 @@ sub main {
     }
 
     if ( $option{header_file} ) {
-        my $headers = file($option{header_file})->slurp;
+        my $headers = path($option{header_file})->slurp;
         my %headers = map { split /\s*=\s*/, $_, 2 } grep {!/^#/ && !/^\s*$/ } split /\s*\r?\n/, $headers;
         $mech->add_header( %headers );
     }
@@ -122,7 +122,7 @@ sub main {
         my $content
             = $option{content} eq '-' ? do { local $/; <> }
             : !-f $option{content}    ? $option{content}
-            :                           file($option{content})->slurp;
+            :                           path($option{content})->slurp;
 
         eval { $mech->put($url, content => $content) };
     }

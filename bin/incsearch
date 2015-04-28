@@ -17,7 +17,7 @@ use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
-use Path::Class;
+use Path::Tiny;
 
 our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -69,7 +69,7 @@ sub main {
 
         for my $path (@INC) {
             next if !-d $path;
-            my @possibles = map { -d $_ ? dir($_) : file($_) } glob "$path/$file*";
+            my @possibles = map { path($_) } glob "$path/$file*";
             next if ! @possibles;
 
             print "$path\n" if $option{verbose} == 1;

@@ -19,7 +19,7 @@ use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use HTTP::Proxy;
 use HTTP::Recorder;
-use Path::Class;
+use Path::Tiny;
 
 our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -147,7 +147,7 @@ package Recorder::HeaderFilter;
 
 use strict;
 use warnings;
-use Path::Class;
+use Path::Tiny;
 use Data::Dumper qw/Dumper/;
 use base qw/HTTP::Proxy::HeaderFilter/;
 
@@ -189,7 +189,7 @@ sub get_headers {
     if ( $self->filename && -f $self->filename ) {
         my @stat = stat $self->filename;
         if ( $stat[9] > $self->file_date ) {
-            my $headers = file($self->filename)->slurp;
+            my $headers = path($self->filename)->slurp;
             my %headers = map { split /\s*=\s*/, $_, 2 } grep {!/^#/ && !/^\s*$/ } split /\s*\r?\n/, $headers;
             $self->file_headers(\%headers);
         }

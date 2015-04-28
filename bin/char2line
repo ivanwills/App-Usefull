@@ -17,7 +17,7 @@ use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
-use Path::Class;
+use Path::Tiny;
 
 our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -67,7 +67,7 @@ sub main {
     }
 
     # do stuff here
-    my $str = file( shift @ARGV )->slurp;
+    my $str = path( shift @ARGV )->slurp;
     my $pos = substr $str, 0, $option{position};
     my @lines = split /\n/, $pos;
     my $lines = @lines + 1;

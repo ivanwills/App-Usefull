@@ -17,7 +17,7 @@ use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
-use Path::Class;
+use Path::Tiny;
 use IPC::Open2 qw/open2/;
 
 our $VERSION = version->new('0.0.1');
@@ -79,7 +79,7 @@ sub jshint {
     my $cdata_end    = qr{ \s* (?: /[*] )? \]\]> (?: [*]\/ )? }xms;
     my $script_data  = qr{ $script_start ([^<].+?) $script_end }xms;
 
-    my $html = file($file)->slurp;
+    my $html = path($file)->slurp;
     my @scripts = $html =~ /$script_data/gxms;
     for my $script (@scripts) {
         $script =~ s/(?:$cdata_start)//xms;
