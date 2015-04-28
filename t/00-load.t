@@ -9,7 +9,7 @@ use File::Spec;
 use_ok('App::Useful');
 
 my $base = path($0)->parent->parent;
-my $lib  = $base->subdir('lib');
+my $lib  = $base->child('lib');
 my @files = $lib->children;
 
 while ( my $file = shift @files ) {
@@ -22,7 +22,7 @@ while ( my $file = shift @files ) {
 }
 
 my $perl = File::Spec->rel2abs($^X);
-my $bin = $base->subdir('bin');
+my $bin = $base->child('bin');
 @files = $bin->children;
 
 my $perl = File::Spec->rel2abs($^X);
