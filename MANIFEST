@@ -1,13 +1,11 @@
 bin/bigfiles
 bin/blame-line
-bin/build-all
 bin/builder
 bin/char2line
 bin/chkspell
 bin/cmdaliaser
 bin/coder
 bin/df-colour
-bin/diffdir
 bin/duhs
 bin/duuser
 bin/fdiff
