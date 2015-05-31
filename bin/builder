@@ -122,12 +122,14 @@ sub main {
     system builder();
 
     $ENV{TEST_AUTHOR}     = $opt->author;
+    $ENV{RELEASE_TESTING} = $opt->author;
     $ENV{HARNESS_OPTIONS} = 'j' . $opt->parallel;
 
     if ( $level eq 'dist' ) {
         # turn on author tests before making a distribution
-        $ENV{TEST_AUTHOR} = defined $ENV{TEST_AUTHOR} ? $ENV{TEST_AUTHOR} : 1;
-        $ENV{TEST_POD}    = defined $ENV{TEST_POD}    ? $ENV{TEST_POD}    : 1;
+        $ENV{TEST_AUTHOR}     = defined $ENV{TEST_AUTHOR}     ? $ENV{TEST_AUTHOR}     : 1;
+        $ENV{TEST_POD}        = defined $ENV{TEST_POD}        ? $ENV{TEST_POD}        : 1;
+        $ENV{RELEASE_TESTING} = defined $ENV{RELEASE_TESTING} ? $ENV{RELEASE_TESTING} : 1;
     }
 
       $level eq 'test'      ? test($opt)
