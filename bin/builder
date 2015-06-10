@@ -341,6 +341,9 @@ CHANGES
                 }
             }
             system $dch if -d 'debian';
+
+            # now install the just released code.
+            system $opt->install . builder() . ' install';
         }
         elsif ( $tags && $tags !~ /$ver/ ) {
             unlink $tars[-1];
