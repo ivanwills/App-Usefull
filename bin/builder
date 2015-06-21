@@ -387,6 +387,9 @@ sub release {
         $old =~ s/^v//;
         $new = $old;
         $new =~ s/(\d+)$/sprintf '%0'.(length $1).'d', $1+1/egxms;
+        while ( length $new < length $old ) {
+            $new .= '0';
+        }
         print "builder release $version $new\n";
         return if !$opt->do;
     }
