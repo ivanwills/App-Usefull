@@ -51,7 +51,7 @@ sub main {
             : $percent >= 80  ? BOLD YELLOW
             :                   RESET;
 
-        print $colour . $line;
+        print $colour . $line . RESET;
     }
 
     return;
