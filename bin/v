@@ -153,7 +153,11 @@ sub auto {
     }
 
     my $conf = config();
-    my @auto = sort ( qw/perl lib test templ static css js db all/, (grep {ref $conf->{$_} ne 'ARRAY'} keys %$conf), keys %{ $conf->{$branch} } );
+    my @auto = sort +(
+        qw/perl lib test templ static css js db all/,
+        (grep {ref $conf->{$_} ne 'HASH'} keys %$conf),
+        keys %{ $conf->{$branch} }
+    );
 
     if ( @ARGV > 1 ) {
         @auto = grep {/^$ARGV[-1]/} @auto;
