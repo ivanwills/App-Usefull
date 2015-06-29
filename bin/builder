@@ -393,6 +393,9 @@ sub release {
         print "builder release $version $new\n";
         return if !$opt->do;
     }
+    elsif ( $new =~ /[.].*0$/ ) {
+        die "Don't create versions with 0 at the end, Module::Build doesn't like them!\n";
+    }
 
     test($opt) || return if !$opt->do;
 
