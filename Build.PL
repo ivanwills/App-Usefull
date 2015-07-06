@@ -36,7 +36,6 @@ my $builder = Module::Build->new(
         'Net::DBus'                       => 0,
         'Net::DBus::Reactor'              => 0,
         'Number::Bytes::Human'            => 0,
-        'Path::Class'                     => 0,
         'Path::Tiny'                      => 0,
         'Perl::MinimumVersion'            => 0,
         'Proc::ProcessTable'              => 0,
