@@ -344,6 +344,9 @@ CHANGES
 
             # now install the just released code.
             system $opt->install . builder() . ' install';
+            my $self = `whoami`;
+            chomp $self;
+            system qw/sudo chown/, "$self\:", qw/-R ./;
         }
         elsif ( $tags && $tags !~ /$ver/ ) {
             unlink $tars[-1];
