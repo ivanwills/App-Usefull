@@ -357,6 +357,7 @@ sub open_dir {
         }
         else {
             push @found, "$file";
+            last if @files > $option{max};
         }
     }
 
