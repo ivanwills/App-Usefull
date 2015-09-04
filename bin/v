@@ -86,6 +86,7 @@ sub main {
             : $file eq 'db'     ? open_database()
             : $file eq 'all'    ? ( open_perl(), open_templates(), open_database() )
             : $opt->find        ? open_found($file)
+            : -d $file          ? open_dir($file)
             :                     $file;
     }
     die "Could not find any files!\n" if !@files;
@@ -340,6 +341,22 @@ sub open_found {
         }
         else {
             warn "'$file' matched " . (join ', ', @found) . "\n";
+        }
+    }
+
+    return @found;
+}
+
+sub open_dir {
+    my @files = @_;
+    my @found;
+
+    while ( my $file = shift @files ) {
+        if (-d $file) {
+            push @files, path($file)->children;
+        }
+        else {
+            push @found, "$file";
         }
     }
 
