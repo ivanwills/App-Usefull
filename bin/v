@@ -353,7 +353,7 @@ sub open_dir {
 
     while ( my $file = shift @files ) {
         if (-d $file) {
-            push @files, path($file)->children;
+            push @files, sort ( path($file)->children );
         }
         else {
             push @found, "$file";
