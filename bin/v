@@ -73,7 +73,7 @@ sub main {
     for my $file ( @options ) {
         push @files
             , -f $file          ? $file
-            : $conf->{$file}    ? map { glob $_ } @{ $conf->{$file} }
+            : $conf->{$file}    ? grep { ! -d $_ } map { glob $_ } @{ $conf->{$file} }
             : $file eq 'perl'   ? open_perl()
             : $file eq 'bin'    ? open_bin()
             : $file eq 'lib'    ? open_lib()
