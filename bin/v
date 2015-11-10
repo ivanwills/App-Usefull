@@ -266,13 +266,13 @@ sub open_tests {
 }
 
 sub open_bin       { return open_general( [qw{ bin                                                                }],                           ); }
-sub open_lib       { return open_general( [qw{ lib                                                                }], [qr{ [.](?:pm|pod)$ }xms] ); }
+sub open_lib       { return open_general( [qw{ lib                                                                }], [qr{ [.](?:pm|pod)$ }xms], [qr{ lib/perl5 }xms] ); }
 sub open_templates { return open_general( [qw{ template templates root html views                                 }]); }
 sub open_css       { return open_general( [qw{ css public/css root/css                                            }], [qr{ [.]css$        }xms] ); }
 sub open_js        { return open_general( [qw{ js javascript public/js public/javascripts root/js root/javascript }], [qr{ [.]js$         }xms] ); }
 
 sub open_general {
-    my ($dirs, $matches) = @_;
+    my ($dirs, $matches, $excludes) = @_;
     my @files;
 
     DIR:
@@ -295,6 +295,7 @@ sub open_general {
                 next FILE if $file =~ /jquery/;
                 next FILE if -b $file;
                 next FILE if $matches && !grep {$file =~ /$_/} @$matches;
+                next FILE if $excludes && grep {$file =~ /$_/} @$excludes;
                 push @files, $file;
             }
         }
