@@ -166,15 +166,18 @@ sub auto {
 
     if (!@auto) {
         $tc ||= File::TypeCategories->new(%option);
-        find(
-            sub {
-                return if -d $_ || $tc->types_match($File::Find::name, 'ignore');
-                my $name = $File::Find::name;
-                $name =~ s{^[.]/}{};
-                push @auto, $name if $name =~ m{^$ARGV[-1]};
-            },
-            '.'
-        );
+        my $base = $ARGV[-1];
+        if ($base =~ m{/}) {
+            $base =~ s{/[^/]*$}{};
+        }
+        else {
+            $base = '.';
+        }
+
+        for my $file (path($base)->children) {
+            next if $file !~ m{^$ARGV[-1]};
+            push @auto, -d $file ? "$file/" : "$file";
+        }
     }
 
     print join " ", sort @auto;
