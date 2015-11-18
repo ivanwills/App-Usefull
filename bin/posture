@@ -18,13 +18,13 @@ use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use UI::Dialog;
+use YAML qw/LoadFile/;
 
 our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
-    posture => 30,
-    eyes    => 59,
+    config  => "$ENV{HOME}/.posture.yml",
     time    => 60,
     verbose => 0,
     man     => 0,
@@ -62,25 +62,18 @@ sub main {
 
     # do stuff here
     my $dialog = UI::Dialog->new;
+    my ($config) = LoadFile($option{config});
     my $i = 0;
-    my $size = length $option{posture} * $option{eyes};
 
     while (1) {
         sleep $option{time};
-        print {*STDERR} sprintf "%${size}i ", $i++ if $option{verbose};
-        my $new_line = 0;
-        if ( $i % $option{posture} == 0 ) {
-            $new_line ++;
-            $dialog->msgbox(title => "Posture", text => "Sit up straight");
-        }
-        if ( $i % $option{eyes} == 0 ) {
-            $new_line++;
-            $dialog->msgbox(title => "Eyes", text => "Look into the distance!");
-        }
-        print "\n" if $option{verbose} && $new_line;
-        if ( $new_line == !!$option{posture} + !!$option{eyes} ) {
-            return if !$option{time};
-            $i = 0;
+
+        for my $type (keys %$config) {
+            for my $min (@{ $config->{$type}{time} }) {
+                if (time % 60 == $min) {
+                    $dialog->msgbox(title => $type, text => $config->{$type}{text});
+                }
+            }
         }
     }
 
@@ -102,9 +95,8 @@ This documentation refers to posture version 0.1.
    posture [option]
 
  OPTIONS:
-  -p --posture=min  The number of minutes between reminding to check posture
-  -e --eyes=min     The number of minutes between reminding to look into the
-                    distance
+  -c --config[=]file
+                    Change the default config file (~/.posture.yml)
   -t --sleep-time=sec
                     Set the number of seconds to sleep for (defines what
                     --posture and --eyes consider a minute to be, Default 60)
@@ -115,6 +107,43 @@ This documentation refers to posture version 0.1.
      --man          Prints the full documentation for posture
 
 =head1 DESCRIPTION
+
+=head2 Example config
+
+The following is an example config that:
+
+=over 4
+
+=item *
+
+On the hour tells you to stand up
+
+=item *
+
+On the half hour tells you to sit down
+
+=item *
+
+On the 15 minute and 45 minute mark tells you to look into the distance
+
+=back
+
+My config for ~/.posture.yml
+
+    ---
+    Posture:
+        time:
+            - 30
+        text: Stand up
+    Comfort:
+        time:
+            - 0
+        text: Stand up
+    Eyes:
+        time:
+            - 15
+            - 45
+        text: Look into the distance
 
 =head1 SUBROUTINES/METHODS
 
