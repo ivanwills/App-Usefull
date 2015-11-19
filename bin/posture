@@ -17,7 +17,7 @@ use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
-use UI::Dialog;
+use Gtk3::Notify qw/-init Posture/;
 use YAML qw/LoadFile/;
 
 our $VERSION = version->new('0.0.1');
@@ -61,7 +61,6 @@ sub main {
     }
 
     # do stuff here
-    my $dialog = UI::Dialog->new;
     my ($config) = LoadFile($option{config});
     my $i = 0;
 
@@ -71,7 +70,7 @@ sub main {
         for my $type (keys %$config) {
             for my $min (@{ $config->{$type}{time} }) {
                 if (time % 60 == $min) {
-                    $dialog->msgbox(title => $type, text => $config->{$type}{text});
+                    Gtk3::Notify::Notification->new($type, $config->{$type}{text})->show;
                 }
             }
         }
