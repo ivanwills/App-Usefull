@@ -52,6 +52,7 @@ sub main {
             'test|t!',
             'list|l',
             'tags|T!',
+            'title',
             'o',
             'O',
             'R',
@@ -69,7 +70,14 @@ sub main {
     my $conf = config();
 
     my @options = @ARGV ? @ARGV : ('perl');
+    my $title = $options[0];
     my @files;
+
+    if ($option{title}) {
+        require Term::Title;
+        Term::Title::set_titlebar($title);
+    }
+
     for my $file ( @options ) {
         push @files
             , -f $file          ? $file
