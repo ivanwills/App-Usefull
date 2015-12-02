@@ -36,7 +36,7 @@ sub main {
     Getopt::Long::Configure('bundling');
     GetOptions(
         \%option,
-        'out|o=s',
+        'depth|d=i',
         'verbose|v+',
         'man',
         'help',
@@ -64,9 +64,12 @@ sub main {
 }
 
 sub out {
-    my ($json, $indent) = @_;
+    my ($json, $indent, $depth) = @_;
     my $out = '';
     $indent ||= '';
+    $depth ||= 0;
+
+    return '...' if $option{depth} && $depth >= $option{depth};
 
     if ( !ref $json ) {
         $out = $coder->encode($json);
@@ -74,7 +77,7 @@ sub out {
     elsif (ref $json eq 'HASH') {
         $out .= "{\n";
         for my $key ( sort keys %$json ) {
-            $out .= qq/$indent$option{indent}"$key": / . out($json->{$key}, "$indent$option{indent}") . ",\n";
+            $out .= qq/$indent$option{indent}"$key": / . out($json->{$key}, "$indent$option{indent}", $depth + 1) . ",\n";
         }
         chop $out;
         chop $out;
@@ -84,7 +87,7 @@ sub out {
         if (@$json) {
             $out .= "[\n";
             for my $val (@$json) {
-                $out .= qq/$indent$option{indent}/ . out($val, "$indent$option{indent}") . ",\n";
+                $out .= qq/$indent$option{indent}/ . out($val, "$indent$option{indent}", $depth + 1) . ",\n";
             }
             chop $out;
             chop $out;
