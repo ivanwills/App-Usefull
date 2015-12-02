@@ -465,6 +465,7 @@ This documentation refers to v version 0.1.
   -s --schema[=]str
                 Open files for the schema
   -T --tags     Create ctags file
+     --title    Set the terminal title to the first file option
   -N --name[=]str
                 Name a notes "str" (implies --note)
   -n --note     Add any extra files being opened to the saved config option
