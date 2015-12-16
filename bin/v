@@ -9,6 +9,7 @@
 use strict;
 use warnings;
 use version;
+use List::Util qw/max/;
 use List::MoreUtils qw/uniq/;
 use Getopt::Alt qw/get_options/;
 use List::MoreUtils qw/uniq/;
@@ -59,6 +60,7 @@ sub main {
             'note|n!',
             'name|N=s',
             'find|f',
+            'summarise|summarize|sum|S',
             'auto_complete|auto-complete',
             'verbose|v+',
         ],
@@ -73,7 +75,14 @@ sub main {
     my $title = $options[0];
     my @files;
 
-    if ($option{title}) {
+    if ($option{summarise}) {
+        my $max = max map { length $_ } keys %$conf;
+        for my $key (sort keys %$conf) {
+            printf "%-${max}s %3d files\n", $key, scalar @{ $conf->{$key} };
+        }
+        exit 0;
+    }
+    elsif ($option{title}) {
         require Term::Title;
         Term::Title::set_titlebar($title);
     }
