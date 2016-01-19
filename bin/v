@@ -295,6 +295,8 @@ sub open_general {
     my ($dirs, $matches, $excludes) = @_;
     my @files;
 
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:$ENV{PERL5LIB}:lib" : 'lib';
+
     DIR:
     for my $dir (@$dirs) {
         next if !-d $dir;
