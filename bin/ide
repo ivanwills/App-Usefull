@@ -69,6 +69,7 @@ sub main {
     my ($params, @cmd) = config($run);
 
     if ($params->{wait}) {
+        print join ' ', @cmd, "\n";
         print "Press enter to start : ";
         my $ans = <STDIN>;
         if (!$ans || !ord $ans) {
