@@ -129,6 +129,7 @@ sub config {
     if (!$params) {
         warn "No command $run found running bash\n";
         $params = [qw/bash -i/];
+        $default->{wait} = 0;
     }
     my @cmd = @{ ref $params eq 'HASH' ? $params->{command} : $params };
 
