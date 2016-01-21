@@ -100,7 +100,7 @@ sub main {
             }
             my $answer = <STDIN>;
             chomp $answer;
-            $answer ||= $params->{default};
+            $answer ||= $params->{default} || '';
             while (!$action{$answer}) {
                 print "Please choose one of " . (join ', ', sort keys %action) . "\n";
                 $answer = <STDIN>;
@@ -122,6 +122,9 @@ sub config {
 
     my $config = eval { LoadFile(path('.ide.yml')) } || {};
     my $params = $config->{$run};
+    my $default = $config->{_default} || {
+        restart => undef,
+    };
 
     if (!$params) {
         warn "No command $run found running bash\n";
@@ -134,9 +137,7 @@ sub config {
         exit 1;
     }
 
-    $params = ref $params ne 'ARRAY' ? $params : {
-        restart => undef,
-    };
+    $params = ref $params ne 'ARRAY' ? $params : $default;
 
     return ($params, @cmd);
 }
