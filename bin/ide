@@ -69,7 +69,7 @@ sub main {
 
     if (!$params) {
         warn "No command $run found running bash\n";
-        $config->{$run} = [qw/bash -i/];
+        $params = [qw/bash -i/];
     }
     my @cmd = @{ ref $params eq 'HASH' ? $params->{command} : $params };
 
