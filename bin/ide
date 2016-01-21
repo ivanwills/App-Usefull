@@ -102,7 +102,7 @@ sub main {
                 print "$letter - $action{$letter}{msg}\n";
             }
             my $answer = <STDIN>;
-            chomp $answer;
+            chomp $answer if $answer;
             $answer ||= $params->{default} || '';
             while (!$action{$answer}) {
                 print "Please choose one of " . (join ', ', sort keys %action) . "\n";
