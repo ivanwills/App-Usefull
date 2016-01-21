@@ -64,23 +64,7 @@ sub main {
 
     # do stuff here
     my $run    = shift @ARGV;
-    my $config = eval { LoadFile(path('.ide.yml')) } || {};
-    my $params = $config->{$run};
-
-    if (!$params) {
-        warn "No command $run found running bash\n";
-        $params = [qw/bash -i/];
-    }
-    my @cmd = @{ ref $params eq 'HASH' ? $params->{command} : $params };
-
-    if ($option{test}) {
-        print join ' ', @cmd;
-        return;
-    }
-
-    $params = ref $params ne 'ARRAY' ? $params : {
-        restart => undef,
-    };
+    my ($params, @cmd) = config($run);
 
     if ($params->{wait}) {
         print "Press enter to start : ";
@@ -116,11 +100,13 @@ sub main {
             }
             my $answer = <STDIN>;
             chomp $answer;
+            $answer ||= $params->{default};
             while (!$action{$answer}) {
                 print "Please choose one of " . (join ', ', sort keys %action) . "\n";
                 $answer = <STDIN>;
                 chomp $answer;
             }
+            ($params, @cmd) = config($run);
             $action{$answer}{exec}->();
         }
     }
@@ -129,6 +115,30 @@ sub main {
     }
 
     return;
+}
+
+sub config {
+    my ($run) = @_;
+
+    my $config = eval { LoadFile(path('.ide.yml')) } || {};
+    my $params = $config->{$run};
+
+    if (!$params) {
+        warn "No command $run found running bash\n";
+        $params = [qw/bash -i/];
+    }
+    my @cmd = @{ ref $params eq 'HASH' ? $params->{command} : $params };
+
+    if ($option{test}) {
+        print join ' ', @cmd;
+        exit 1;
+    }
+
+    $params = ref $params ne 'ARRAY' ? $params : {
+        restart => undef,
+    };
+
+    return ($params, @cmd);
 }
 
 __DATA__
