@@ -63,7 +63,9 @@ sub main {
     }
 
     # do stuff here
-    my $run    = shift @ARGV;
+    my $run = shift @ARGV;
+    $ENV{IDE_TERM} = $run;
+
     my ($params, @cmd) = config($run);
 
     if ($params->{wait}) {
