@@ -82,6 +82,15 @@ sub main {
         restart => undef,
     };
 
+    if ($params->{wait}) {
+        print "Press enter to start : ";
+        my $ans = <STDIN>;
+        if (!$ans || !ord $ans) {
+            print "\n";
+            return;
+        }
+    }
+
     if ($params->{restart}) {
         my %action = (
             q => {
