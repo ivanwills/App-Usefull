@@ -48,11 +48,13 @@ sub main {
         \%option,
         'out|o=s',
         'content|c=s',
+        'content_type|content-type|T=s',
         'header|h=s%',
         'header_file|header-file|F=s',
         'max_lines|max-lines|l=i',
         'max_size|max-size|m=i',
         'max_redirect|max-redirect|r=i',
+        'method|M=s',
         'proxy|p=s%',
         'timeout|to=i',
         'useragent|ua|u=s',
@@ -124,7 +126,23 @@ sub main {
             : !-f $option{content}    ? $option{content}
             :                           path($option{content})->slurp;
 
-        eval { $mech->put($url, content => $content) };
+        if ($option{content_type}) {
+            warn "$content\n";
+            if ($option{content_type} eq 'JSON') {
+                require JSON::XS;
+                my $jx = JSON::XS->new->utf8->relaxed->allow_nonref(1)->pretty(1);
+                $content = $jx->decode($content);
+            }
+            elsif ($option{content_type} eq 'PERL') {
+                $content = eval($content);  ## no critic
+            }
+            else {
+                die "Unknown content type '$option{content_type}'!\n";
+            }
+        }
+
+        my $method = lc $option{method} || 'put';
+        eval { $mech->$method($url, content => $content) };
     }
     else {
         eval { $mech->get($url) };
@@ -190,6 +208,8 @@ This documentation refers to myget version 0.1.
                  POST content, if a dash '-' reads from STDIN if a file
                  exists called str reads the file else uses the value of
                  str as the POST body.
+  -T --content-type[=](JSON|PERL)
+                 Process the content as this type before sending.
   -h --header[=]str
                  Any header variables you want to set
   -F --header-file[=]str
@@ -201,6 +221,8 @@ This documentation refers to myget version 0.1.
                  only one line)
   -r --max-redirect[=]int
                  The maximum number of redirects to perform (Default 10)
+  -M --method[=](GET|POST|PUT|DELETE|OPTIONS|PATCH)
+                 Use this HTTP method to send data
   -p --proxy protocol=proxy_url
                  Configure to use proxy on the protocol with the url
                  eg http=http://localhost:3128
