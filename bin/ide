@@ -122,15 +122,19 @@ sub config {
 
     my $config = eval { LoadFile(path('.ide.yml')) } || {};
     my $params = $config->{$run};
-    my $default = $config->{_default} || {
+    my $default = {
         restart => undef,
+        wait    => undef,
     };
 
     if (!$params) {
         warn "No command $run found running bash\n";
         $params = [qw/bash -i/];
-        $default->{wait} = 0;
     }
+    elsif ($config->{_default}) {
+        $default = $config->{_default};
+    }
+
     my @cmd = @{ ref $params eq 'HASH' ? $params->{command} : $params };
 
     if ($option{test}) {
