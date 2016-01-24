@@ -24,16 +24,12 @@ our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
-    out     => undef,
+    count   => 4,
     verbose => 0,
     man     => 0,
     help    => 0,
     VERSION => 0,
 );
-
-if ( !@ARGV ) {
-    pod2usage( -verbose => 1 );
-}
 
 main();
 exit 0;
@@ -44,6 +40,7 @@ sub main {
     Getopt::Long::Configure('bundling');
     GetOptions(
         \%option,
+        'cound|c=i',
         'test|t!',
         'verbose|v+',
         'man',
@@ -67,6 +64,15 @@ sub main {
     $ENV{IDE_TERM} = $run;
 
     my ($params, @cmd) = config($run);
+
+    if (!$run) {
+        if (!%{ $params }) {
+            warn "No parameters passed and no .ide.yml file found!\n";
+            pod2usage( -verbose => 1 );
+        }
+
+        start_tmux($params);
+    }
 
     if ($params->{wait}) {
         print join ' ', @cmd, "\n";
@@ -124,6 +130,11 @@ sub config {
     my ($run) = @_;
 
     my $config = eval { LoadFile(path('.ide.yml')) } || {};
+
+    if (!$run) {
+        return ( $config->{_default} );
+    }
+
     my $params = $config->{$run};
     my $default = {
         restart => undef,
@@ -148,6 +159,29 @@ sub config {
     $params = ref $params ne 'ARRAY' ? $params : $default;
 
     return ($params, @cmd);
+}
+
+sub start_tmux {
+    my ($params) = @_;
+
+    my $session = $params->{name};
+    if (!$session) {
+        $session = path(".")->absolute->basename;
+    }
+
+    my $tmux = "tmux -u2 new-session -s $session "
+        . "split-window -h 'ide 1a' "
+        . "split-window -dv 'ide 1b' ";
+
+    for my $window (2 .. $option{count}) {
+        $tmux .= "new-window 'ide $window' ";
+    }
+    $tmux .= "select-window -t 1";
+
+    eval { require Term::Title; }
+        and Term::Title::set_titlebar($session);
+
+    exec $tmux;
 }
 
 __DATA__
