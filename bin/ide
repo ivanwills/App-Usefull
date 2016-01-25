@@ -18,13 +18,12 @@ use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use Path::Tiny;
-use YAML::XS qw/LoadFile/;
+use YAML::XS qw/LoadFile DumpFile/;
 
 our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
-    count   => 4,
     verbose => 0,
     man     => 0,
     help    => 0,
@@ -41,6 +40,7 @@ sub main {
     GetOptions(
         \%option,
         'cound|c=i',
+        'start|s',
         'test|t!',
         'verbose|v+',
         'man',
@@ -66,10 +66,12 @@ sub main {
     my ($params, @cmd) = config($run);
 
     if (!$run) {
-        if (!%{ $params }) {
+        if (!$option{start} && !%{ $params || {} }) {
             warn "No parameters passed and no .ide.yml file found!\n";
             pod2usage( -verbose => 1 );
         }
+
+        $option{count} ||= 4;
 
         start_tmux($params);
     }
@@ -130,6 +132,7 @@ sub config {
     my ($run) = @_;
 
     my $config = eval { LoadFile(path('.ide.yml')) } || {};
+    warn Dumper $config, $@ if $option{verbose} > 1;
 
     if (!$run) {
         return ( $config->{_default} );
@@ -169,17 +172,36 @@ sub start_tmux {
         $session = path(".")->absolute->basename;
     }
 
-    my $tmux = "tmux -u2 new-session -s $session "
-        . "split-window -h 'ide 1a' "
-        . "split-window -dv 'ide 1b' ";
+    if ($option{start}) {
+        if (!-f '.ide.yml') {
+            $params->{_default} = {
+                name    => $session,
+                count   => $option{count} || 4,
+                restart => 0,
+                wait    => 0,
+                default => 'r',
+            };
+
+            DumpFile('.ide.yml', $params);
+        }
+    }
+
+    my $tmux = "tmux -u2 new-session -s $session \\; "
+        . "split-window -h 'ide 1a' \\; "
+        . "split-window -dv 'ide 1b' \\; ";
 
     for my $window (2 .. $option{count}) {
-        $tmux .= "new-window 'ide $window' ";
+        $tmux .= "new-window 'ide $window' \\; ";
     }
     $tmux .= "select-window -t 1";
 
     eval { require Term::Title; }
         and Term::Title::set_titlebar($session);
+
+    if ($option{test}) {
+        print $tmux;
+        exit 0;
+    }
 
     exec $tmux;
 }
@@ -188,23 +210,29 @@ __DATA__
 
 =head1 NAME
 
-bin/ide - <One-line description of commands purpose>
+ide - Tmux and Vim IDEish
 
 =head1 VERSION
 
-This documentation refers to bin/ide version 0.0.1
+This documentation refers to ide version 0.0.1
 
 =head1 SYNOPSIS
 
-   bin/ide [option]
+   ide [-s|--start] [-c|--count number]
+   ide [-t|--test] [-v|--verbose] (term)
+   ide --version
+   ide --help
+   ide --man
 
  OPTIONS:
-  -o --other         other option
+  -c --count[=]int   When starting IDE how many terminals to create
+  -s --start
 
+  -t --test          Test don't run
   -v --verbose       Show more detailed option
      --version       Prints the version information
      --help          Prints this help information
-     --man           Prints the full documentation for bin/ide
+     --man           Prints the full documentation for ide
 
 =head1 DESCRIPTION
 
