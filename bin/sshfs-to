@@ -1,0 +1,156 @@
+#!/usr/bin/perl
+
+# Created on: 2011-03-18 10:57:26
+# Create by:  Ivan Wills
+# $Id$
+# $Revision$, $HeadURL$, $Date$
+# $Revision$, $Source$, $Date$
+
+use strict;
+use warnings;
+use version;
+use Getopt::Alt qw/get_options/;
+use Pod::Usage;
+use Data::Dumper qw/Dumper/;
+use English qw/ -no_match_vars /;
+use FindBin qw/$Bin/;
+use Path::Class;
+
+our $VERSION = version->new('0.0.1');
+my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+
+my %option = (
+    basedir => "$ENV{HOME}/work",
+    verbose => 0,
+    man     => 0,
+    help    => 0,
+    VERSION => 0,
+);
+
+main();
+exit 0;
+
+sub main {
+
+    my $opt = get_options(
+        \%option,
+        'basedir|b=s',
+        'unmount|u',
+        'force|f',
+        'test|t',
+        'verbose|v+',
+        'man',
+        'help',
+        'version!',
+    ) or pod2usage(2);
+
+    if ( $opt->version ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $opt->man ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $opt->help ) {
+        pod2usage( -verbose => 1 );
+    }
+
+    # do stuff here
+    my ( $self, $user ) = $0 =~ m{ / ([^/]+) fs (?: _ (\w+))?  $}xms;
+    my $dir   = $user ? $self . '_' . $user : $self;
+    my $mount = $opt->basedir;
+
+    $user ||= '';
+    warn "$self, $user, $dir, $mount\n" if $opt->verbose;
+    if ( $opt->unmount ) {
+        my $force = $opt->force ? '--force' : '';
+        my $cmd = "fusermount -u $force $mount/$self";
+        print "$cmd\n" if $opt->verbose || $opt->test;
+        exec $cmd if !$opt->test;
+
+        return;
+    }
+
+    if ( !-d "$mount/$dir" ) {
+        mkdir "$mount/$dir";
+    }
+
+    my $remote
+        = !$user          ? '/home'
+        : $user eq 'root' ? '/root'
+        :                   "/home/$user";
+    $user = $user ? "$user@" : '';
+
+    my $cmd = "sshfs $user$self\:$remote $mount/$dir -o reconnect -oworkaround=rename -oreaddir_ino";
+    warn $cmd;
+    print "$cmd\n" if $opt->verbose || $opt->test;
+    exec $cmd if !$opt->test;
+
+    print "Try editing /etc/ssh/sshd_config on $self to uncomment SFTP\n"
+        if !$opt->test;
+
+    return;
+}
+
+__DATA__
+
+=head1 NAME
+
+sshfs-to - SSHFS mount remote file systems
+
+=head1 VERSION
+
+This documentation refers to sshfs-to version 0.1.
+
+=head1 SYNOPSIS
+
+   sshfs-to [option]
+
+ OPTIONS:
+  -u --unmount  Unmount the sshfs filesystem
+  -b --basedir[=]dir
+                Specify the base directory to mount into
+  -f --force    Force the mounting of the remote file system
+  -t --test     Only test the action don't actually mount/unmount
+
+  -v --verbose  Show more detailed option
+     --version  Prints the version information
+     --help     Prints this help information
+     --man      Prints the full documentation for sshfs-to
+
+=head1 DESCRIPTION
+
+=head1 SUBROUTINES/METHODS
+
+=head1 DIAGNOSTICS
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+=head1 DEPENDENCIES
+
+=head1 INCOMPATIBILITIES
+
+=head1 BUGS AND LIMITATIONS
+
+There are no known bugs in this module.
+
+Please report problems to Ivan Wills (ivan.wills@gmail.com).
+
+Patches are welcome.
+
+=head1 AUTHOR
+
+Ivan Wills - (ivan.wills@gmail.com)
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2011 Optus (1 Lyon Park Rd, Macquarie Park, NSW, Australia).
+All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself. See L<perlartistic>.  This program is
+distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+=cut
