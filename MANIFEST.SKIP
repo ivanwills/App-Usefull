@@ -96,3 +96,6 @@ vrc.yml
 tmp*
 temp*
 test_repo/.*
+.travis.yml
+.editorconfig
+.vtide.yml

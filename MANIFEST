@@ -18,6 +18,7 @@ bin/img-resize
 bin/img-size
 bin/incsearch
 bin/itop
+bin/json-pretty
 bin/lines
 bin/module-dependencies
 bin/myget
@@ -34,6 +35,7 @@ bin/rhythmbox-ctl.pl
 bin/schema-loader
 bin/set-title
 bin/ssh-forwards
+bin/sshfs-to
 bin/ssh-to
 bin/stop-watch
 bin/suggest-tests
@@ -42,7 +44,6 @@ bin/tidyup
 bin/v
 bin/validate_json
 bin/vims
-bin/watch-do
 bin/yargs
 Build.PL
 Changes
@@ -56,8 +57,8 @@ t/00-load.t
 t/boilerplate.t
 t/critic.t
 t/kwalitee.t
+TODO.md
 t/perlcriticrc
 t/pod-coverage.t
 t/pod.t
 t/spelling.t
-TODO.md
