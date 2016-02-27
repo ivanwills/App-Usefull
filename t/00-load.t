@@ -29,6 +29,7 @@ my %skippable = (
     'bin/img-resize' => 'Image/Resize.pm',
     'bin/posture'    => 'Gtk3/Notify.pm',
     'bin/img-size'   => 'Image/Resize.pm',
+    'bin/rhythmbox-ctl.pl' => 'Net::DBus',
 );
 while ( my $file = shift @files ) {
     if ( -d $file ) {
