@@ -25,7 +25,11 @@ my $perl = File::Spec->rel2abs($^X);
 my $bin = $base->child('bin');
 @files = $bin->children;
 
-my $perl = File::Spec->rel2abs($^X);
+my %skippable = (
+    'bin/img-resize' => 'Image/Resize.pm',
+    'bin/posture'    => 'Gtk3/Notify.pm',
+    'bin/img-size'   => 'Image/Resize.pm',
+);
 while ( my $file = shift @files ) {
     if ( -d $file ) {
         push @files, $file->children;
@@ -33,6 +37,9 @@ while ( my $file = shift @files ) {
     elsif ( $file !~ /[.]sw[ponx]$/ ) {
         my ($bang) = $file->slurp;
         next if $bang !~ /perl/;
+        if ( $skippable{$file} && !eval { require $skippable{$file} } ) {
+            next;
+        }
         ok !(system $perl, qw/-Ilib -c /, $file), "$file compiles";
     }
 }
