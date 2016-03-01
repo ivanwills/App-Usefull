@@ -35,8 +35,8 @@ bin/rhythmbox-ctl.pl
 bin/schema-loader
 bin/set-title
 bin/ssh-forwards
-bin/sshfs-to
 bin/ssh-to
+bin/sshfs-to
 bin/stop-watch
 bin/suggest-tests
 bin/swapfiles
@@ -57,8 +57,8 @@ t/00-load.t
 t/boilerplate.t
 t/critic.t
 t/kwalitee.t
-TODO.md
 t/perlcriticrc
 t/pod-coverage.t
 t/pod.t
 t/spelling.t
+TODO.md
