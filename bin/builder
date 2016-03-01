@@ -99,10 +99,6 @@ sub main {
     );
     my $level = shift @ARGV || '';
 
-    if ($opt->do && $opt->force) {
-        die "Won't --do with --force!\n";
-    }
-
     # Determine weather the package is using Module::Build or make files
 
     if ( ( $opt->clean || $level eq 'release' || $level eq 'dist' ) && built() ) {
@@ -195,6 +191,10 @@ sub install {
 }
 
 sub dist {
+    if ($opt->do && $opt->force) {
+        die "Won't --do with --force!\n";
+    }
+
     if ( !test($opt) ) {
         return if !$opt->force;
         $opt->force($opt->force - 1);
@@ -218,6 +218,9 @@ sub dist {
     ) {
         my $dist = $1;
         my $ver  = $2;
+        if ($ARGV[1] && $ARGV[1] =~ /^$ver/) {
+            $ver = $ARGV[1];
+        }
 
         ## Check t/00-load.t tests all modules
         my $modules = `find lib | grep '[.]pm\$' | wc -l`;
@@ -397,7 +400,16 @@ sub release {
         return if !$opt->do;
     }
     elsif ( $new =~ /[.].*0$/ ) {
-        die "Don't create versions with 0 at the end, Module::Build doesn't like them!\n";
+        my $message = "Don't create versions with 0 at the end, Module::Build doesn't like them!\n";
+        if (!$opt->force) {
+            die $message;
+        }
+        warn $message;
+        $opt->force($opt->force - 1);
+    }
+
+    if ($opt->do && $opt->force) {
+        die "Won't --do with --force!\n";
     }
 
     test($opt) || return if !$opt->do;
