@@ -530,8 +530,14 @@ This documentation refers to builder version 0.1.0.
 
 =head1 SYNOPSIS
 
-   builder level [--dist-clean]
+   builder (level) [--dist-clean]
    builder [option]
+   builder test [-c|--dist-clean] [-a|--author-tests|--no-author] [(-j|--parallel) count]
+   builder testcover [-c|--dist-clean] [-a|--author-tests|--no-author] [(-j|--parallel) count]
+   builder install [-c|--dist-clean] [-a|--author-tests|--no-author]
+   builder manifest
+   builder release [old [new]] [-d|--do]
+   builder dist [-d|--do]
 
  LEVELS:
   test      Just run the distribution's tests
