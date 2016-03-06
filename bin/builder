@@ -22,7 +22,7 @@ use File::Copy qw/copy/;
 use Config::General;
 use DateTime;
 
-our $VERSION = version->new('0.1.0');
+our $VERSION = version->new('0.2.0');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my $opt;
@@ -337,7 +337,7 @@ CHANGES
         my $upload = "cpan-upload-http -verbose $tars[-1]";
         my $dch    = "git dch --auto";
 
-        if ( $opt->do && ( !$tags || $tags !~ /$ver/ ) ) {
+        if ( $opt->do && ( !$tags || $tags !~ /^$ver$/xms ) ) {
             for ($tag, $push, $upload) {
                 my $error = system $_;
                 if ($error) {
