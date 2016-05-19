@@ -21,6 +21,7 @@ use Path::Tiny;
 use WWW::Mechanize;
 use HTTP::Cookies;
 use IO::Socket::SSL();
+use MIME::Base64 qw/encode_base64/;
 
 our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -47,6 +48,7 @@ sub main {
     GetOptions(
         \%option,
         'out|o=s',
+        'basic_auth|basic-auth|b=s',
         'content|c=s',
         'content_type|content-type|T=s',
         'header|h=s%',
@@ -111,6 +113,13 @@ sub main {
         my %headers = map { split /\s*=\s*/, $_, 2 } grep {!/^#/ && !/^\s*$/ } split /\s*\r?\n/, $headers;
         $mech->add_header( %headers );
     }
+
+    if ( $option{basic_auth} ) {
+        my ($user, $pass) = split /=/, $option{basic_auth}, 2;
+        $mech->add_header(
+            Authorization => "Basic " . encode_base64($user . ':' . $pass)
+        );
+   }
 
     $mech->add_header(%{ $option{header} }) if $option{header};
 
