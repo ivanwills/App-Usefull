@@ -120,6 +120,7 @@ sub main {
     $ENV{TEST_AUTHOR}     = $opt->author;
     $ENV{RELEASE_TESTING} = $opt->author;
     $ENV{HARNESS_OPTIONS} = 'j' . $opt->parallel;
+    $ENV{PERL5LIB}        = "inc:$ENV{PERL5LIB}";
 
     if ( $level eq 'dist' ) {
         # turn on author tests before making a distribution
