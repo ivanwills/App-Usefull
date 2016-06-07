@@ -1,0 +1,15 @@
+#!/bin/bash
+
+t=$(tempfile) || exit
+
+if [ ! "$1" ]; then
+    echo Usage:
+    echo '    md markdown-file.md'
+    exit 1
+fi
+
+md2man-roff $1 > $t
+
+man -l $t
+
+rm $t
