@@ -22,6 +22,7 @@ our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
+    sort    => 'num',
     verbose => 0,
     man     => 0,
     help    => 0,
@@ -37,6 +38,8 @@ sub main {
     GetOptions(
         \%option,
         'one-file-system|x',
+        'sort|s=s',
+        'reverse|r',
         'verbose|v+',
         'man',
         'help',
@@ -59,8 +62,19 @@ sub main {
     my $cmd = 'du -bs';
     $cmd .= ' --one-file-system' if $option{'one-file-system'};
 
-    for ( `$cmd $dirs | sort -n` ) {
-        my ($number, $dir) = split /\s+/, $_, 2;
+    my @stats = map {[ split /\s+/, $_, 2 ]} `$cmd $dirs`;
+
+    @stats = sort {
+            $option{sort} eq 'alpha' ? $a->[1] cmp $b->[1]
+            : $option{sort} eq 'num' ? $a->[0] <=> $b->[0]
+            :                          0
+        }
+        @stats;
+
+    @stats = reverse @stats if $option{reverse};
+
+    for (@stats) {
+        my ($number, $dir) = @$_;
 
         print
               $number < 1000          ? $number
@@ -90,6 +104,9 @@ This documentation refers to duhs version 0.1.
    duhs [option] [dire_or_file ...]
 
  OPTIONS:
+  -r --reverse  Reverse the order of the output
+  -s --sort[=](num|alpha)
+                Sort the directories by size (num) or name (alpha) (Default num)
   -x --one-file-system
                 Only show usage for one filesystem, don't switch to other filesystems
 
