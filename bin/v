@@ -133,12 +133,13 @@ sub main {
 
 sub config {
     my $confs = Config::Any->load_stems({
-        stems   => [ qw/vrc .vrc/, "$ENV{HOME}/.vrc", "/etc/vrc" ],
+        stems   => [ qw/vrc .vtide .vrc/, "$ENV{HOME}/.vrc", "$ENV{HOME}/.vtide/defaults", "/etc/vrc" ],
         use_ext => 1,
     });
     my $conf = {};
     for my $config ( reverse @{$confs} ) {
         for my $file ( values %$config ) {
+            $file = $file->{editor}{files} if $file->{editor}{files};
             $conf = merge( $conf, $file );
         }
     }
