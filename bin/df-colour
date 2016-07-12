@@ -29,20 +29,45 @@ my %option = (
     help    => 0,
     VERSION => 0,
 );
+sub sorter;
 
 main();
 exit 0;
 
 sub main {
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,
+        'sort|s=s',
+        'verbose|v+',
+        'man',
+        'help',
+        'VERSION!',
+    ) or pod2usage(2);
+
+    if ( $option{'VERSION'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
+
 
     # do stuff here
     my $df  = '/bin/df';
-    my $cmd = "$df " . join ' ', @ARGV;
+    my $cmd = "$df -k";
     my @out = `$cmd`;
-    print shift @out;
+    my @lines;
+    my %max;
 
     for my $line (@out) {
-        my ($percent) = $line =~ / \s (\d+) \% \s /xms;
+        chomp $line;
+        my ($fs, $size, $used, $avaiable, $percentage, $mount) = split /\s+/, $line, 6;
+        my ($percent) = $percentage =~ /^(\d+)/;
 
         my $colour =
               !$percent       ? RESET
@@ -51,10 +76,64 @@ sub main {
             : $percent >= 80  ? BOLD YELLOW
             :                   RESET;
 
-        print $colour . $line . RESET;
+        push @lines, {
+            fs         => $fs,
+            size       => num_format($size),
+            used       => num_format($used),
+            available  => num_format($avaiable),
+            percentage => $percentage,
+            mount      => $mount,
+            colour     => $colour,
+        };
+        for my $key (keys %{ $lines[-1] }) {
+            $max{$key} = length $lines[-1]{$key} if !$max{$key} || $max{$key} < length $lines[-1]{$key};
+        }
+    }
+
+    $lines[0]{colour} = BOLD;
+    $lines[0]{size} = 'Size';
+    print_line(shift @lines, \%max);
+    for my $line (sort sorter @lines) {
+        print_line($line, \%max);
     }
 
     return;
+}
+
+sub print_line {
+    my ($line, $max) = @_;
+
+    warn $max->{fs}, ' ', length $line->{fs} if $max->{fs} - length $line->{fs} < 0;
+    print $line->{colour};
+    print $line->{fs}, ' ' x ($max->{fs} - length $line->{fs}), ' ';
+    print ' ' x ($max->{size}       - length $line->{size}      ), $line->{size}      , ' ';
+    print ' ' x ($max->{used}       - length $line->{used}      ), $line->{used}      , ' ';
+    print ' ' x ($max->{available}  - length $line->{available} ), $line->{available} , ' ';
+    print ' ' x ($max->{percentage} - length $line->{percentage}), $line->{percentage}, ' ';
+    print $line->{mount} . RESET . "\n";
+}
+
+sub sorter {
+    return 0 if !$option{sort};
+    return
+          $option{sort} eq 'size'       ? $a->{size}       <=> $b->{size}
+        : $option{sort} eq 'used'       ? $a->{used}       <=> $b->{used}
+        : $option{sort} eq 'available'  ? $a->{available}  <=> $b->{available}
+        : $option{sort} eq 'percentage' ? $a->{percentage} <=> $b->{percentage}
+        :                                 0;
+}
+
+sub num_format {
+    my ($number) = @_;
+    return $number !~ /^\d+%?$/      ? $number
+        : $number * 1_000 < 1000             ? $number
+        : $number * 1_000 < 100_000          ? sprintf("%.1fK",$number * 1_000 / 1000)
+        : $number * 1_000 < 1_000_000        ? sprintf("%.0fK",$number * 1_000 / 1000)
+        : $number * 1_000 < 100_000_000      ? sprintf("%.1fM",$number * 1_000 / 1_000_000)
+        : $number * 1_000 < 1_000_000_000    ? sprintf("%.0fM",$number * 1_000 / 1_000_000)
+        : $number * 1_000 < 100_000_000_000  ? sprintf("%.1fG",$number * 1_000 / 1_000_000_000)
+        : $number * 1_000 < 1000_000_000_000 ? sprintf("%.0fG",$number * 1_000 / 1_000_000_000)
+        :                                      sprintf("%.1fT",$number * 1_000 / 1_000_000_000_000);
 }
 
 __DATA__
