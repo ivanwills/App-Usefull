@@ -81,6 +81,9 @@ sub main {
 
     # do stuff here
     my $url  = shift @ARGV;
+    if ($url !~ m{^[a-z]+:}) {
+        $url = "http://$url";
+    }
     my $mech = WWW::Mechanize->new(
         ssl_opts => {
             SSL_verify_mode => IO::Socket::SSL::SSL_VERIFY_NONE,
