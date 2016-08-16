@@ -64,8 +64,7 @@ sub main {
     }
 
     # do stuff here
-    if (!$option{function})
-    {
+    if (!$option{function}) {
         $option{function} = [ split /,/, shift @ARGV ];
     }
 
