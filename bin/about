@@ -45,6 +45,7 @@ sub main {
         'before|BEFORE|B=n',
         'after|AFTER|A=n',
         'context|CONTEXT|C=n',
+        'line_no|line-no|n',
         'verbose|v+',
         'man',
         'help',
@@ -106,7 +107,12 @@ sub about {
 
         # is the line in the range to display?
         if ($start <= $line_no && $line_no <= $end) {
-            printf "%${max}d: %s", $line_no, $line;
+            if ($option{line_no}) {
+                printf "%${max}d: %s", $line_no, $line;
+            }
+            else {
+                print $line;
+            }
         }
     }
 
@@ -135,6 +141,7 @@ This documentation refers to about version 0.0.1
                 at STDIN.
   -l --line[=]int
                 The line number of interest
+  -n --line-no  Show the line numbers of each line
   -B --before[=]int
                 Show this number of lines before the line of interest
   -A --after[=]int
@@ -146,6 +153,13 @@ This documentation refers to about version 0.0.1
      --version  Prints the version information
      --help     Prints this help information
      --man      Prints the full documentation for about
+
+  eg:
+    # show the 22nd line from STDIN
+    about 22
+    # show lines 310 to 318 of my-file
+    about -l 314 -C 4 my-file
+    about 314 -B4 -A4 my-file
 
 =head1 DESCRIPTION
 
