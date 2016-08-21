@@ -73,6 +73,11 @@ sub main {
 
     for my $file (@ARGV) {
         my $fh;
+
+        if (@ARGV > 1) {
+            print "\n==> $file <==\n";
+        }
+
         if ($file eq '-') {
             $fh = \*STDIN;
         }
