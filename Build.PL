@@ -38,6 +38,7 @@ my $builder = Module::Build->new(
         'Perl::MinimumVersion'            => 0,
         'Proc::ProcessTable'              => 0,
         'Syntax::Highlight::Engine::Kate' => 0,
+        'Term::Size::Perl'                => 0,
         'Term::Title'                     => 0,
         'Text::CSV_XS'                    => 0,
         'Text::Table'                     => 0,
