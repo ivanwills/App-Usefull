@@ -8,26 +8,16 @@
 
 use strict;
 use warnings;
-use version;
-use Scalar::Util;
-use List::Util;
-#use List::MoreUtils;
 use Getopt::Long;
 use Pod::Usage;
-use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
-use FindBin qw/$Bin/;
 use Path::Tiny;
 
-our $VERSION = version->new('0.0.1');
+our $VERSION = 0.01;
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
-    out     => undef,
-    verbose => 0,
-    man     => 0,
-    help    => 0,
-    VERSION => 0,
+    gulpfile => ['gulpfile.js'],
 );
 
 main();
@@ -37,14 +27,18 @@ sub main {
     Getopt::Long::Configure('bundling');
     GetOptions(
         \%option,
-        'out|o=s',
+        'gulpfile|g=s@',
+        'auto_complete|auto-complete',
         'verbose|v+',
         'man',
         'help',
         'VERSION!',
     ) or pod2usage(2);
 
-    if ( $option{'VERSION'} ) {
+    if ( $option{auto_complete} ) {
+        return auto_complete();
+    }
+    elsif ( $option{'VERSION'} ) {
         print "$name Version = $VERSION\n";
         exit 1;
     }
@@ -60,6 +54,11 @@ sub main {
     my @pids;
 
     for my $task (@ARGV) {
+        if ($task =~ /^\d+/) {
+            sleep $task;
+            next;
+        }
+
         my $pid = fork;
 
         if ($pid) {
@@ -76,6 +75,25 @@ sub main {
     }
 
     return;
+}
+
+sub auto_complete {
+    my @tasks;
+
+    for my $gulpfile (@{ $option{gulpfile} }) {
+        next if !-f $gulpfile;
+
+        for my $line (split /\n/, path($gulpfile)->slurp) {
+            next if $line !~ /gulp[.]task\s*[(]\s*['"]([\w-]+)['"]/;
+
+            push @tasks, $1;
+        }
+    }
+
+    shift @ARGV if $ARGV[0] eq $PROGRAM_NAME;
+    my $filter = $ARGV[0] && $ARGV[0] ne '--' ? $ARGV[0] : '';
+
+    print join "\n", grep {/^$filter/} @tasks;
 }
 
 __DATA__
