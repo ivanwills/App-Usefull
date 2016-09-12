@@ -55,7 +55,15 @@ sub main {
 
     for my $task (@ARGV) {
         if ($task =~ /^\d+/) {
-            sleep $task;
+            if ( $task eq '0' ) {
+                # zero break waits for everything before it to finish
+                while (shift @pids) {
+                    wait;
+                }
+            }
+            else {
+                sleep $task;
+            }
             next;
         }
 
