@@ -120,7 +120,9 @@ This documentation refers to golp version 0.0.1
 
  OPTIONS:
   task          The task(s) to execute, if the task is a number a sleep
-                will be performed.
+                will be performed. If task is a number then the code will
+                sleep for that many seconds unless it's zero when it will
+                wait for previous tasks to finish.
 
      --gulpfile[=]file
                 Add extra gulpfiles to help with auto completion
@@ -131,6 +133,14 @@ This documentation refers to golp version 0.0.1
      --version  Prints the version information
      --help     Prints this help information
      --man      Prints the full documentation for golp
+
+  e.g.
+    # the following would run the compile-javascript and compile-scss tasks
+    # then wait till they finish and run the test task
+    golp compile-javascript compile-scss 0 test
+
+    # This shows more complex tasks where one task needs extra arguments
+    golp task1 'task2 extra=1'
 
 =head1 DESCRIPTION
 
