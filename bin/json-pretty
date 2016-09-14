@@ -76,7 +76,7 @@ sub out {
     }
     elsif (ref $json eq 'HASH') {
         $out .= "{\n";
-        for my $key ( sort keys %$json ) {
+        for my $key ( sort {lc $a cmp lc $b } keys %$json ) {
             $out .= qq/$indent$option{indent}"$key": / . out($json->{$key}, "$indent$option{indent}", $depth + 1) . ",\n";
         }
         chop $out;
