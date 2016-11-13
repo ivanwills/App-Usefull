@@ -421,7 +421,7 @@ sub release {
 
     my $details = sha_from_show($old);
     my $old_date = DateTime->from_epoch( epoch => $details->{time} )->ymd('-');
-    system "cs $old_re -r $new_re --yes -Nperl -Xbuild\n";
+    system "cs $old_re -r $new_re --yes -Nperl -Xbuild";
     my @all_log = `git log --format=format:'%s (%an) -%d' --since=$old_date`;
     my @log;
     my $log_message = "Updating for release of version $new";
