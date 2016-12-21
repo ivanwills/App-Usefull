@@ -267,12 +267,12 @@ sub get_coders {
         hex => {
             # hex => dec
             encode => sub {
-                sprintf "%x", $_;
+                sprintf "%x", $_ if defined $_ && $_ =~ /^\d+$/;
             },
             encode_on => 'word',
             # dec => hex
             decode    => sub {
-                sprintf "%i", hex $_;
+                sprintf "%i", hex $_ if defined $_ && $_ =~ /^\d+$/;
             },
         },
     );
