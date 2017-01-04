@@ -56,6 +56,10 @@ sub main {
     }
 
     # do stuff here
+    if ( $option{indent} eq '\t' ) {
+        $option{indent} = "\t";
+    }
+
     my $file = @ARGV ? path($ARGV[0]) : '';
     eval {
         my $json = $file ? decode_json(scalar $file->slurp) : decode_json(join '', <ARGV>);
