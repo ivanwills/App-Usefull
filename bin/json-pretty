@@ -23,6 +23,7 @@ my $coder;
 
 my %option = (
     indent  => '  ',
+    newline => "\n",
     verbose => 0,
     man     => 0,
     help    => 0,
@@ -38,6 +39,7 @@ sub main {
         \%option,
         'depth|d=i',
         'indent|i=s',
+        'newline|n=s',
         'verbose|v+',
         'man',
         'help',
@@ -58,6 +60,9 @@ sub main {
     # do stuff here
     if ( $option{indent} eq '\t' ) {
         $option{indent} = "\t";
+    }
+    if ( $option{newline} eq '\n' ) {
+        $option{newline} = "\n";
     }
 
     my $file = @ARGV ? path($ARGV[0]) : '';
@@ -87,13 +92,13 @@ sub out {
     }
     elsif (ref $json eq 'HASH') {
         if ( %$json ) {
-            $out .= "{\n";
+            $out .= "{$option{newline}";
             for my $key ( sort keys %$json ) {
-                $out .= qq/$indent$option{indent}"$key": / . out($json->{$key}, "$indent$option{indent}", $depth + 1) . ",\n";
+                $out .= qq/$indent$option{indent}"$key": / . out($json->{$key}, "$indent$option{indent}", $depth + 1) . ",$option{newline}";
             }
             chop $out;
             chop $out;
-            $out .= "\n$indent}";
+            $out .= "$option{newline}$indent}";
         }
         else {
             $out .= "{}";
@@ -101,13 +106,13 @@ sub out {
     }
     elsif (ref $json eq 'ARRAY') {
         if (@$json) {
-            $out .= "[\n";
+            $out .= "[$option{newline}";
             for my $val (@$json) {
-                $out .= qq/$indent$option{indent}/ . out($val, "$indent$option{indent}", $depth + 1) . ",\n";
+                $out .= qq/$indent$option{indent}/ . out($val, "$indent$option{indent}", $depth + 1) . ",$option{newline}";
             }
             chop $out;
             chop $out;
-            $out .= "\n$indent]";
+            $out .= "$option{newline}$indent]";
         }
         else {
             $out .= "[]";
@@ -139,6 +144,7 @@ This documentation refers to json-pretty version 0.0.1
  OPTIONS:
   -d --depth[=]int  Show results to this maximum depth
   -i --indent[=]str The string to indent with (default 2 spaces)
+  -n --newline[=]str The string to add a newline (default \n)
 
   -v --verbose      Show more detailed option
      --version      Prints the version information
