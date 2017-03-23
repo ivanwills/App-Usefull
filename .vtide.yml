@@ -1,14 +1,24 @@
---- 
+---
 count: 4
-default: 
+default:
   restart: 0
   wait: 0
-editor: 
-  files: 
-    eg: 
+editor:
+  files:
+    eg:
       - some-file.eg
 name: useful
-terminals: 
+start:
+  ctags: -R
+  ctags-exclude:
+    - perl
+    - tmp/
+  ctags-excludes:
+    perl:
+      - blib
+      - _build
+      - Build
+terminals:
   2: []
 
   3: []
