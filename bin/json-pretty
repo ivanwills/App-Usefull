@@ -38,8 +38,11 @@ sub main {
     GetOptions(
         \%option,
         'depth|d=i',
+        'exclude|e=s@',
         'indent|i=s',
         'newline|n=s',
+        'string_length|string-length|s=i',
+        'test|t!',
         'verbose|v+',
         'man',
         'help',
@@ -80,12 +83,14 @@ sub main {
 }
 
 sub out {
-    my ($json, $indent, $depth) = @_;
+    my ($json, $indent, $depth, $path) = @_;
     my $out = '';
     $indent ||= '';
     $depth ||= 0;
+    $path ||= '';
 
     return '...' if $option{depth} && $depth >= $option{depth};
+    return '...' if $option{exclude} && grep {$_ eq $path} @{ $option{exclude} };
 
     if ( !ref $json ) {
         $out = $coder->encode($json);
@@ -93,8 +98,10 @@ sub out {
     elsif (ref $json eq 'HASH') {
         if ( %$json ) {
             $out .= "{$option{newline}";
+            $out .= "//$path$option{newline}" if $option{test} && $path;
+            $path &&= "$path.";
             for my $key ( sort keys %$json ) {
-                $out .= qq/$indent$option{indent}"$key": / . out($json->{$key}, "$indent$option{indent}", $depth + 1) . ",$option{newline}";
+                $out .= qq/$indent$option{indent}"$key": / . out($json->{$key}, "$indent$option{indent}", $depth + 1, "$path$key") . ",$option{newline}";
             }
             chop $out;
             chop $out;
@@ -107,8 +114,10 @@ sub out {
     elsif (ref $json eq 'ARRAY') {
         if (@$json) {
             $out .= "[$option{newline}";
-            for my $val (@$json) {
-                $out .= qq/$indent$option{indent}/ . out($val, "$indent$option{indent}", $depth + 1) . ",$option{newline}";
+            $out .= "//$path$option{newline}" if $option{test} && $path;
+            for my $i (0 .. @$json - 1) {
+                my $val = $json->[$i];
+                $out .= qq/$indent$option{indent}/ . out($val, "$indent$option{indent}", $depth + 1, "$path\[$i]") . ",$option{newline}";
             }
             chop $out;
             chop $out;
@@ -139,7 +148,8 @@ This documentation refers to json-pretty version 0.0.1
 
 =head1 SYNOPSIS
 
-   json-pretty [option]
+   json-pretty [option] < file.json
+   get json | json-pretty [option]
 
  OPTIONS:
   -d --depth[=]int  Show results to this maximum depth
