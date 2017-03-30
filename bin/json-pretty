@@ -93,7 +93,13 @@ sub out {
     return '...' if $option{exclude} && grep {$_ eq $path} @{ $option{exclude} };
 
     if ( !ref $json ) {
-        $out = $coder->encode($json);
+        my $js = $coder->encode($json);
+        if ( $option{string_length} && length $js > $option{string_length} ) {
+            my $first = int($option{string_length}/2) - 2;
+            my $last = int($option{string_length}/2 + 0.5) - 1;
+            $js = substr($js, 0, $first) . '...' . substr($js, -$last, length $js);
+        }
+        $out .= $js;
     }
     elsif (ref $json eq 'HASH') {
         if ( %$json ) {
