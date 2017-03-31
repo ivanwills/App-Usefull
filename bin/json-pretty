@@ -38,7 +38,8 @@ sub main {
     GetOptions(
         \%option,
         'depth|d=i',
-        'exclude|e=s@',
+        'exclude|E=s@',
+        'include|I=s@',
         'indent|i=s',
         'newline|n=s',
         'string_length|string-length|s=i',
@@ -91,6 +92,7 @@ sub out {
 
     return '...' if $option{depth} && $depth >= $option{depth};
     return '...' if $option{exclude} && grep {$_ eq $path} @{ $option{exclude} };
+    return '...' if $option{include} && $path && !grep {$_ =~ /^$path/} @{ $option{include} };
 
     if ( !ref $json ) {
         my $js = $coder->encode($json);
