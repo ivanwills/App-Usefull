@@ -101,6 +101,7 @@ sub out {
             my $last = int($option{string_length}/2 + 0.5) - 1;
             $js = substr($js, 0, $first) . '...' . substr($js, -$last, length $js);
         }
+        $out .= "//$path$option{newline}" if $option{test} && $option{verbose} && $path;
         $out .= $js;
     }
     elsif (ref $json eq 'HASH') {
