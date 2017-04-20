@@ -171,7 +171,7 @@ This documentation refers to json-pretty version 0.0.1
                     Only include this path (may be used more than once)
   -s --string-length=i
                     Shorten output by truncating long strings to this length
-        'test|t!',
+  -t --test         Show full paths for each element
 
   -v --verbose      Show more detailed option
      --version      Prints the version information
