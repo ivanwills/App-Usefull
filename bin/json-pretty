@@ -37,11 +37,13 @@ sub main {
     Getopt::Long::Configure('bundling');
     GetOptions(
         \%option,
+        'clean|c',
         'depth|d=i',
         'exclude|E=s@',
         'include|I=s@',
         'indent|i=s',
         'newline|n=s',
+        'update|u',
         'string_length|string-length|s=i',
         'test|t!',
         'verbose|v+',
@@ -71,10 +73,18 @@ sub main {
 
     my $file = @ARGV ? path($ARGV[0]) : '';
     eval {
-        my $json = $file ? decode_json(scalar $file->slurp) : decode_json(join '', <ARGV>);
+        my $text = $file ? $file->slurp : join '', <ARGV>;
+        if ( $option{clean} ) {
+            warn $text =~ /\A(.{40})/xms, '...', $text =~ /(.{40})\Z/xms, "\n" if $option{verbose} > 1;
+            $text =~ s/(\A[^{]+?\{)/{/xms;
+            $text =~ s/(\}[^}]+?\Z)/}/xms;
+            warn $text =~ /\A(.{40})/xms, '...', $text =~ /(.{40})\Z/xms, "\n" if $option{verbose} > 1;
+        }
+        my $json = decode_json($text);
         $coder = JSON::XS->new->ascii->pretty->allow_nonref;
 
-        print out($json), "\n";
+        my $fh = $option{update} && $file ? $file->openw : \*STDOUT;
+        print {$fh} out($json), "\n";
         1;
     } or do {
         die 'Error in parsing ' . ($file ? $file : 'STDIN') . "!:\n $@";
@@ -161,6 +171,9 @@ This documentation refers to json-pretty version 0.0.1
    get json | json-pretty [option]
 
  OPTIONS:
+  -c --clean        Clean any extranious characters before leading '{' and
+                    after trailing '}' so that copy pasting errors can be
+                    ignored and initial JSON passed successfully.
   -d --depth[=]int  Show results to this maximum depth
   -i --indent[=]str The string to indent with (default 2 spaces)
   -n --newline[=]str
@@ -171,6 +184,8 @@ This documentation refers to json-pretty version 0.0.1
                     Only include this path (may be used more than once)
   -s --string-length=i
                     Shorten output by truncating long strings to this length
+  -u --update       When processing a file this will write back to that file
+                    overwriting the original contents.
   -t --test         Show full paths for each element
 
   -v --verbose      Show more detailed option
