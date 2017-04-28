@@ -44,6 +44,7 @@ sub main {
         'indent|i=s',
         'newline|n=s',
         'update|u',
+        'path_only|path-only|p',
         'string_length|string-length|s=i',
         'test|t!',
         'verbose|v+',
@@ -111,46 +112,50 @@ sub out {
             my $last = int($option{string_length}/2 + 0.5) - 1;
             $js = substr($js, 0, $first) . '...' . substr($js, -$last, length $js);
         }
-        $out .= "//$path$option{newline}" if $option{test} && $option{verbose} && $path;
-        $out .= $js;
+        $out .= "//$path$option{newline}" if ( $option{test} && $option{verbose} || $option{path_only} ) && $path;
+        $out .= $js if !$option{path_only};
     }
     elsif (ref $json eq 'HASH') {
         if ( %$json ) {
-            $out .= "{$option{newline}";
-            $out .= "//$path$option{newline}" if $option{test} && $path;
+            $out .= "{$option{newline}" if !$option{path_only};
+            $out .= "//$path$option{newline}" if ( $option{test} || $option{path_only} ) && $path;
             $path &&= "$path.";
             for my $key ( sort keys %$json ) {
-                $out .= qq/$indent$option{indent}"$key": / . out($json->{$key}, "$indent$option{indent}", $depth + 1, "$path$key") . ",$option{newline}";
+                $out .= qq/$indent$option{indent}"$key": / if !$option{path_only};
+                $out .= out($json->{$key}, "$indent$option{indent}", $depth + 1, "$path$key");
+                $out .= ",$option{newline}" if !$option{path_only};
             }
-            chop $out;
-            chop $out;
-            $out .= "$option{newline}$indent}";
+            chop $out if !$option{path_only};
+            chop $out if !$option{path_only};
+            $out .= "$option{newline}$indent}" if !$option{path_only};
         }
         else {
-            $out .= "{}";
+            $out .= "{}" if !$option{path_only};
         }
     }
     elsif (ref $json eq 'ARRAY') {
         if (@$json) {
-            $out .= "[$option{newline}";
-            $out .= "//$path$option{newline}" if $option{test} && $path;
+            $out .= "[$option{newline}" if !$option{path_only};
+            $out .= "//$path$option{newline}" if ( $option{test} || $option{path_only} ) && $path;
             for my $i (0 .. @$json - 1) {
                 my $val = $json->[$i];
-                $out .= qq/$indent$option{indent}/ . out($val, "$indent$option{indent}", $depth + 1, "$path\[$i]") . ",$option{newline}";
+                $out .= qq/$indent$option{indent}/ if !$option{path_only};
+                $out .= out($val, "$indent$option{indent}", $depth + 1, "$path\[$i]");
+                $out .= ",$option{newline}" if !$option{path_only};
             }
-            chop $out;
-            chop $out;
-            $out .= "$option{newline}$indent]";
+            chop $out if !$option{path_only};
+            chop $out if !$option{path_only};
+            $out .= "$option{newline}$indent]" if !$option{path_only};
         }
         else {
-            $out .= "[]";
+            $out .= "[]" if !$option{path_only};
         }
     }
     else {
-        $out = $coder->encode($json);
+        $out = $coder->encode($json) if !$option{path_only};
     }
 
-    chomp $out;
+    chomp $out if !$option{path_only};
 
     return $out;
 }
