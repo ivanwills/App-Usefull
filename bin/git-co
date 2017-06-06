@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+if (@ARGV) {
+    if ( $ARGV[0] eq '-'
+        || $ARGV[0] eq '-b'
+        || ! -e $ARGV[0]
+    ) {
+        my $branch = `git rev-parse --abbrev-ref HEAD`;
+        chomp $branch;
+        my $root = `git rev-parse --show-toplevel`;
+        chomp $root;
+        open my $fh, '>>', "$root/.git/branch.log" || die "Could not open '$root/.git/branch.log' : $!\n";
+        my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+        $mon++;
+        $year += 1900;
+        printf {$fh} "%04i-%02i-%02i %02i:%02i:%02i %s\n", $year, $mon, $mday, $hour, $min, $sec, $branch;
+    }
+}
+
+exec qw/git checkout/, @ARGV;
