@@ -3,6 +3,7 @@
 URL=$1
 RC=~/.packtest.rc
 TEMP="$(tempfile)"
+TESTER="$(which pactester)"
 
 if [ ! "$URL" ]; then
     echo Usage pactest URL
@@ -12,6 +13,12 @@ fi
 if [ ! -f "${RC}" ]; then
     echo You haven\'t added any pac URLs to your $RC file
     exit 2
+fi
+
+if [ ! "${TESTER}" ]; then
+    echo "Could not find pactester' try installing from:"
+    echo "  git clone https://github.com/manugarg/pactester.git"
+    exit 3
 fi
 
 for pac in $(cat "${RC}"); do
