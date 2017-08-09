@@ -206,6 +206,31 @@ sub html_codes {
     );
 }
 
+sub colour {
+    my ($r, $g, $b, $a);
+    chomp;
+    my $hex = qr/[A-Fa-f0-9]/;
+    my $num = qr/(?: \s* (\d+) \s* (?: , \s* )? )/xms;
+
+    if ( ($r, $g, $b, $a) = /^#($hex{2})($hex{2})($hex{2})($hex{2})?$/ ) {
+        return $a
+            ? sprintf "rgb(%i, %i, %i, %i)", hex $r, hex $g, hex $b, hex $a
+            : sprintf "rgb(%i, %i, %i)",     hex $r, hex $g, hex $b;
+    }
+    elsif ( ($r, $g, $b, $a) = /^#($hex)($hex)($hex)($hex)?$/ ) {
+        return $a
+            ? sprintf "rgb(%i, %i, %i, %i)", hex "$r$r", hex "$g$g", hex "$b$b", hex "$a$a"
+            : sprintf "rgb(%i, %i, %i)",     hex "$r$r", hex "$g$g", hex "$b$b";
+    }
+    elsif ( ($r, $g, $b) = /^rgb \s* [(] $num $num $num [)] $/ixms ) {
+        return  sprintf "#%02X%02X%02X",     $r, $g, $b;
+    }
+    elsif ( ($r, $g, $b, $a) = /^rgba \s* [(] \s* $num $num $num $num [)] $/ixms ) {
+        return sprintf "#%02X%02X%02X%02X", $r, $g, $b, $a;
+    }
+    return "unknown $_";
+}
+
 sub get_coders {
     return (
         bash => {
@@ -275,6 +300,12 @@ sub get_coders {
                 sprintf "%i\n", hex $_ if defined $_ && $_ =~ /^\d+$/;
             },
         },
+        colour => {
+            encode    => \&colour,
+            encode_on => 'whole',
+            decode    => \&colour,
+            decode_on => 'whole',
+        },
     );
 }
 
@@ -297,6 +328,7 @@ This documentation refers to coder version 0.1.
   CODE           The type of coding/decoding to do currently supported:
                     bash             Single quoted bash line (only encode)
                     base64           Base64 encoding/decoding
+                    colour           Convert between rgb and hex HTML colour codings (direction ignored)
                     quoted_printable MIME quoted printable format
                     hex              Decimal <=> hexadecimal conversion
                     html             HTML entity encoding
