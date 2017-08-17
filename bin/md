@@ -8,8 +8,8 @@ if [ ! "$1" ]; then
     exit 1
 fi
 
-md2man-roff $1 > $t
+md2man-roff "$1" > "$t"
 
-man -l $t
+man -l "$t"
 
-rm $t
+rm "$t"
