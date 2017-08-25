@@ -1,0 +1,224 @@
+#!/usr/bin/perl
+
+# Created on: 2015-06-29 11:40:18
+# Create by:  Ivan Wills
+# $Id$
+# $Revision$, $HeadURL$, $Date$
+# $Revision$, $Source$, $Date$
+
+use strict;
+use warnings;
+use version;
+use Getopt::Long;
+use Pod::Usage;
+use Data::Dumper qw/Dumper/;
+use English qw/ -no_match_vars /;
+use FindBin qw/$Bin/;
+use Path::Tiny;
+use JSON::XS;
+
+our $VERSION = version->new('0.0.1');
+my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+my $coder;
+
+my %option = (
+    newline => "\n",
+    verbose => 0,
+    man     => 0,
+    help    => 0,
+    VERSION => 0,
+);
+
+main();
+exit 0;
+
+sub main {
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,
+        'clean|c',
+        'depth|d=i',
+        'exclude|E=s@',
+        'include|I=s@',
+        'newline|n=s',
+        'update|u',
+        'path_only|path-only|p',
+        'string_length|string-length|s=i',
+        'test|t!',
+        'verbose|v+',
+        'man',
+        'help',
+        'VERSION!',
+    ) or pod2usage(2);
+
+    if ( $option{'VERSION'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
+
+    # do stuff here
+    if ( $option{newline} eq '\n' ) {
+        $option{newline} = "\n";
+    }
+
+    my $file = @ARGV ? path($ARGV[0]) : '';
+    eval {
+        my $text = $file ? $file->slurp : join '', <ARGV>;
+        if ( $option{clean} ) {
+            warn $text =~ /\A(.{40})/xms, '...', $text =~ /(.{40})\Z/xms, "\n" if $option{verbose} > 1;
+            $text =~ s/(\A[^{]+?\{)/{/xms;
+            $text =~ s/(\}[^}]+?\Z)/}/xms;
+            warn $text =~ /\A(.{40})/xms, '...', $text =~ /(.{40})\Z/xms, "\n" if $option{verbose} > 1;
+        }
+        my $json = decode_json($text);
+        $coder = JSON::XS->new->ascii->pretty->allow_nonref;
+
+        my $fh = $option{update} && $file ? $file->openw : \*STDOUT;
+        print {$fh} 'temp = ', out($json, 0, 'temp'), "\n";
+        1;
+    } or do {
+        die 'Error in parsing ' . ($file ? $file : 'STDIN') . "!:\n $@";
+    };
+
+    return;
+}
+
+sub out {
+    my ($json, $depth, $path) = @_;
+    my $out = '';
+    $depth ||= 0;
+
+    return '...' if $option{depth} && $depth >= $option{depth};
+    return '...' if $option{exclude} && grep {$_ eq $path} @{ $option{exclude} };
+    return '...' if $option{include} && $path && !grep {$_ =~ /^$path/} @{ $option{include} };
+
+    if ( !ref $json ) {
+        my $js = $coder->encode($json);
+        if ( $option{string_length} && length $js > $option{string_length} ) {
+            my $first = int($option{string_length}/2) - 2;
+            my $last = int($option{string_length}/2 + 0.5) - 1;
+            $js = substr($js, 0, $first) . '...' . substr($js, -$last, length $js);
+        }
+        $out .= $js if !$option{path_only};
+    }
+    elsif (ref $json eq 'HASH') {
+        $out .= "{};$option{newline}";
+        if ( %$json ) {
+            $path &&= "$path.";
+            for my $key ( sort keys %$json ) {
+                $out .= qq/$path$key = /;
+                $out .= out($json->{$key}, $depth + 1, "$path$key");
+                $out .= ";$option{newline}" if !$option{path_only};
+            }
+            chop $out if !$option{path_only};
+            chop $out if !$option{path_only};
+        }
+        else {
+            $out .= "{}" if !$option{path_only};
+        }
+    }
+    elsif (ref $json eq 'ARRAY') {
+        $out .= "[];$option{newline}";
+        if (@$json) {
+            for my $i (0 .. @$json - 1) {
+                my $val = $json->[$i];
+                $out .= "$path\[$i] = " . out($val, $depth + 1, "$path\[$i]");
+                $out .= ";$option{newline}" if !$option{path_only};
+            }
+            chop $out if !$option{path_only};
+            chop $out if !$option{path_only};
+        }
+    }
+    else {
+        $out = $coder->encode($json) if !$option{path_only};
+    }
+
+    chomp $out if !$option{path_only};
+
+    return $out;
+}
+
+__DATA__
+
+=head1 NAME
+
+json-lines - Pretty print and order JSON data
+
+=head1 VERSION
+
+This documentation refers to json-lines version 0.0.1
+
+=head1 SYNOPSIS
+
+   json-lines [option] < file.json
+   get json | json-lines [option]
+
+ OPTIONS:
+  -c --clean        Clean any extranious characters before leading '{' and
+                    after trailing '}' so that copy pasting errors can be
+                    ignored and initial JSON passed successfully.
+  -d --depth[=]int  Show results to this maximum depth
+  -i --indent[=]str The string to indent with (default 2 spaces)
+  -n --newline[=]str
+                    The string to add a newline (default \n)
+  -E --exclude[=]path
+                    Exclude this path (may be used more than once)
+  -I --include[=]path
+                    Only include this path (may be used more than once)
+  -s --string-length=i
+                    Shorten output by truncating long strings to this length
+  -u --update       When processing a file this will write back to that file
+                    overwriting the original contents.
+  -t --test         Show full paths for each element
+
+  -v --verbose      Show more detailed option
+     --version      Prints the version information
+     --help         Prints this help information
+     --man          Prints the full documentation for json-lines
+
+=head1 DESCRIPTION
+
+Most JSON checkers/pretty printers don't guarentee (as per the JSON standard)
+the order of the out putted JSON object fields, I<json-lines> does it will
+ASCII order the fileds names making it easy for JSON configs to be stored in
+version controll systems. This can also be useful for humans to review the
+returned structures.
+
+=head1 DIAGNOSTICS
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+=head1 DEPENDENCIES
+
+=head1 INCOMPATIBILITIES
+
+=head1 BUGS AND LIMITATIONS
+
+There are no known bugs in this module.
+
+Please report problems to Ivan Wills (ivan.wills@gmail.com).
+
+Patches are welcome.
+
+=head1 AUTHOR
+
+Ivan Wills - (ivan.wills@gmail.com)
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2015 Ivan Wills (14 Mullion Close, Hornsby Heights, NSW Australia 2077).
+All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself. See L<perlartistic>.  This program is
+distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+=cut
