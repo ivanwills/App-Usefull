@@ -80,7 +80,7 @@ sub main {
         $coder = JSON::XS->new->ascii->pretty->allow_nonref;
 
         my $fh = $option{update} && $file ? $file->openw : \*STDOUT;
-        print {$fh} 'temp = ', out($json, 0, 'temp'), "\n";
+        print {$fh} 'json = ', out($json, 0, 'json'), "\n";
         1;
     } or do {
         die 'Error in parsing ' . ($file ? $file : 'STDIN') . "!:\n $@";
