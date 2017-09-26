@@ -123,7 +123,7 @@ __DATA__
 
 =head1 NAME
 
-about - Show the text of a file about a line
+about - Show the text of a file about a line (similar to head or tail)
 
 =head1 VERSION
 
