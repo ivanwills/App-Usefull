@@ -80,12 +80,13 @@ sub main {
 
     $mech->get($url);
     my $ignore = $mech->content();
-    my $file = path($option{out});
 
     if ($option{append}) {
+        my $file = path($option{out} || '.gitignore');
         $file->spew($file->slurp . $ignore);
     }
     elsif ($option{out}) {
+        my $file = path($option{out});
         $file->spew($ignore);
     }
     else {
