@@ -65,19 +65,21 @@ sub main {
     }
 
     # do stuff here
-    if (!$option{line}) {
+    if ( ! $option{line} ) {
         $option{line} = shift @ARGV || pod2usage( -verbose => 1 );
     }
 
     if (!@ARGV) {
         push @ARGV, '-';
     }
+    my $file_count = 0;
 
     for my $file (@ARGV) {
         my $fh;
 
         if ( ( @ARGV > 1 || $option{verbose} ) && ! $option{quiet} ) {
-            print "\n==> $file <==\n";
+            print "\n" if $file_count++ > 0;
+            print "==> $file <==\n";
         }
 
         if ($file eq '-') {
