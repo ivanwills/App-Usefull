@@ -45,7 +45,8 @@ sub main {
         'before|BEFORE|B=n',
         'after|AFTER|A=n',
         'context|CONTEXT|C=n',
-        'line_no|line-no|n',
+        'line_no|lines|n',
+        'quiet|silent|q',
         'verbose|v+',
         'man',
         'help',
@@ -75,7 +76,7 @@ sub main {
     for my $file (@ARGV) {
         my $fh;
 
-        if (@ARGV > 1) {
+        if ( ( @ARGV > 1 || $option{verbose} ) && ! $option{quiet} ) {
             print "\n==> $file <==\n";
         }
 
@@ -131,17 +132,17 @@ This documentation refers to about version 0.0.1
 
 =head1 SYNOPSIS
 
-   about [option] line [file ...]
+   about [option] line_no [file ...]
    about (--line|-l line) [(--before|-B) num] [(--after|-A) num] [(--context|-C) num] [file ...]
 
  OPTIONS:
-  line          Short hand form of --line
+  line_no       Short hand form of --line
   file          The file (or files) to show the about line. If not file is
                 passed STDIN is assumed and a file of '-' explicitly looks
                 at STDIN.
   -l --line[=]int
                 The line number of interest
-  -n --line-no  Show the line numbers of each line
+  -n --lines    Show the line numbers of each line
   -B --before[=]int
                 Show this number of lines before the line of interest
   -A --after[=]int
@@ -149,7 +150,9 @@ This documentation refers to about version 0.0.1
   -C --context[=]int
                 Show this number of lines either side of the line of interest
 
-  -v --verbose  Show more detailed option
+  -q --quiet or --silent
+                never print headers giving file names
+  -v --verbose  always print headers giving file names
      --version  Prints the version information
      --help     Prints this help information
      --man      Prints the full documentation for about
