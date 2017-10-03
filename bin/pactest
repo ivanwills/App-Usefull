@@ -8,6 +8,8 @@ TESTER="$(which pactester)"
 if [ ! "$URL" ]; then
     echo Usage pactest URL
     exit 1
+elif [[ ! "$URL" =~ "^https?" ]]; then
+    URL="http://$URL"
 fi
 
 if [ ! -f "${RC}" ]; then
