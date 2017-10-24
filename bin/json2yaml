@@ -62,7 +62,7 @@ sub main {
     for my $file (@ARGV) {
         my $json = decode_json(scalar path($file)->slurp);
         my $new_file = $file;
-        $new_file =~ s/[.]js$//;
+        $new_file =~ s/[.]json$//;
         $new_file .= '.yml';
         DumpFile($new_file, $json);
     }
