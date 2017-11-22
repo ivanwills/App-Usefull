@@ -416,10 +416,10 @@ sub note {
     }
 
     $name ||= 'note';
-    require YAML::Syck;
+    require YAML::XS;
 
     if ( -f $config_file ) {
-        $config = YAML::Syck::LoadFile($config_file);
+        $config = YAML::XS::LoadFile($config_file);
     }
 
     my $location = $config;
@@ -443,7 +443,7 @@ sub note {
         $location->{$name} = \@files;
     }
 
-    YAML::Syck::DumpFile($config_file, $config);
+    YAML::XS::DumpFile($config_file, $config);
     return;
 }
 

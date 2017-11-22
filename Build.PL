@@ -47,8 +47,7 @@ my $builder = Module::Build->new(
         'WWW::Mechanize'                  => 0,
         'WWW::Mechanize::Cached'          => 0,
         'X11::Protocol::Ext::DPMS'        => 0,
-        'YAML'                            => 0,
-        'YAML::Syck'                      => 0,
+        'YAML::XS'                        => 0,
     },
     configure_requires => {
         'Module::Build' => 0.38,
