@@ -7,9 +7,10 @@ use Pod::Usage;
 
 our $VERSION = 0.1;
 my %option = (
-    min    => 60,
-    main   => 'master',
-    remote => 'origin',
+    min       => 60,
+    main      => 'master',
+    remote    => 'origin',
+    protected => [],
 );
 main();
 
@@ -20,6 +21,7 @@ sub main {
         'min|m=i',
         'main|M=s',
         'remote|r=s',
+        'protected|p=s@',
         'test!',
         'verbose|v+',
         'man',
@@ -42,7 +44,10 @@ sub main {
     my $min_age  = time() - 60 * 60 * 24 * $option{min};
 
     for my $branch (@branches) {
-        next if $branch =~ /$option{main}/;
+        # skip branch if it's the main branch
+        next if $branch =~ /^$option{remote}\/$option{main}$/;
+        # skip branch if it's a protected branch
+        next if grep { $branch =~ /$_/ } @{ $option{protected} };
 
         my ($age) = `git log -n 1 --format=format:%at $branch`;
         chomp $age;
@@ -78,6 +83,10 @@ This documentation refers to git-clean-remote-branches version 0.0.1
                 branches are merged to) (Default master)
   -r --remote[=]str
                 Specifies the remote repository for comparison (Default origin)
+  -p --protected[=]str
+                Specify branch name(s) regular expressions to protect
+                specific branches from removal, the main branch is protected
+                by default. Specify multiple times for more than one regexp.
 
   -v --verbose    Show more detailed option
      --version    Prints the version information
