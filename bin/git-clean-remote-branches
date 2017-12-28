@@ -40,20 +40,38 @@ sub main {
         pod2usage( -verbose => 1 );
     }
 
-    my @branches = map {/^\s*(.*?)\s*$/; $1} `git branch -r --merged $option{remote}/$option{main}`;
+    # remove any remote branches that only exist locally
+    system "git remote prune $option{remote}";
+
+    my @branches = map {/^\s*(.*?)\s*$/; $1} `git branch -r --merged '$option{remote}/$option{main}'`;
     my $min_age  = time() - 60 * 60 * 24 * $option{min};
 
     for my $branch (@branches) {
+        # skip the current HEAD
+        next if $branch =~ /\s->\s/;
         # skip branch if it's the main branch
         next if $branch =~ /^$option{remote}\/$option{main}$/;
         # skip branch if it's a protected branch
         next if grep { $branch =~ /$_/ } @{ $option{protected} };
 
-        my ($age) = `git log -n 1 --format=format:%at $branch`;
+        # protect the branch against shell expansion
+        $branch =~ s/'/'\\''/g;
+
+        my $log = "git log -n 1 --format=format:%at '$branch'";
+        my ($age) = `$log`;
+        # skip branches with no age (not sure why this happens)
+        if ( ! $age ) {
+            warn "Skipping $branch with no age!\n See:\n $log" if $option{verbose};
+            next;
+        }
+
         chomp $age;
         if ( $age < $min_age ) {
-            $branch =~ s{/}{ };
-            my $cmd = "git push --delete $branch";
+            my ($remote, $name) = split m{/}, $branch, 2;
+            # don't delete from other remotes
+            next if $remote ne $option{remote};
+
+            my $cmd = "git push --delete $remote '$name'";
             warn "$cmd\n" if $option{verbose} || $option{test};
             system $cmd if !$option{test};
         }
