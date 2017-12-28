@@ -1,0 +1,107 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use Pod::Usage;
+
+our $VERSION = 0.1;
+my %option = (
+    min    => 60,
+    main   => 'master',
+    remote => 'origin',
+);
+main();
+
+sub main {
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,
+        'min|m=i',
+        'main|M=s',
+        'remote|r=s',
+        'test!',
+        'verbose|v+',
+        'man',
+        'help',
+        'VERSION!',
+    ) or pod2usage(2);
+
+    if ( $option{'VERSION'} ) {
+        print "git-clean-remote-branches Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
+
+    my @branches = map {/^\s*(.*?)\s*$/; $1} `git branch -r --merged $option{remote}/$option{main}`;
+    my $min_age  = time() - 60 * 60 * 24 * $option{min};
+
+    for my $branch (@branches) {
+        next if $branch =~ /$option{main}/;
+
+        my ($age) = `git log -n 1 --format=format:%at $branch`;
+        chomp $age;
+        if ( $age < $min_age ) {
+            $branch =~ s{/}{ };
+            my $cmd = "git push --delete $branch";
+            warn "$cmd\n" if $option{verbose} || $option{test};
+            system $cmd if !$option{test};
+        }
+    }
+}
+
+__DATA__
+
+=head1 NAME
+
+git-clean-remote-branches - Clean-up old branches that have been merged to the main branch (eg master).
+
+=head1 VERSION
+
+This documentation refers to git-clean-remote-branches version 0.0.1
+
+=head1 SYNOPSIS
+
+   git-clean-remote-branches [(-m|--min) num]
+   git-clean-remote-branches [option]
+
+ OPTIONS:
+  -m --min[=]int
+                Minumim number of days to retain the branch for (Default 60 days)
+  -M --main[=]str
+                Specifies the "main" branch (i.e. the branch to check if other
+                branches are merged to) (Default master)
+  -r --remote[=]str
+                Specifies the remote repository for comparison (Default origin)
+
+  -v --verbose    Show more detailed option
+     --version    Prints the version information
+     --help       Prints this help information
+     --man        Prints the full documentation for git-clean-remote-branches
+
+=head1 DESCRIPTION
+
+=head1 SUBROUTINES/METHODS
+
+=head1 DIAGNOSTICS
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+=head1 DEPENDENCIES
+
+=head1 INCOMPATIBILITIES
+
+=head1 BUGS AND LIMITATIONS
+
+There are no known bugs in this module.
+
+Please report problems to Ivan Wills (Ivan.Wills2@optus.com.au).
+
+Patches are welcome.
+
+=cut
