@@ -113,6 +113,14 @@ This documentation refers to git-clean-remote-branches version 0.0.1
 
 =head1 DESCRIPTION
 
+This script is designed to clean up branches in remote repositories that have
+been merged to a default branch (by default origin/master). If does this by
+first pruning any locally stored branches that are no longer present in the
+remote repository. Then it lists all branches that have been merged to the
+default branch, removing from the list any branch that is less than C<--min>
+days old. The final list of branches are all removed from the remote
+repository.
+
 =head1 SUBROUTINES/METHODS
 
 =head1 DIAGNOSTICS
