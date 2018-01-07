@@ -102,5 +102,13 @@ add_stopwords(qw/
     swapfiles
     jshint
     jshtml
+    Macquarie
+    Optus
+    SSHFS
+    io
+    golp
+    sshfs
+    gitignore
+
 /);
 all_pod_files_spelling_ok();

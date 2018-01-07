@@ -200,10 +200,10 @@ This documentation refers to json-pretty version 0.0.1
 
 =head1 DESCRIPTION
 
-Most JSON checkers/pretty printers don't guarentee (as per the JSON standard)
+Most JSON checkers/pretty printers don't guarantee (as per the JSON standard)
 the order of the out putted JSON object fields, I<json-pretty> does it will
-ASCII order the fileds names making it easy for JSON configs to be stored in
-version controll systems. This can also be useful for humans to review the
+ASCII order the fields names making it easy for JSON configs to be stored in
+version control systems. This can also be useful for humans to review the
 returned structures.
 
 =head1 DIAGNOSTICS
