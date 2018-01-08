@@ -4,6 +4,7 @@ bin/blame-line
 bin/builder
 bin/char2line
 bin/chkspell
+bin/chop-line
 bin/cmdaliaser
 bin/coder
 bin/df-colour
@@ -11,6 +12,9 @@ bin/duhs
 bin/duuser
 bin/fdiff
 bin/fspot-cp
+bin/git-clean-remote-branches
+bin/git-co
+bin/gitignore
 bin/golp
 bin/highlight
 bin/hl
@@ -20,12 +24,15 @@ bin/img-resize
 bin/img-size
 bin/incsearch
 bin/itop
+bin/json-lines
 bin/json-pretty
+bin/json2yaml
 bin/lines
 bin/md
 bin/module-dependencies
 bin/myget
 bin/nodedoc
+bin/pactest
 bin/partition-table.pl
 bin/pingfind
 bin/player-alarm
