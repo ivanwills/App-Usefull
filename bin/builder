@@ -21,6 +21,7 @@ use Path::Tiny;
 use File::Copy qw/copy/;
 use Config::General;
 use DateTime;
+use YAML::XS qw/LoadFile/;
 
 our $VERSION = version->new('0.2.0');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -326,6 +327,16 @@ CHANGES
                 unlink $tars[-1];
                 exit;
             }
+        }
+
+        # check for .travis.yml being up to date for perl versions
+        my %versions_available = map { /(5[.][123][24680])/; $1 ? ($1 => 1) : () }
+            `perlbrew available`;
+        my $travis = LoadFile('.travis.yml');
+        my %versions_specified = map {$_ => 1} @{ $travis->{perl} };
+        for my $available (sort keys %versions_available) {
+            die ".travis.yml doesn't have $available configured"
+                if ! $versions_specified{$available};
         }
 
         # check that there is a tag for this version
