@@ -13,6 +13,8 @@ my $lib  = $base->child('lib');
 my @files = $lib->children;
 
 while ( my $file = shift @files ) {
+    next if $file eq 'lib/App/Useful.pm';
+
     if ( -d $file ) {
         push @files, $file->children;
     }
