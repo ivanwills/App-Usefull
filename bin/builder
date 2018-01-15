@@ -334,9 +334,14 @@ CHANGES
             `perlbrew available`;
         my $travis = LoadFile('.travis.yml');
         my %versions_specified = map {$_ => 1} @{ $travis->{perl} };
+
+        my $meta = LoadFile('META.yml');
+        my $min_version = $meta->{requires}{perl} || 5.10;
+        $min_version =~ s/^v?(5[.]\d+).*$/$1/;
+
         for my $available (sort keys %versions_available) {
             die ".travis.yml doesn't have $available configured"
-                if ! $versions_specified{$available};
+                if ! $versions_specified{$available} && $available >= $min_version;
         }
 
         # check that there is a tag for this version
