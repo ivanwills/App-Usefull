@@ -340,8 +340,10 @@ CHANGES
         $min_version =~ s/^v?(5[.]\d+).*$/$1/;
 
         for my $available (sort keys %versions_available) {
-            die ".travis.yml doesn't have $available configured"
-                if ! $versions_specified{$available} && $available >= $min_version;
+            my $ava_long = $available;
+            $ava_long =~ s/^5.([123])/5.0$1/;
+            die ".travis.yml doesn't have $available configured\n"
+                if ! $versions_specified{$available} && $ava_long >= $min_version;
         }
 
         # check that there is a tag for this version
