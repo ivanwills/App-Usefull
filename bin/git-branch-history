@@ -71,15 +71,18 @@ sub main {
     if ($option{uniq}) {
         my @uniq;
         my %branches;
-        while (@uniq < $option{number}) {
-            if ( $branches{$history[-1][2]}++ ) {
-                pop @history;
+        while (@uniq < $option{number} && @history) {
+            my $item = pop @history;
+            if ( $branches{$item->[2]}++ ) {
                 next;
             }
-            unshift @uniq, pop @history;
+            unshift @uniq, $item;
         }
         @history = @uniq;
     }
+
+    # don't try to show more history than exists
+    $option{number} = $#history if $option{number} > $#history;
 
     print join "\n", (map {join ' ', @$_} @history[ $#history - $option{number} .. $#history ]), '';
 
