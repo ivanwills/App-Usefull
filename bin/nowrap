@@ -12,12 +12,12 @@ use Getopt::Long;
 use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
+use Term::Size::Perl;
 
 our $VERSION = 0.001;
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
-    max     => 80,
     verbose => 0,
     man     => 0,
     help    => 0,
@@ -31,7 +31,7 @@ sub main {
     Getopt::Long::Configure('bundling');
     GetOptions(
         \%option,
-        'max|m=s',
+        'max|m=i',
         'verbose|v+',
         'man',
         'help',
@@ -52,6 +52,8 @@ sub main {
     # do stuff here
     my @files = @ARGV ? @ARGV : ('-');
 
+    ($option{max}) ||= Term::Size::Perl::chars *STDOUT{IO};
+
     FILE:
     for my $file (@files) {
         my $fh;
@@ -67,6 +69,7 @@ sub main {
 
         while (my $line = <$fh>) {
             my $end = chomp $line;
+
             if ( length $line > $option{max} ) {
                 $line = substr $line, 0, $option{max};
             }
