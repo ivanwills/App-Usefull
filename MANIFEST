@@ -27,11 +27,11 @@ bin/itop
 bin/json-lines
 bin/json-pretty
 bin/json2yaml
-bin/lines
 bin/md
 bin/module-dependencies
 bin/myget
 bin/nodedoc
+bin/nowrap
 bin/pactest
 bin/partition-table.pl
 bin/pingfind
