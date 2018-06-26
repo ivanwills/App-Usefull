@@ -1,0 +1,132 @@
+=head1 App-Usefull
+
+Lots useful scripts to acheive tasks
+
+=head1 INSTALLATION
+
+To install this module, run the following commands:
+
+    perl Build.PL
+    ./Build
+    ./Build test
+    ./Build install
+
+=head1 COMMANDS
+
+=head2 File display
+
+about
+nowrap
+char2line
+hl
+yargs
+
+=head2 File system
+
+bigfiles
+df-colour
+duuser
+duhs
+
+=head2 Development
+
+blame-line
+builder
+fdiff
+git-branch-history
+git-clean-remote-branches
+git-co
+gitignore
+
+=head2 Node, Javascript and JSON
+
+golp
+jshtml
+json2yaml
+json-lines
+json-pretty
+nodedoc
+validate_json
+
+=head2 Images
+
+img-resize
+img-size
+
+=head2 Processes
+
+itop
+
+=head2 Perl
+
+highlight
+incsearch
+module-dependencies
+pmver
+pmwhich
+schema-loader
+suggest-tests
+tidyup
+
+=head2 Terminal
+
+set-title
+
+=head2 HTML
+
+csv2html-table.pl
+html-cleaner
+
+=head2 Web and Network
+
+httprecorder
+pactest
+pingfind
+myget
+
+=head2 SSH
+
+ssh-forwards
+sshfs-to
+ssh-to
+
+=head2 GUI Helpers
+
+player-alarm
+player-pause.pl
+rhythmbox-ctl.pl
+
+=head2 PostgreSQL Database
+
+partition-table.pl
+psqlout2csv.pl
+
+=head2 Vim
+
+v
+vims
+
+=head2 Markdown
+
+md
+
+=head2 Other
+
+chkspell
+cmdaliaser
+coder
+posture
+stop-watch
+swapfiles
+watcher
+
+=head1 COPYRIGHT AND LICENCE
+
+Copyright (C) 2011 Ivan Wills
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of either: the GNU General Public License as published
+by the Free Software Foundation; or the Artistic License.
+
+See http://dev.perl.org/licenses/ for more information.
+
