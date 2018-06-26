@@ -8,18 +8,13 @@
 
 use strict;
 use warnings;
-use version;
-use Scalar::Util;
-use List::Util;
-#use List::MoreUtils;
 use Getopt::Long;
 use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
-use Path::Tiny;
 
-our $VERSION = version->new('0.0.1');
+our $VERSION = 0.001;
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
@@ -86,7 +81,7 @@ sub main {
             $fh = \*STDIN;
         }
         else {
-            $fh = path($file)->openr;
+            open $fh, '<', $file or die "Can't open '$file' for reading! $!\n";
         }
 
         about($fh, %option);
@@ -130,7 +125,7 @@ about - Show the text of a file about a line (similar to head or tail)
 
 =head1 VERSION
 
-This documentation refers to about version 0.0.1
+This documentation refers to about version 0.001
 
 =head1 SYNOPSIS
 
