@@ -52,6 +52,7 @@ sub main {
 
     # do stuff here
     my @files = @ARGV ? @ARGV : ('-');
+    my $file_count = 0;
 
     if ( ! defined $option{max} ) {
         ($option{max}) = Term::Size::Perl::chars *STDOUT{IO};
@@ -61,6 +62,12 @@ sub main {
     FILE:
     for my $file (@files) {
         my $fh;
+
+        if ( ( @ARGV > 1 || $option{verbose} ) && ! $option{quiet} ) {
+            print "\n" if $file_count++ > 0;
+            print "==> $file <==\n";
+        }
+
         if ($file eq '-') {
             $fh = \*STDIN;
         }
