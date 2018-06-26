@@ -31,6 +31,7 @@ sub main {
     Getopt::Long::Configure('bundling');
     GetOptions(
         \%option,
+        'start|s=i',
         'max|m=i',
         'verbose|v+',
         'man',
@@ -52,7 +53,10 @@ sub main {
     # do stuff here
     my @files = @ARGV ? @ARGV : ('-');
 
-    ($option{max}) ||= Term::Size::Perl::chars *STDOUT{IO};
+    if ( ! defined $option{max} ) {
+        ($option{max}) = Term::Size::Perl::chars *STDOUT{IO};
+        $option{max} ||= 80;
+    }
 
     FILE:
     for my $file (@files) {
@@ -69,6 +73,15 @@ sub main {
 
         while (my $line = <$fh>) {
             my $end = chomp $line;
+
+            if ( $option{start} ) {
+                if ( length $line > $option{start} ) {
+                    $line = substr $line, $option{start}, length $line;
+                }
+                else {
+                    $line = '';
+                }
+            }
 
             if ( length $line > $option{max} ) {
                 $line = substr $line, 0, $option{max};
