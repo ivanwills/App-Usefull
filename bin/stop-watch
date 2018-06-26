@@ -96,7 +96,7 @@ This documentation refers to stop-watch version 0.1.
   -m --max-time=sec
                Set the maximum time for the timer to run.
   -c --count-down=sec
-               Count down the seconds beofer starting the timer.
+               Count down the seconds before starting the timer.
 
   -v --verbose Show more detailed option
      --VERSION Prints the version information
