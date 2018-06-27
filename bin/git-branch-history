@@ -39,6 +39,7 @@ sub main {
         \%option,
         'number|n=i',
         'uniq|u!',
+        'checkout|c=i',
         'verbose|v+',
         'man',
         'help',
@@ -59,7 +60,7 @@ sub main {
     # do stuff here
     my $root = `git rev-parse --show-toplevel`;
     chomp $root;
-    open my $fh, '<', "$root/.git/branch.log" || die "Could not open '$root/.git/branch.log' : $!\n";
+    open my $fh, '<', "$root/.git/branch.log" or die "Could not open '$root/.git/branch.log' : $!\n";
     my @history;
 
     while (my $history = <$fh>) {
@@ -84,7 +85,15 @@ sub main {
     # don't try to show more history than exists
     $option{number} = $#history if $option{number} > $#history;
 
-    print join "\n", (map {join ' ', @$_} @history[ $#history - $option{number} .. $#history ]), '';
+    my $i = $option{number} + 1;
+    print join "\n", (
+        map {join ' ', (defined $option{checkout} ? ('[' . $i-- .']'): ()), @$_}
+        @history[ $#history - $option{number} .. $#history ]), '';
+
+    if ( $option{checkout} ) {
+        warn "\nChecking out $history[-$option{checkout}][2]\n";
+        system "git co $history[-$option{checkout}][2]";
+    }
 
     return;
 }
@@ -93,7 +102,7 @@ __DATA__
 
 =head1 NAME
 
-git-branch-history - <One-line description of commands purpose>
+git-branch-history - Show the history of branch changes saved by git co
 
 =head1 VERSION
 
