@@ -3,6 +3,9 @@
 use strict;
 use warnings;
 
+## If you want autocompletion of branches while using this command add a git alias
+#  git config -g alias.co commit
+
 if (@ARGV) {
     if ( $ARGV[0] eq '-'
         || $ARGV[0] eq '-b'
