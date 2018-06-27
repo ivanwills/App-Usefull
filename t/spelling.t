@@ -109,6 +109,7 @@ add_stopwords(qw/
     golp
     sshfs
     gitignore
+    nowrap
 
 /);
 all_pod_files_spelling_ok();
