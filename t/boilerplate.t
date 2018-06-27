@@ -73,6 +73,7 @@ module_boilerplate_ok('bin/df-colour');
 module_boilerplate_ok('bin/duhs');
 module_boilerplate_ok('bin/duuser');
 module_boilerplate_ok('bin/fdiff');
+module_boilerplate_ok('bin/git-branch-history');
 module_boilerplate_ok('bin/git-clean-remote-branches');
 module_boilerplate_ok('bin/git-co');
 module_boilerplate_ok('bin/gitignore');
