@@ -100,6 +100,8 @@ This documentation refers to git-clean-remote-branches version 0.0.1
    git-clean-remote-branches [option]
 
  OPTIONS:
+  -d --deleateble-branches
+                Show count of branches that could be deleted with this script
   -m --min[=]int
                 Minumim number of days to retain the branch for (Default 60 days)
   -M --main[=]str
