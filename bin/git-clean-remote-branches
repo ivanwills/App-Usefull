@@ -18,6 +18,7 @@ sub main {
     Getopt::Long::Configure('bundling');
     GetOptions(
         \%option,
+        'deletable|deleatable-branches|d',
         'min|m=i',
         'main|M=s',
         'remote|r=s',
@@ -45,6 +46,11 @@ sub main {
 
     my @branches = map {/^\s*(.*?)\s*$/; $1} `git branch -r --merged '$option{remote}/$option{main}'`;
     my $min_age  = time() - 60 * 60 * 24 * $option{min};
+
+    if ( $option{deleatable} ) {
+        warn 'There are ' . @branches . " branches that are merged to $option{main} and could be deleted\n";
+        return;
+    }
 
     for my $branch (@branches) {
         # skip the current HEAD
