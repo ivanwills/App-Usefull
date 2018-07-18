@@ -5,6 +5,8 @@ t=$(tempfile) || exit
 if [ ! "$1" ]; then
     echo Usage:
     echo '    md markdown-file.md'
+    echo
+    echo 'Cheadsheet: https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet'
     exit 1
 fi
 
