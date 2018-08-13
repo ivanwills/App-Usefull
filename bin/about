@@ -36,11 +36,12 @@ sub main {
     Getopt::Long::Configure('bundling');
     GetOptions(
         \%option,
-        'line|l=n',
-        'before|BEFORE|B=n',
-        'after|AFTER|A=n',
-        'context|CONTEXT|C=n',
-        'line_no|lines|n',
+        'line|n=i',
+        'column|c=i',
+        'before|BEFORE|B=i',
+        'after|AFTER|A=i',
+        'context|CONTEXT|C=i',
+        'line_no|lines|l',
         'quiet|silent|q',
         'verbose|v+',
         'man',
@@ -92,24 +93,29 @@ sub main {
 
 sub about {
     my ($fh, %option) = @_;
-    my $start   = $option{line} - ( $option{before} || $option{context} || 0 );
-    my $end     = $option{line} + ( $option{after}  || $option{context} || 0 );
-    my $line_no = 0;
-    my $max     = length $end;
+    my $start     = ( $option{column} || $option{line} ) - ( $option{before} || $option{context} || 0 );
+    my $end       = ( $option{column} || $option{line} ) + ( $option{after}  || $option{context} || 0 );
+    my $line_no   = 0;
+    my $last_line = $option{column} ? $option{line} : $end;
+    my $max       = length $end;
 
     while (my $line = <$fh>) {
         $line_no++;
 
         # stop processing after last line of interest
-        last if $line_no > $end;
+        last if $line_no > $last_line;
 
-        # is the line in the range to display?
-        if ($start <= $line_no && $line_no <= $end) {
-            if ($option{line_no}) {
-                printf "%${max}d: %s", $line_no, $line;
-            }
-            else {
-                print $line;
+        if ( $option{column} ) {
+        }
+        else {
+            # is the line in the range to display?
+            if ($start <= $line_no && $line_no <= $end) {
+                if ($option{line_no}) {
+                    printf "%${max}d: %s", $line_no, $line;
+                }
+                else {
+                    print $line;
+                }
             }
         }
     }
