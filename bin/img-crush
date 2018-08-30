@@ -92,11 +92,11 @@ sub crush_jpeg {
 
     if ( -s "$file-tmp" >= $size ) {
         unlink "$file-tmp";
-        warn "Keeping $file";
+        print "Keeping $file\n" if $option{verbose};
     }
     else {
         unlink $file;
-        warn "using jpegoptim for $file\n";
+        print "using jpegoptim for $file\n" if $option{verbose};
         move "$file-tmp", $file;
     }
 }
@@ -111,19 +111,19 @@ sub crush_png {
     if ( -s $file > -s "$file-cr" && -s "$file-cr" < -s "$file-tmp" ) {
         unlink $file;
         unlink "$file-tmp";
-        warn "using pngcrush for $file\n";
+        print "using pngcrush for $file\n" if $option{verbose};
         move "$file-cr", $file;
     }
     elsif ( -s $file > -s "$file-tmp" && -s "$file-cr" >= -s "$file-tmp" ) {
         unlink $file;
         unlink "$file-cr";
-        warn "using optipng  for $file\n";
+        print "using optipng  for $file\n" if $option{verbose};
         move "$file-tmp", $file;
     }
     else {
         unlink "$file-tmp";
         unlink "$file-cr";
-        warn "Keeping $file";
+        print "Keeping $file\n" if $option{verbose};
     }
 }
 
@@ -135,11 +135,11 @@ sub crush_gif {
 
     if ( -s "$file-tmp" >= $size ) {
         unlink "$file-tmp";
-        warn "Keeping $file";
+        print "Keeping $file\n" if $option{verbose};
     }
     else {
         unlink $file;
-        warn "using jpegoptim for $file\n";
+        print "using jpegoptim for $file\n" if $option{verbose};
         move "$file-tmp", $file;
     }
 }
