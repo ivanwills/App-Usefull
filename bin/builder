@@ -413,8 +413,11 @@ CHANGES
             }
         }
     }
-    else {
+    elsif ( $tars[-1] ) {
         warn "Could not determine module version from '$tars[-1]'!\n";
+    }
+    else {
+        warn "Could not determine module version from\n";
     }
 
     return;
