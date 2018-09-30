@@ -628,6 +628,10 @@ This documentation refers to builder version 0.1.0.
                       so you will have to manually install dependencies for
                       the tested perl versions.
   -t --tags     Cause tags file to be generated for project
+     --travis-min, --tmin[=]float
+                Ignore missing perl versions from travis files below this version
+     --travis-max, --tmax[=]float
+                Ignore missing perl versions from travis files above this version
 
   -v --verbose  Show more detailed option
      --VERSION  Prints the version information
