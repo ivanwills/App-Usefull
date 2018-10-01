@@ -336,7 +336,7 @@ CHANGES
             `perlbrew available`;
         if ( ! %versions_available ) {
             # fallback if perlbrew isn't installed or doesn't return anything
-            %versions_available = map { "5." . (2 * $_) . '.0' => 1 } 3 .. 13;
+            %versions_available = map { "5." . (2 * $_) . '.0' => 1 } 6 .. 14;
         }
 
         my $travis = LoadFile('.travis.yml');
