@@ -642,6 +642,8 @@ This documentation refers to builder version 0.1.0.
                 Note: The module wont be build against those perl versions
                       so you will have to manually install dependencies for
                       the tested perl versions.
+     --save     Save's current command line options into .builderrc file so the
+                options don't need to be specified every time builder is run.
   -t --tags     Cause tags file to be generated for project
      --travis-min, --tmin[=]float
                 Ignore missing perl versions from travis files below this version
@@ -660,6 +662,9 @@ This documentation refers to builder version 0.1.0.
 =head1 DIAGNOSTICS
 
 =head1 CONFIGURATION AND ENVIRONMENT
+
+Command line options can be written into a file C<.builderrc> so for a
+specific repository they don't need to be specified all the time.
 
 =head1 DEPENDENCIES
 
