@@ -54,8 +54,9 @@ exit 0;
 sub main {
 
     my %default;
+    my $config;
     if ( -e '.builderrc' ) {
-        my $config = Config::General->new('.builderrc');
+        $config = Config::General->new('.builderrc');
         %default = ( %default, $config->getall );
         for my $key ( keys %default ) {
             if ( $alt_opt{$key} ) {
@@ -68,17 +69,20 @@ sub main {
                 map {"$_ $default{pre_commands}{$_}"} keys %{ $default{pre_commands} }
             ];
         }
-        die Dumper \%default;
     }
 
+    my %base = (
+        install  => 'sudo ',
+        perl     => $EXECUTABLE_NAME,
+        parallel => 2,
+        travis_min => '5.01',
+    );
     $opt = get_options(
         {
             bundle  => 1,
             help    => 1,
             default => {
-                install  => 'sudo ',
-                perl     => $EXECUTABLE_NAME,
-                parallel => 2,
+                %base,
                 %default,
             },
         },
@@ -97,12 +101,23 @@ sub main {
             'brew=s',
             'travis_min|travis-min|tmin=f',
             'travis_max|travis-max|tmax=f',
+            'save',
             'verbose|v+',
         ]
     );
     my $level = shift @ARGV || '';
 
     # Determine weather the package is using Module::Build or make files
+
+    if ( $opt->save ) {
+        my %values = %$opt;
+        for my $key (keys %base) {
+            delete $values{$key} if $values{$key} eq $base{$key};
+        }
+        delete $values{save};
+        $config ||= Config::General->new;
+        $config->save_file('.builderrc', \%values);
+    }
 
     if ( ( $opt->clean || $level eq 'release' || $level eq 'dist' ) && built() ) {
         builder('distclean');
