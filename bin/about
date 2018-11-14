@@ -13,6 +13,7 @@ use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
+use Term::ANSIColor qw/colored/;
 
 our $VERSION = 0.001;
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -101,6 +102,10 @@ sub about {
 
     while (my $line = <$fh>) {
         $line_no++;
+
+        if ( $line_no == $option{line} && ( $start != $option{line} || $end != $option{line} ) ) {
+            $line = colored ['bold'], $line;
+        }
 
         # stop processing after last line of interest
         last if $line_no > $last_line;
