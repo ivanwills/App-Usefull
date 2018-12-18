@@ -23,7 +23,9 @@ our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
-    out     => undef,
+    seconds => 0,
+    minutes => 0,
+    hours   => 0,
     verbose => 0,
     man     => 0,
     help    => 0,
@@ -41,7 +43,9 @@ sub main {
     Getopt::Long::Configure('bundling');
     GetOptions(
         \%option,
-        'seconds|n=s',
+        'seconds|n=i',
+        'minutes|m=i',
+        'hours|h=i',
         'verbose|v+',
         'man',
         'help',
@@ -60,7 +64,12 @@ sub main {
     }
 
     # do stuff here
-    sleep $option{seconds};
+    my $sec = $option{hours} * 60 * 60 + $option{minutes} * 60 + $option{seconds};
+    while ( $sec-- ) {
+        sleep 1;
+        print {*STDERR} '.';
+    }
+    print "\n";
 
     return exec map {shell_quote($_)} @ARGV;
 }
