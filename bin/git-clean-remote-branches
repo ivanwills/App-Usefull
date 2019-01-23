@@ -96,7 +96,7 @@ This documentation refers to git-clean-remote-branches version 0.0.1
 
 =head1 SYNOPSIS
 
-   git-clean-remote-branches [(-m|--min) num]
+   git-clean-remote-branches [-d|--deletable-branches] [(-m|--min) num] [(-m|--min) branch] [(-r|--remote) repo] [(-p|--protected) regex]
    git-clean-remote-branches [option]
 
  OPTIONS:
