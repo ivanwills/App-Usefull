@@ -44,6 +44,7 @@ sub main {
         'indent|i=s',
         'newline|n=s',
         'update|u',
+        'jsonp|j=s',
         'path_only|path-only|p',
         'string_length|string-length|s=i',
         'test|t!',
@@ -75,6 +76,11 @@ sub main {
     my $file = @ARGV ? path($ARGV[0]) : '';
     eval {
         my $text = $file ? $file->slurp : join '', <ARGV>;
+        if ( $option{jsonp} ) {
+            # need to remove the JSONP function call so that the result is just JSON
+            $text =~ s/\A\s*$option{jsonp}\s*[(]\s*//xms;
+            $text =~ s/\s*[)]\s*;\s*\Z//xms;
+        }
         if ( $option{clean} ) {
             warn $text =~ /\A(.{40})/xms, '...', $text =~ /(.{40})\Z/xms, "\n" if $option{verbose} > 1;
             $text =~ s/(\A[^{]+?\{)/{/xms;
