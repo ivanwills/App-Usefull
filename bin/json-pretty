@@ -45,6 +45,7 @@ sub main {
         'newline|n=s',
         'update|u',
         'jsonp|j=s',
+        'path|p=s',
         'path_only|path-only|p',
         'string_length|string-length|s=i',
         'test|t!',
@@ -90,6 +91,22 @@ sub main {
         my $json = decode_json($text);
         $coder = JSON::XS->new->ascii->pretty->allow_nonref;
 
+        if ( $option{path} ) {
+            while ( my ($item) = $option{path} =~ /(^\w+|^\[[^\]]+\])[.]?/ ) {
+                $option{path} =~ s/(^\w+|^\[[^\]]+\])[.]?//xms;
+                $item =~ s/^['"]|['"]$//;
+                if (ref $json eq 'HASH') {
+                    $json = $json->{$item};
+                }
+                elsif (ref $json eq 'ARRAY') {
+                    $json = $json->[$item];
+                }
+                else {
+                    $json = undef;
+                    last;
+                }
+            }
+        }
         my $fh = $option{update} && $file ? $file->openw : \*STDOUT;
         print {$fh} out($json), "\n";
         1;
