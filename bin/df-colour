@@ -59,7 +59,7 @@ sub main {
 
     # do stuff here
     my $df  = '/bin/df';
-    my $cmd = "$df -k";
+    my $cmd = "$df -k " . join ' ', @ARGV;
     my @out = `$cmd`;
     my @lines;
     my %max;
