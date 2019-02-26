@@ -66,6 +66,7 @@ sub main {
     }
 
     for my $config (sort @configs) {
+        warn "Adding $config\n" if $option{verbose};
         $new_config .= "# $config\n";
         $new_config .= path($config)->slurp . "\n";
     }
