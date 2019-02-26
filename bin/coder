@@ -36,7 +36,6 @@ if ( !@ARGV ) {
 }
 
 main();
-exit 0;
 
 sub main {
 
@@ -46,6 +45,7 @@ sub main {
         'code|C=s',
         'direction|D=s',
         'level|l=i',
+        'quiet|q',
         'verbose|v+',
         'man',
         'help',
@@ -77,7 +77,7 @@ sub main {
     if (@ARGV) {
         my @lines = $style eq 'word' ? @ARGV : ( join ' ', @ARGV );
         for my $line (@lines) {
-            print "$line\n";
+            print {*STDERR} "$line\n" if ! $option{quiet};
             local $_ = $line;
             print $sub->($line) . "\n";
         }
