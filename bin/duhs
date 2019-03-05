@@ -58,11 +58,12 @@ sub main {
     }
 
     # do stuff here
-    my $dirs = join ' ', map { "\"$_\"" } ( @ARGV ? @ARGV : ('.') );
+    my @dirs = map { "\"$_\"" } ( @ARGV ? @ARGV : ('.') );
     my $cmd = 'du -bs';
     $cmd .= ' --one-file-system' if $option{'one-file-system'};
 
-    my @stats = map {[ split /\s+/, $_, 2 ]} `$cmd $dirs`;
+    warn "$cmd " . (join ' ', @dirs) . "\n" if $option{verbose};
+    my @stats = map {[ split /\s+/, $_, 2 ]} map {`$cmd $_`} @dirs;
 
     @stats = sort {
             $option{sort} eq 'alpha' ? $a->[1] cmp $b->[1]
