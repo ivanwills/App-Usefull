@@ -66,6 +66,7 @@ sub main {
 
     for my $line (@out) {
         chomp $line;
+        next if ! $option{verbose} && $line =~ m{ /snap/};
         my ($fs, $size, $used, $avaiable, $percentage, $mount) = split /\s+/, $line, 6;
         my ($percent) = $percentage =~ /^(\d+)/;
 
