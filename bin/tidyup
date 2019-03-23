@@ -93,7 +93,7 @@ package Tidy::Json {
     use Moose;
     extends 'Tidy::STDIN';
 
-    has '+command' => ( default => sub{[qw/json_pp -f json -t json -json_opt relaxed,pretty,allow_singlequote/]} );
+    has '+command' => ( default => sub{[qw/json-pretty/]} );
 }
 
 package Tidy::Yaml {
