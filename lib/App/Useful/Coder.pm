@@ -12,11 +12,12 @@ use version;
 use Carp;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
+use base qw/Exporter/;
 
 our $VERSION     = version->new('0.0.1');
 our @EXPORT_OK   = qw/html_codes coder get_coders/;
 our %EXPORT_TAGS = ();
-our @EXPORT      = qw//;
+our @EXPORT      = qw/get_coders/;
 
 sub coder {
     my ($type, $dir, $data, $option) = @_;
