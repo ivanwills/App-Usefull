@@ -47,7 +47,16 @@ sub get_coders {
             decode_on => 'line',
         },
         html => {
-            encode    => sub { $_[0] =~ s/([^\w])/sprintf "&#%d;", ord $1/egxms; return $_[0] },
+            encode    => sub {
+                my $matcher =
+                      $option->{level} == 3 ? qr{ .       }xms
+                    : $option->{level} == 2 ? qr{ \W      }xms
+                    : $option->{level} == 1 ? qr{ [<!"=>] }xms
+                    : $option->{level} == 0 ? qr{ [<">]   }xms
+                    :                         qr{ [<">]   }xms;
+                $_[0] =~ s/($matcher)/sprintf "&#%d;", ord $1/egxms;
+                return $_[0]
+            },
             encode_on => 'line',
             decode    => sub {
                 my %codes = reverse html_codes();
@@ -70,7 +79,7 @@ sub get_coders {
                     : $option->{level} == 2 ? qr{  \W    }xms
                     : $option->{level} == 1 ? qr{ [\W/:] }xms
                     : $option->{level} == 0 ? qr{ [\W]   }xms
-                    :                       qr{ [\W]   }xms;
+                    :                         qr{ [\W]   }xms;
                 s/($matcher)/sprintf('%%%x',ord($1))/eg;
                 $_;
             },
