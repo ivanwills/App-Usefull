@@ -12,6 +12,8 @@ use version;
 use Carp;
 use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
+use MIME::Base64 qw/encode_base64 decode_base64/;
+use MIME::QuotedPrint qw/encode_qp decode_qp/;
 use base qw/Exporter/;
 
 our $VERSION     = version->new('0.0.1');
