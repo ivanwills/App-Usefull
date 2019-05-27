@@ -39,6 +39,7 @@ sub main {
         \%option,
         'number|n=i',
         'uniq|u!',
+        'quiet|q',
         'checkout|c=i',
         'verbose|v+',
         'man',
@@ -66,7 +67,7 @@ sub main {
     while (my $history = <$fh>) {
         chomp $history;
         my ($date, $time, $branch) = split /\s/, $history, 3;
-        push @history, [ $date, $time, $branch ];
+        push @history, $option{quiet} ? [ $branch ] : [ $date, $time, $branch ];
     }
 
     if ($option{uniq}) {
@@ -88,7 +89,7 @@ sub main {
     my $i = $option{number} + 1;
     print join "\n", (
         map {join ' ', (defined $option{checkout} ? ('[' . $i-- .']'): ()), @$_}
-        @history[ $#history - $option{number} .. $#history ]), '';
+        @history[ $#history + 1 - $option{number} .. $#history ]), '';
 
     if ( $option{checkout} ) {
         warn "\nChecking out $history[-$option{checkout}][2]\n";
