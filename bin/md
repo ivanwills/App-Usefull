@@ -10,7 +10,11 @@ if [ ! "$1" ]; then
     exit 1
 fi
 
-md2man-roff "$1" > "$t"
+if [ "$(which md2man-roff)" ]; then
+    md2man-roff "$1" > "$t"
+elif [ "$(which go-md2man)" ]; then
+    go-md2man -in="$1" -out="$t"
+fi
 
 man -l "$t"
 
