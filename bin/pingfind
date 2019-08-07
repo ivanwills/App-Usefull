@@ -100,6 +100,10 @@ This documentation refers to pingfind version 0.1.
  OPTIONS:
   -f --fork    Fork for each ping to parrelleise the search (Default)
      --no-fork Turn off forking each ping
+  -p --pause[=]int
+               Pause after searching this number of IP addresses (Default 20)
+     --min     Start from this number
+     --max     Stop at this number
 
   -v --verbose Show more detailed option
      --VERSION Prints the version information
