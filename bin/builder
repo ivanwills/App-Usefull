@@ -22,6 +22,7 @@ use File::Copy qw/copy/;
 use Config::General;
 use DateTime;
 use YAML::XS qw/LoadFile/;
+use CPAN::Uploader;
 
 our $VERSION = version->new('0.2.0');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -387,19 +388,21 @@ CHANGES
         chomp $tags;
 
         # finialise commands
-        my $tag    = "git tag -a -m 'Tagging version $ver' '$ver'";
-        my $push   = "git push origin master --tags";
-        my $upload = "cpan-upload-http -verbose $tars[-1]";
-        my $dch    = "git dch --auto";
+        my $tag  = "git tag -a -m 'Tagging version $ver' '$ver'";
+        my $push = "git push origin master --tags";
+        my $dch  = "git dch --auto";
 
         if ( $opt->do && ( !$tags || $tags !~ /^$ver$/xms ) ) {
-            for ($tag, $push, $upload) {
+            for ($tag, $push) {
                 my $error = system $_;
                 if ($error) {
                     warn "'$_' returned " . ($error >> 8) . "\n";
                     return;
                 }
             }
+            my $pause = { Config::General->new("$ENV{HOME}/.pause")->getall };
+            CPAN::Uploader->upload_file($tars[-1], $pause);
+
             system $dch if -d 'debian';
 
             # now install the just released code.
