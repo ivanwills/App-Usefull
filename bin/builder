@@ -388,9 +388,10 @@ CHANGES
         chomp $tags;
 
         # finialise commands
-        my $tag  = "git tag -a -m 'Tagging version $ver' '$ver'";
-        my $push = "git push origin master --tags";
-        my $dch  = "git dch --auto";
+        my $tag    = "git tag -a -m 'Tagging version $ver' '$ver'";
+        my $push   = "git push origin master --tags";
+        my $upload = "cpan-upload-http -verbose $tars[-1]";
+        my $dch    = "git dch --auto";
 
         if ( $opt->do && ( !$tags || $tags !~ /^$ver$/xms ) ) {
             for ($tag, $push) {
