@@ -39,6 +39,7 @@ sub main {
         \%option,
         'line|n=i',
         'column|c=i',
+        'position|p=i',
         'before|BEFORE|B=i',
         'after|AFTER|A=i',
         'context|CONTEXT|C=i',
@@ -62,7 +63,11 @@ sub main {
     }
 
     # do stuff here
-    if ( ! $option{line} ) {
+    if ( $option{position} ) {
+        $option{before} ||= 10;
+        $option{after} ||= 10;
+    }
+    elsif ( ! $option{line} ) {
         $option{line} = shift @ARGV || pod2usage( -verbose => 1 );
     }
 
@@ -94,6 +99,20 @@ sub main {
 
 sub about {
     my ($fh, %option) = @_;
+    if ( $option{position} ) {
+        local $/ = undef;
+        my $text = <$fh>;
+        my $length = ($option{before} || $option{context}) + ($option{after} || $option{context});
+        my $start = $option{position} - ($option{before} || $option{context});
+        if ($start < 0) {
+            $start = 0;
+        }
+
+        my $selection = substr $text, $start, $length;
+        print "$selection\n";
+        return;
+    }
+
     my $start     = ( $option{column} || $option{line} ) - ( $option{before} || $option{context} || 0 );
     my $end       = ( $option{column} || $option{line} ) + ( $option{after}  || $option{context} || 0 );
     my $line_no   = 0;
