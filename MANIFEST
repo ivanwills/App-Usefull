@@ -52,7 +52,6 @@ bin/tidyup
 bin/v
 bin/validate_json
 bin/vims
-bin/watcher
 bin/yargs
 Build.PL
 Changes
