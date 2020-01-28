@@ -44,6 +44,7 @@ sub main {
         'after|AFTER|A=i',
         'context|CONTEXT|C=i',
         'line_no|lines|l',
+        'ends|e',
         'quiet|silent|q',
         'verbose|v+',
         'man',
@@ -56,9 +57,11 @@ sub main {
         exit 1;
     }
     elsif ( $option{'man'} ) {
+        warn 'a';
         pod2usage( -verbose => 2 );
     }
     elsif ( $option{'help'} ) {
+        warn 'b';
         pod2usage( -verbose => 1 );
     }
 
@@ -67,8 +70,8 @@ sub main {
         $option{before} ||= 10;
         $option{after} ||= 10;
     }
-    elsif ( ! $option{line} ) {
-        $option{line} = shift @ARGV || pod2usage( -verbose => 1 );
+    elsif ( ! defined $option{line} ) {
+        $option{line} = shift @ARGV // pod2usage( -verbose => 1 );
     }
 
     if (!@ARGV) {
@@ -118,6 +121,7 @@ sub about {
     my $line_no   = 0;
     my $last_line = $option{column} ? $option{line} : $end;
     my $max       = length $end;
+    my @end;
 
     while (my $line = <$fh>) {
         $line_no++;
@@ -125,9 +129,21 @@ sub about {
         if ( $line_no == $option{line} && ( $start != $option{line} || $end != $option{line} ) ) {
             $line = colored ['bold'], $line;
         }
+        elsif ( $option{ends} && $line_no <= $start ) {
+            print $line;
+        }
 
-        # stop processing after last line of interest
-        last if $line_no > $last_line;
+        if ($option{ends}) {
+            push @end, $line;
+            if (@end > $end * 2) {
+                @end = @end[@end - $end -1 .. @end - 1];
+            }
+        }
+        else {
+
+            # stop processing after last line of interest
+            last if $line_no > $last_line;
+        }
 
         if ( $option{column} ) {
         }
@@ -142,6 +158,18 @@ sub about {
                 }
             }
         }
+    }
+    if ($option{ends}) {
+        if ( abs($start) + $end + ( $option{line} ? 1 : 0 ) >= $line_no ) {
+            $end = $line_no - abs($start) - ( $option{line} ? 1 : 0 );
+        }
+        else {
+            print "...\n";
+        }
+        if (@end > $end) {
+            @end = @end[@end - $end .. @end - 1];
+        }
+        print @end;
     }
 
     return;
