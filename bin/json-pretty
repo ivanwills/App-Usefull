@@ -47,6 +47,7 @@ sub main {
         'jsonp|j=s',
         'path|p=s',
         'path_only|path-only|p',
+        'sort|S=s',
         'string_length|string-length|s=i',
         'test|t!',
         'verbose|v+',
@@ -72,6 +73,12 @@ sub main {
     }
     if ( $option{newline} eq '\n' ) {
         $option{newline} = "\n";
+    }
+    if ( ! $option{sort} ) {
+        $option{sort} = 'insensitive';
+    }
+    elsif ( $option{sort} && ! main->can($option{sort}) ) {
+        error "--sort must be one of normaal, insensitive or alphanum\n"
     }
 
     my $file = @ARGV ? path($ARGV[0]) : '';
@@ -117,12 +124,27 @@ sub main {
     return;
 }
 
+sub normaal {
+    return $a cmp $b;
+}
+sub insensitive {
+    return lc $a cmp lc $b;
+}
+sub alphanum {
+    my $a1 = ref $a ? $a->{name} : $a;
+    my $b1 = ref $b ? $b->{name} : $b;
+    $a1 =~ s/(\d+)/sprintf "%05d", $1/egxms;
+    $b1 =~ s/(\d+)/sprintf "%05d", $1/egxms;
+    return $a1 cmp $b1;
+}
+
 sub out {
     my ($json, $indent, $depth, $path) = @_;
     my $out = '';
     $indent ||= '';
     $depth ||= 0;
     $path ||= '';
+    my $sort = $option{sort} || 'normal';
 
     return '...' if $option{depth} && $depth >= $option{depth};
     return '...' if $option{exclude} && grep {$_ eq $path} @{ $option{exclude} };
@@ -143,7 +165,10 @@ sub out {
             $out .= "{$option{newline}" if !$option{path_only};
             $out .= "//$path$option{newline}" if ( $option{test} || $option{path_only} ) && $path;
             $path &&= "$path.";
-            for my $key ( sort keys %$json ) {
+            my @out_keys = $option{sort} eq 'insensitive' ? sort insensitive keys %$json
+                : $option{sort} eq 'alphanum'             ? sort alphanum keys %$json
+                :                                           sort keys %$json;
+            for my $key (@out_keys) {
                 $out .= qq/$indent$option{indent}"$key": / if !$option{path_only};
                 $out .= out($json->{$key}, "$indent$option{indent}", $depth + 1, "$path$key");
                 $out .= ",$option{newline}" if !$option{path_only};
