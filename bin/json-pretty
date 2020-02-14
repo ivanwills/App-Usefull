@@ -78,7 +78,7 @@ sub main {
         $option{sort} = 'insensitive';
     }
     elsif ( $option{sort} && ! main->can($option{sort}) ) {
-        error "--sort must be one of normaal, insensitive or alphanum\n"
+        die "--sort must be one of normaal, insensitive or alphanum\n"
     }
 
     my $file = @ARGV ? path($ARGV[0]) : '';
