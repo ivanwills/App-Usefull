@@ -198,6 +198,11 @@ This documentation refers to about version 0.001
   -l --line[=]int
                 The line number of interest
   -n --lines    Show the line numbers of each line
+  -c --column[=]int
+                Show characters about this column
+  -p --position[=]int
+                Show characters about this position (in bytes) of file
+  -e --ends     Show the ends of the file?
   -B --before[=]int
                 Show this number of lines before the line of interest
   -A --after[=]int
