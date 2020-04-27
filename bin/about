@@ -67,8 +67,8 @@ sub main {
 
     # do stuff here
     if ( $option{position} ) {
-        $option{before} ||= 10;
-        $option{after} ||= 10;
+        $option{before} ||= $option{context} || 10;
+        $option{after} ||= $option{context} || 10;
     }
     elsif ( ! defined $option{line} ) {
         $option{line} = shift @ARGV // pod2usage( -verbose => 1 );
@@ -112,7 +112,11 @@ sub about {
         }
 
         my $selection = substr $text, $start, $length;
-        print "$selection\n";
+        printf "%s%s%s%s%s\n", (substr $selection, 0, $option{before} - 1),
+            colored( ['on_green'], substr $selection, $option{before} - 1, 1),
+            colored( ['on_red'], substr $selection, $option{before} + 0, 1),
+            colored( ['on_green'], substr $selection, $option{before} + 1, 1),
+            (substr $selection, $option{before} + 2);
         return;
     }
 
