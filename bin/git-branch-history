@@ -41,6 +41,7 @@ sub main {
         'uniq|u!',
         'quiet|q',
         'checkout|c=i',
+        'purge|p',
         'verbose|v+',
         'man',
         'help',
@@ -59,9 +60,14 @@ sub main {
     }
 
     # do stuff here
+    return history();
+}
+
+sub history {
     my $root = `git rev-parse --show-toplevel`;
     chomp $root;
-    open my $fh, '<', "$root/.git/branch.log" or die "Could not open '$root/.git/branch.log' : $!\n";
+    my $log_file = "$root/.git/branch.log";
+    open my $fh, '<', $log_file or die "Could not open '$log_file' : $!\n";
     my @history;
 
     while (my $history = <$fh>) {
@@ -86,10 +92,46 @@ sub main {
     # don't try to show more history than exists
     $option{number} = $#history if $option{number} > $#history;
 
+    @history = @history[ $#history + 1 - $option{number} .. $#history ];
+
+    if ( $option{verbose} ) {
+        system qw/git remote prune origin/;
+        my $purged = 0;
+        my $log_temp = "$log_file.temp";
+        path($log_file)->copy($log_temp);
+        for my $branch (@history) {
+            # check if the upstream is removed
+            my @local = `git log -n1 $branch->[2] 2> /dev/null`;
+            my @remote = `git log -n1 origin/$branch->[2] 2> /dev/null`;
+            if (!@local && !@remote) {
+                push @$branch, '=';
+                if ( $option{purge} ) {
+                    $purged++;
+                    warn "grep -vE ' $branch->[2]\$' $log_temp > $log_file\n";
+                    `grep -vE ' $branch->[2]\$' $log_temp > $log_file`;
+                    path($log_file)->copy($log_temp);
+                }
+            }
+            elsif (!@remote) {
+                push @$branch, '-';
+            }
+            elsif (!@local) {
+                push @$branch, '*';
+            }
+
+        }
+
+        if ($purged) {
+            unlink $log_temp;
+            warn "Purged $purged branches for the branch history\n";
+            return history();
+        }
+    }
+
     my $i = $option{number} + 1;
     print join "\n", (
-        map {join ' ', (defined $option{checkout} ? ('[' . $i-- .']'): ()), @$_}
-        @history[ $#history + 1 - $option{number} .. $#history ]), '';
+        map {join ' ', (defined $option{verbose} ? ('[' . $i-- .']'): ()), @$_}
+        @history), '';
 
     if ( $option{checkout} ) {
         warn "\nChecking out $history[-$option{checkout}][2]\n";
@@ -116,9 +158,14 @@ This documentation refers to git-branch-history version 0.0.1
  OPTIONS:
   -n --number[=]int
                 Limit shown history to this number of branches
-  -n --uniq     Only show a unique history of branches
+  -u --uniq     Only show a unique history of branches
+  -q --quiet    Hide non-branch details
+  -c --checkout[=]int
+                Checkout the branch this far back in history
+  -p --purge    Remove branches from history log that have been both locally
+                and remotely deleted. Note this is a permanent action.
 
-  -v --verbose  Show more detailed option
+  -v --verbose  Show more detailed information about branches
      --version  Prints the version information
      --help     Prints this help information
      --man      Prints the full documentation for git-branch-history
