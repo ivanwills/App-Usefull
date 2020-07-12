@@ -42,6 +42,7 @@ sub main {
         'quiet|q',
         'checkout|c=i',
         'purge|p',
+        'test|t!',
         'verbose|v+',
         'man',
         'help',
@@ -69,6 +70,20 @@ sub history {
     my $log_file = "$root/.git/branch.log";
     open my $fh, '<', $log_file or die "Could not open '$log_file' : $!\n";
     my @history;
+    my %seen = (
+        '=' => {
+            count => 0,
+            desc  => 'Both local and remove removed (use -p to clean)',
+        },
+        '-' => {
+            count => 0,
+            desc  => 'Local branch exists but not remove (either it has been deleted or you haven\'t pushed it yet)',
+        },
+        '*' => {
+            count => 0,
+            desc  => 'Remote branch exsits but there is no local copy',
+        },
+    );
 
     while (my $history = <$fh>) {
         chomp $history;
@@ -105,6 +120,7 @@ sub history {
             my @remote = `git log -n1 origin/$branch->[2] 2> /dev/null`;
             if (!@local && !@remote) {
                 push @$branch, '=';
+                $seen{'='}{count}++;
                 if ( $option{purge} ) {
                     $purged++;
                     warn "grep -vE ' $branch->[2]\$' $log_temp > $log_file\n";
@@ -114,9 +130,11 @@ sub history {
             }
             elsif (!@remote) {
                 push @$branch, '-';
+                $seen{'-'}{count}++;
             }
             elsif (!@local) {
                 push @$branch, '*';
+                $seen{'*'}{count}++;
             }
 
         }
@@ -128,16 +146,25 @@ sub history {
         }
     }
 
-    my $i = $option{number} + 1;
+    my $i = $option{number};
     print join "\n", (
         map {join ' ', (defined $option{verbose} ? ('[' . $i-- .']'): ()), @$_}
         @history), '';
 
-    if ( $option{checkout} ) {
-        warn "\nChecking out $history[-$option{checkout}][2]\n";
-        system "git co $history[-$option{checkout}][2]";
+    if ( $option{verbose} ) {
+        for my $key (keys %seen) {
+            if ($seen{$key}{count}) {
+                print "$key $seen{$key}{desc}\n";
+            }
+        }
     }
 
+    if ( $option{checkout} ) {
+        warn "\nChecking out $history[-$option{checkout}][2]\n";
+        if (!$option{test}) {
+            system "git co $history[-$option{checkout}][2]";
+        }
+    }
     return;
 }
 
