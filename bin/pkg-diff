@@ -75,7 +75,7 @@ sub main {
         $data{$pkg} = decode_json(scalar path($pkg)->slurp);
     }
 
-    if ($option{dependencies}) {
+    if ($option{dependencies} || !@{$option{keys}}) {
         push @{ $option{keys} }, qw/dependencies devDependencies optionalDependencies/;
     }
 
