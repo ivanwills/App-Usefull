@@ -6,6 +6,8 @@ use warnings;
 ## If you want autocompletion of branches while using this command add a git alias
 #  git config -g alias.co commit
 
+my $file;
+my $original;
 if (@ARGV) {
     if ( $ARGV[0] eq '-'
         || $ARGV[0] eq '-b'
@@ -20,7 +22,33 @@ if (@ARGV) {
         $mon++;
         $year += 1900;
         printf {$fh} "%04i-%02i-%02i %02i:%02i:%02i %s\n", $year, $mon, $mday, $hour, $min, $sec, $branch;
+
+        if ( -f "$root/package.json" ) {
+            $file = "$root/package.json";
+            require(JSON::XS);
+            $original = sortDeps($file);
+        }
     }
 }
 
 exec qw/git checkout/, @ARGV;
+
+
+if ( -f $file ) {
+    my $new = sortDeps($file);
+    if ($new ne $original) {
+        system qw/npm install/;
+    }
+}
+
+sub sortDeps {
+    my ($file) = @_;
+    open my $fs, '<', $file;
+    my $json = do { local $/; <$fs> };
+    my package = JSON::XS->decode_json($json);
+
+    return join "\n",
+        "dependencies:\n" . (join "\n", map {"$_, $package->{dependencies}{$_}"} sort keys $package->{dependencies} ),
+        "devDependencies:\n" . (join "\n", map {"$_, $package->{devDependencies}{$_}"} sort keys $package->{devDependencies} ),
+        "otherDependencies:\n" . (join "\n", map {"$_, $package->{otherDependencies}{$_}"} sort keys $package->{otherDependencies} );
+}
