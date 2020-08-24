@@ -25,16 +25,16 @@ if (@ARGV) {
 
         if ( -f "$root/package.json" ) {
             $file = "$root/package.json";
-            require(JSON::XS);
+            require JSON::XS;
             $original = sortDeps($file);
         }
     }
 }
 
-exec qw/git checkout/, @ARGV;
+my $error = system qw/git checkout/, @ARGV;
+exit $error >> 8 if $error;
 
-
-if ( -f $file ) {
+if ( $file && -f $file ) {
     my $new = sortDeps($file);
     if ($new ne $original) {
         system qw/npm install/;
@@ -45,10 +45,10 @@ sub sortDeps {
     my ($file) = @_;
     open my $fs, '<', $file;
     my $json = do { local $/; <$fs> };
-    my package = JSON::XS->decode_json($json);
+    my $package = JSON::XS->decode_json($json);
 
     return join "\n",
-        "dependencies:\n" . (join "\n", map {"$_, $package->{dependencies}{$_}"} sort keys $package->{dependencies} ),
-        "devDependencies:\n" . (join "\n", map {"$_, $package->{devDependencies}{$_}"} sort keys $package->{devDependencies} ),
-        "otherDependencies:\n" . (join "\n", map {"$_, $package->{otherDependencies}{$_}"} sort keys $package->{otherDependencies} );
+        "dependencies:"     , (join "\n", map {" $_, $package->{dependencies}{$_}"     } sort keys %{$package->{dependencies}     } ),
+        "devDependencies:"  , (join "\n", map {" $_, $package->{devDependencies}{$_}"  } sort keys %{$package->{devDependencies}  } ),
+        "otherDependencies:", (join "\n", map {" $_, $package->{otherDependencies}{$_}"} sort keys %{$package->{otherDependencies}} );
 }
