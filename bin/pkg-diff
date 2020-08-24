@@ -81,6 +81,7 @@ sub main {
 
     for my $key (@{ $option{keys} }) {
         my @defined = uniq sort map { keys %{ $data{$_}{$key} }} @packages;
+        my $shown = 0;
 
         for my $defined (@defined) {
             my @matches;
@@ -93,6 +94,7 @@ sub main {
             if (!$match) {
                 if ($option{missing}) {
                     if ( grep { !defined $_ } @matches ) {
+                        $shown++;
                         print "M $key.$defined\n";
                         if ($option{verbose}) {
                             for my $i (0 .. @packages - 1) {
@@ -105,6 +107,7 @@ sub main {
                 }
                 elsif ($option{changed}) {
                     if ( ! grep { !defined $_ } @matches ) {
+                        $shown++;
                         print "C $key.$defined\n";
                         if ($option{verbose}) {
                             print map {"  $packages[$_] : " . (defined $matches[$_] ? "'$matches[$_]'" : 'undef') . "\n"} 0 .. @packages - 1;
@@ -112,9 +115,14 @@ sub main {
                     }
                 }
                 else {
+                    $shown++;
                     print "$key.$defined\n";
                 }
             }
+        }
+
+        if ($shown) {
+            print "\n";
         }
     }
 
