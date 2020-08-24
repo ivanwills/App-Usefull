@@ -45,7 +45,7 @@ sub sortDeps {
     my ($file) = @_;
     open my $fs, '<', $file;
     my $json = do { local $/; <$fs> };
-    my $package = JSON::XS->decode_json($json);
+    my $package = JSON::XS::decode_json($json);
 
     return join "\n",
         "dependencies:"     , (join "\n", map {" $_, $package->{dependencies}{$_}"     } sort keys %{$package->{dependencies}     } ),
