@@ -130,10 +130,18 @@ This documentation refers to bin/task-switch version 0.0.1
 
 =head1 SYNOPSIS
 
-   bin/task-switch [option]
+   task-switch [--d|--date YYYY-MM-DD] [-t|--time HH:MM:SS] (-c|--category category) task description
+   task-switch [--d|--date YYYY-MM-DD] [-t|--time HH:MM:SS] (-s|--sort)
+   task-switch [--d|--date YYYY-MM-DD] [-t|--time HH:MM:SS] (-l|--list) [-n int] [-r|--reverse]
 
  OPTIONS:
-  -o --other         other option
+   -c --category    The task category
+   -d --date        Use an alternative date (YYYY-MM-DD)
+   -t --time        Use an alternitave time (HH:MM:SS)
+   -s --sort        Sort the days items (may be desired if adding past tasks)
+   -l --list        List the recent tasks
+   -n --number      Limit the list of recent tasks (Default 10)
+   -r --reverse     Reverse the order of recent tasks
 
   -v --verbose       Show more detailed option
      --version       Prints the version information
