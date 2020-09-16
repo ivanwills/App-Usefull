@@ -97,7 +97,7 @@ sub main {
         exit 0;
     }
 
-    open my $fh, '>>', $file;
+    open my $fh, '>>', $file || die "Can't append to $file!: $@\n";
     printf {$fh} "%s %s - %s - %s\n", $date, $time, $option{category}, join ' ', @ARGV;
 
     return;
