@@ -24,7 +24,7 @@ my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
     category => 'NA',
-    file     => "$ENV{HOME}/.tasks",
+    dir      => "$ENV{HOME}/.tasks",
     number   => 10,
     verbose  => 0,
     man      => 0,
@@ -46,7 +46,7 @@ sub main {
         'category|c=s',
         'date|d=s',
         'time|t=s',
-        'file|f=s',
+        'dir|d=s',
         'sort|s',
         'list|l',
         'number|n=i',
@@ -69,16 +69,6 @@ sub main {
     }
 
     # do stuff here
-    if ($option{sort}) {
-        sort_file($option{file});
-        exit 0;
-    }
-    elsif ($option{list}) {
-        list($option{file}, $option{number}, $option{reverse});
-        exit 0;
-    }
-
-    open my $fh, '>>', $option{file};
     my $time = $option{time};
     my $date = $option{date};
 
@@ -91,6 +81,23 @@ sub main {
     if (!$time) {
         $time = sprintf "%02d:%02d:%02d", $hour, $min, $sec;
     }
+
+    if ( ! -d $option{dir} ) {
+        mkdir $option{dir};
+    }
+
+    my $file = "$option{dir}/$date";
+
+    if ($option{sort}) {
+        sort_file($file);
+        exit 0;
+    }
+    elsif ($option{list}) {
+        list($file, $option{number}, $option{reverse});
+        exit 0;
+    }
+
+    open my $fh, '>>', $file;
     printf {$fh} "%s %s - %s - %s\n", $date, $time, $option{category}, join ' ', @ARGV;
 
     return;
