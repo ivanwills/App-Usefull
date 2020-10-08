@@ -23,10 +23,22 @@ if [ ! "${TESTER}" ]; then
     exit 3
 fi
 
+if [[ ! "${URL}" =~ "https://" ]] && [[ ! "${URL}" =~ "http://" ]]; then
+    URL="http://{$URL}"
+fi
+
 for pac in $(cat "${RC}"); do
-    echo $pac
-    wget -qO "${TEMP}" "${pac}"
-    pactester -p "${TEMP}" -u "${URL}"
+    if [[ "${pac}" =~ "#" ]]; then
+        echo
+    else
+        echo $pac
+        wget --read-timeout=1 --timeout=1 -qO "${TEMP}" "${pac}"
+        if [ -s "${TEMP}" ]; then
+            pactester -p "${TEMP}" -u "${URL}"
+        else
+            echo "Could not download pac file '${pac}' for testing"
+        fi
+    fi
 done
 
 rm "${TEMP}"
