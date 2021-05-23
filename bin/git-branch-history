@@ -73,11 +73,11 @@ sub history {
     my %seen = (
         '=' => {
             count => 0,
-            desc  => 'Both local and remove removed (use -p to clean)',
+            desc  => 'Both local and remote branches have been removed (use -p to clean)',
         },
         '-' => {
             count => 0,
-            desc  => 'Local branch exists but not remove (either it has been deleted or you haven\'t pushed it yet)',
+            desc  => 'Local branch exists but not the remote branch (either it has been deleted or you haven\'t pushed it yet)',
         },
         '*' => {
             count => 0,
