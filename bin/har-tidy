@@ -1,0 +1,278 @@
+#!/usr/bin/perl
+
+# Created on: 2021-06-28 14:54:20
+# Create by:  Ivan Wills
+# $Id$
+# $Revision$, $HeadURL$, $Date$
+# $Revision$, $Source$, $Date$
+
+use strict;
+use warnings;
+use version;
+use Scalar::Util;
+use List::Util;
+#use List::MoreUtils;
+use Getopt::Long;
+use Pod::Usage;
+use Data::Dumper qw/Dumper/;
+use English qw/ -no_match_vars /;
+use FindBin qw/$Bin/;
+use Path::Tiny;
+use JSON::XS qw/decode_json encode_json/;
+
+our $VERSION = version->new('0.0.1');
+my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+
+my %option = (
+    out     => undef,
+    verbose => 0,
+    man     => 0,
+    help    => 0,
+    VERSION => 0,
+);
+
+if ( !@ARGV ) {
+    pod2usage( -verbose => 1 );
+}
+
+main();
+exit 0;
+
+sub main {
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,
+        'out|o=s',
+        'simplify|s!',
+        'verbose|v+',
+        'man',
+        'help',
+        'VERSION!',
+    ) or pod2usage(2);
+
+    if ( $option{'VERSION'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
+
+    # do stuff here
+    my $file = shift @ARGV;
+    my $har = sort_kv(expand_responce(decode_json(scalar path($file)->slurp)));
+
+    my $json = encode_json($option{simplify} ? simplify($har) : $har);
+
+    open my $fh, '|-', 'json-pretty' || die "Could not open json-pretty! $!\n";
+    print {$fh} $json;
+
+    return;
+}
+
+sub simplify {
+    my ($json) = @_;
+    my @out;
+
+    for my $entry (@{ $json->{log}{entries} }) {
+        push @out, {
+            a_url => $entry->{request}{url},
+            b_query => $entry->{request}{queryString},
+            post => $entry->{request}{postData}{json} || $entry->{request}{postData}{text},
+            response => $entry->{response}{content}{json} || $entry->{response}{content}{text},
+        };
+    }
+
+    return \@out;
+}
+
+sub expand_responce {
+    my ($json) = @_;
+
+    for my $entry (@{ $json->{log}{entries} }) {
+        if (($entry->{request}{postData}{mimeType} || '') eq 'application/json') {
+            eval {
+                $entry->{request}{postData}{json} = decode_json($entry->{request}{postData}{text});
+            };
+        }
+        if (($entry->{response}{content}{mimeType} || '') eq 'application/json') {
+            eval {
+                $entry->{response}{content}{json} = decode_json($entry->{response}{content}{text});
+            };
+        }
+    }
+
+    return $json;
+}
+
+sub _alpha_num {
+    my $a1 = ref $a ? $a->{name} : $a;
+    my $b1 = ref $b ? $b->{name} : $b;
+    $a1 =~ s/(\d+)/sprintf "%05d", $1/egxms;
+    $b1 =~ s/(\d+)/sprintf "%05d", $1/egxms;
+    return $a1 cmp $b1;
+}
+
+sub sort_kv {
+    my ($json, $path) = @_;
+    $path ||= '.';
+
+    if (ref $json eq 'HASH') {
+        for my $key (keys %$json) {
+            if (ref $json->{$key} eq 'HASH' ) {
+                $json->{$key} = sort_kv($json->{$key}, "$path/$key");
+            }
+            elsif (ref $json->{$key} eq 'ARRAY') {
+                if (ref $json->{$key}[0] eq 'HASH' && $json->{$key}[0]{name} && $json->{$key}[0]{value}) {
+                    warn "$path/$key nave/value\n";
+                    my $i = -1;
+                    $json->{$key} = [
+                        map { $i++; sort_kv($_, "$path/$key\[$i]") }
+                        sort {
+                            my $a1 = $a->{name};
+                            my $b1 = $b->{name};
+                            $a1 =~ s/(\d+)/sprintf "%05d", $1/egxms;
+                            $b1 =~ s/(\d+)/sprintf "%05d", $1/egxms;
+                            $a1 cmp $b1;
+                        } @{$json->{$key}}
+                    ];
+                }
+                elsif (ref $json->{$key}[0] eq 'HASH' && $json->{$key}[0]{value} && $json->{$key}[0]{valueForDisplay}) {
+                    warn "$path/$key value/valueForDisplay\n";
+                    my $i = -1;
+                    $json->{$key} = [
+                        map { $i++; sort_kv($_, "$path/$key\[$i]") }
+                        sort {
+                            my $a1 = $a->{value};
+                            my $b1 = $b->{value};
+                            $a1 =~ s/(\d+)/sprintf "%05d", $1/egxms;
+                            $b1 =~ s/(\d+)/sprintf "%05d", $1/egxms;
+                            $a1 cmp $b1;
+                        } @{$json->{$key}}
+                    ];
+                    warn join ', ', map {$_->{value}} @{$json->{$key}};
+                }
+                else {
+                    $json->{$key} = sort_kv($json->{$key}, "$path/$key");
+                }
+            }
+            else {
+                $json->{$key} = sort_kv($json->{$key}, "$path/$key");
+            }
+        }
+    }
+    elsif (ref $json eq 'ARRAY') {
+        for my $i ( 0 .. $#{$json} ) {
+            $json->[$i] = sort_kv($json->[$i], "$path\[$i]");
+        }
+    }
+
+    return $json;
+}
+
+__DATA__
+
+=head1 NAME
+
+bin/har-tidy - <One-line description of commands purpose>
+
+=head1 VERSION
+
+This documentation refers to bin/har-tidy version 0.0.1
+
+=head1 SYNOPSIS
+
+   bin/har-tidy [option]
+
+ OPTIONS:
+  -o --other         other option
+
+  -v --verbose       Show more detailed option
+     --version       Prints the version information
+     --help          Prints this help information
+     --man           Prints the full documentation for bin/har-tidy
+
+=head1 DESCRIPTION
+
+A full description of the module and its features.
+
+May include numerous subsections (i.e., =head2, =head3, etc.).
+
+=head1 SUBROUTINES/METHODS
+
+A separate section listing the public components of the module's interface.
+
+These normally consist of either subroutines that may be exported, or methods
+that may be called on objects belonging to the classes that the module
+provides.
+
+Name the section accordingly.
+
+In an object-oriented module, this section should begin with a sentence (of the
+form "An object of this class represents ...") to give the reader a high-level
+context to help them understand the methods that are subsequently described.
+
+=head1 DIAGNOSTICS
+
+A list of every error and warning message that the module can generate (even
+the ones that will "never happen"), with a full explanation of each problem,
+one or more likely causes, and any suggested remedies.
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+A full explanation of any configuration system(s) used by the module, including
+the names and locations of any configuration files, and the meaning of any
+environment variables or properties that can be set. These descriptions must
+also include details of any configuration language used.
+
+=head1 DEPENDENCIES
+
+A list of all of the other modules that this module relies upon, including any
+restrictions on versions, and an indication of whether these required modules
+are part of the standard Perl distribution, part of the module's distribution,
+or must be installed separately.
+
+=head1 INCOMPATIBILITIES
+
+A list of any modules that this module cannot be used in conjunction with.
+This may be due to name conflicts in the interface, or competition for system
+or program resources, or due to internal limitations of Perl (for example, many
+modules that use source code filters are mutually incompatible).
+
+=head1 BUGS AND LIMITATIONS
+
+A list of known problems with the module, together with some indication of
+whether they are likely to be fixed in an upcoming release.
+
+Also, a list of restrictions on the features the module does provide: data types
+that cannot be handled, performance issues and the circumstances in which they
+may arise, practical limitations on the size of data sets, special cases that
+are not (yet) handled, etc.
+
+The initial template usually just has:
+
+There are no known bugs in this module.
+
+Please report problems to Ivan Wills (ivan.wills@gmail.com).
+
+Patches are welcome.
+
+=head1 AUTHOR
+
+Ivan Wills - (ivan.wills@gmail.com)
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2021 Ivan Wills (14 Mullion Close, Hornsby Heights, NSW Australia 2077).
+All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself. See L<perlartistic>.  This program is
+distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+=cut
