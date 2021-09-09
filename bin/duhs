@@ -40,6 +40,7 @@ sub main {
         'one-file-system|x',
         'sort|s=s',
         'reverse|r',
+        'total|t!',
         'verbose|v+',
         'man',
         'help',
@@ -74,20 +75,30 @@ sub main {
 
     @stats = reverse @stats if $option{reverse};
 
+    my $total = 0;
     for (@stats) {
         my ($number, $dir) = @$_;
+        $total += $number;
 
-        print
-              $number < 1000          ? $number
-            : $number < 100_000       ? sprintf("%.1fK",$number/1000)
-            : $number < 1_000_000     ? sprintf("%.0fK",$number/1000)
-            : $number < 100_000_000   ? sprintf("%.1fM",$number/1_000_000)
-            : $number < 1_000_000_000 ? sprintf("%.0fM",$number/1_000_000)
-            :                           sprintf("%.1fG",$number/1_000_000_000);
-        print "\t$dir";
+        print size($number) . "\t$dir";
+    }
+
+    if ($option{total}) {
+        print "\n" . size($total) . "\tTOTAL\n";
     }
 
     return;
+}
+
+sub size {
+    my ($number) = @_;
+
+return $number < 1000          ? $number
+     : $number < 100_000       ? sprintf("%.1fK",$number/1000)
+     : $number < 1_000_000     ? sprintf("%.0fK",$number/1000)
+     : $number < 100_000_000   ? sprintf("%.1fM",$number/1_000_000)
+     : $number < 1_000_000_000 ? sprintf("%.0fM",$number/1_000_000)
+     :                           sprintf("%.1fG",$number/1_000_000_000);
 }
 
 __DATA__
