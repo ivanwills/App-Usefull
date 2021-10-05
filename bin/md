@@ -1,6 +1,6 @@
 #!/bin/bash
 
-t=$(tempfile) || exit
+t=$(mktemp) || exit
 
 if [ ! "$1" ]; then
     echo Usage:
