@@ -37,6 +37,7 @@ sub main {
     Getopt::Long::Configure('bundling');
     GetOptions(
         \%option,
+        'array_sort|array-sort|a=s',
         'clean|c',
         'depth|d=i',
         'exclude|E=s@',
@@ -185,6 +186,10 @@ sub out {
         if (@$json) {
             $out .= "[$option{newline}" if !$option{path_only};
             $out .= "//$path$option{newline}" if ( $option{test} || $option{path_only} ) && $path;
+            if ($option{array_sort} && ref $json->[0] eq 'HASH' && exists $json->[0]{$option{array_sort}}) {
+                @$json = sort {$a->{$option{array_sort}} cmp $b->{$option{array_sort}}} @$json;
+            }
+
             for my $i (0 .. @$json - 1) {
                 my $val = $json->[$i];
                 $out .= qq/$indent$option{indent}/ if !$option{path_only};
