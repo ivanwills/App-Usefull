@@ -24,6 +24,7 @@ my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
     level   => 1,
+    quote   => '"',
     verbose => 0,
     man     => 0,
     help    => 0,
@@ -47,6 +48,7 @@ sub main {
         'decode',
         'level|l=i',
         'quiet|q',
+        'quote|Q',
         'verbose|v+',
         'man',
         'help',
@@ -135,6 +137,9 @@ This documentation refers to coder version 0.1.
   -C --code=str  Alternate method of specifying CODE
   -l --level=int Some CODEs (eg url) allow the setting of a level encoding
                  via this parameter
+  -q --quiet     Don't output some warning messages
+  -Q --quote[=]str
+                The type of quoting done in the html [" or '] (used with encoding html)
 
   -v --verbose   Show more detailed option
      --VERSION   Prints the version information
