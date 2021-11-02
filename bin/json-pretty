@@ -16,6 +16,7 @@ use English qw/ -no_match_vars /;
 use FindBin qw/$Bin/;
 use Path::Tiny;
 use JSON::XS;
+use App::Useful::Coder qw/get_coders/;
 
 our $VERSION = version->new('0.0.1');
 my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
@@ -24,6 +25,8 @@ my $coder;
 my %option = (
     indent  => '  ',
     newline => "\n",
+    level   => 1,
+    quote   => "'",
     verbose => 0,
     man     => 0,
     help    => 0,
@@ -40,14 +43,18 @@ sub main {
         'array_sort|array-sort|a=s',
         'clean|c',
         'depth|d=i',
+        'decode_html|h',
+        'encode_html|e',
         'exclude|E=s@',
         'include|I=s@',
         'indent|i=s',
+        'level|l=i',
         'newline|n=s',
         'update|u',
         'jsonp|j=s',
         'path|p=s',
         'path_only|path-only|p',
+        'quote|q=s',
         'sort|S=s',
         'string_length|string-length|s=i',
         'test|t!',
@@ -96,6 +103,11 @@ sub main {
             $text =~ s/(\}[^}]+?\Z)/}/xms;
             warn $text =~ /\A(.{40})/xms, '...', $text =~ /(.{40})\Z/xms, "\n" if $option{verbose} > 1;
         }
+        if ( $option{decode_html} ) {
+            my %coders = get_coders(\%option);
+            $text = $coders{html}{decode}->($text);
+        }
+
         my $json = decode_json($text);
         $coder = JSON::XS->new->ascii->pretty->allow_nonref;
 
@@ -116,7 +128,15 @@ sub main {
             }
         }
         my $fh = $option{update} && $file ? $file->openw : \*STDOUT;
-        print {$fh} out($json), "\n";
+        my $out = out($json);
+        if ( $option{encode_html} ) {
+            my %coders = get_coders(\%option);
+            $out = $coders{html}{encode}->($out);
+        }
+        else {
+            $out = "$out\n";
+        }
+        print {$fh} $out;
         1;
     } or do {
         die 'Error in parsing ' . ($file ? $file : 'STDIN') . "!:\n $@";
@@ -233,7 +253,11 @@ This documentation refers to json-pretty version 0.0.1
                     after trailing '}' so that copy pasting errors can be
                     ignored and initial JSON passed successfully.
   -d --depth[=]int  Show results to this maximum depth
+  -h --decode-html  Assume the input string is an HTML encoded json string
+  -e --encode-html  Encode the prettied output as an HTML encoded string
   -i --indent[=]str The string to indent with (default 2 spaces)
+  -Q --quote[=]str  The type of quoting done in the html [' or "] (used with --encode-html)
+  -l --level[=]int  The level of html encoding to be done (used with --encode-html)
   -n --newline[=]str
                     The string to add a newline (default \n)
   -E --exclude[=]path
