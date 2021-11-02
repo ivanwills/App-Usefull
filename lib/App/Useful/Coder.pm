@@ -50,13 +50,15 @@ sub get_coders {
         },
         html => {
             encode    => sub {
+                $option->{quote} ||= '"';
                 my $matcher =
                       $option->{level} == 3 ? qr{ .       }xms
                     : $option->{level} == 2 ? qr{ \W      }xms
-                    : $option->{level} == 1 ? qr{ [<!"=>] }xms
-                    : $option->{level} == 0 ? qr{ [<">]   }xms
-                    :                         qr{ [<">]   }xms;
-                $_[0] =~ s/($matcher)/sprintf "&#%d;", ord $1/egxms;
+                    : $option->{level} == 1 ? qr{ [<!$option->{quote}=>] }xms
+                    : $option->{level} == 0 ? qr{ [<$option->{quote}>]   }xms
+                    :                         qr{ [<$option->{quote}>]   }xms;
+                my %codes = html_codes();
+                $_[0] =~ s/($matcher)/$codes{$1} || sprintf "&#%d;", ord $1/egxms;
                 return $_[0]
             },
             encode_on => 'line',
