@@ -98,7 +98,13 @@ sub main {
     }
 
     my $out = join ' ', map {shell_quote($_)} @args;
-    print "\n$out\n\n";
+    if ($option{verbose}) {
+        my $last = pop @args;
+        print "\n", map {shell_quote($_) . (!/^--/ ? " \\\n  " : ' ')} @args;
+        print "  $last\n\n";
+    } else {
+        print "\n$out\n\n";
+    }
 
     if ( $option{options}{run} ) {
         exec $out;
@@ -110,7 +116,7 @@ sub main {
 sub shell_quote {
     my ($text) = @_;
 
-    if ($text =~ /[\s$|><;#]/xms) {
+    if ($text =~ /[\s|><;#&\$]/xms) {
         $text =~ s/'/'\\''/gxms;
         $text = "'$text'";
     }
