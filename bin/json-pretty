@@ -44,7 +44,7 @@ sub main {
         'clean|c',
         'depth|d=i',
         'decode_html|h',
-        'encode_html|e',
+        'encode_html|encode-htnl|e',
         'exclude|E=s@',
         'include|I=s@',
         'indent|i=s',
@@ -53,11 +53,12 @@ sub main {
         'update|u',
         'jsonp|j=s',
         'path|p=s',
-        'path_only|path-only|p',
+        'path_only|path-only|P',
         'quote|q=s',
-        'sort|S=s',
-        'string_length|string-length|s=i',
-        'test|t!',
+        'sort|s=s',
+        'string_length|string-length|S=i',
+        'store|t',
+        'test!',
         'verbose|v+',
         'man',
         'help',
@@ -86,7 +87,7 @@ sub main {
         $option{sort} = 'insensitive';
     }
     elsif ( $option{sort} && ! main->can($option{sort}) ) {
-        die "--sort must be one of normaal, insensitive or alphanum\n"
+        die "--sort must be one of normal, insensitive or alphanum\n"
     }
 
     my $file = @ARGV ? path($ARGV[0]) : '';
@@ -110,6 +111,17 @@ sub main {
 
         my $json = decode_json($text);
         $coder = JSON::XS->new->ascii->pretty->allow_nonref;
+
+        # assuming that the input is from sessionStorage or localStorage, so decoding the data
+        if ($option{store}) {
+            for my $key ( keys %$json ) {
+                if ( $json->{$key} =~ /^[\[{]/ ) {
+                    eval {
+                        $json->{$key} = decode_json($json->{$key});
+                    }
+                }
+            }
+        }
 
         if ( $option{path} ) {
             while ( my ($item) = $option{path} =~ /(^\w+|^\[[^\]]+\])[.]?/ ) {
@@ -145,7 +157,7 @@ sub main {
     return;
 }
 
-sub normaal {
+sub normal {
     return $a cmp $b;
 }
 sub insensitive {
@@ -246,14 +258,22 @@ This documentation refers to json-pretty version 0.0.1
 =head1 SYNOPSIS
 
    json-pretty [option] < file.json
-   get json | json-pretty [option]
+   json-pretty [option] file.json
+   cat file.json | json-pretty [option]
 
  OPTIONS:
+ Input:
   -c --clean        Clean any extranious characters before leading '{' and
                     after trailing '}' so that copy pasting errors can be
                     ignored and initial JSON passed successfully.
-  -d --depth[=]int  Show results to this maximum depth
   -h --decode-html  Assume the input string is an HTML encoded json string
+     --jsonp[=]string
+                    Assume the input is encoded as jsonp (eg Func(json))
+  -t --store        Assume the input has come from sessionStorage or
+                    localStorage and decode the first level keys.
+
+ Output:
+  -d --depth[=]int  Show results to this maximum depth
   -e --encode-html  Encode the prettied output as an HTML encoded string
   -i --indent[=]str The string to indent with (default 2 spaces)
   -Q --quote[=]str  The type of quoting done in the html [' or "] (used with --encode-html)
@@ -264,11 +284,19 @@ This documentation refers to json-pretty version 0.0.1
                     Exclude this path (may be used more than once)
   -I --include[=]path
                     Only include this path (may be used more than once)
-  -s --string-length=i
+  -S --string-length=i
                     Shorten output by truncating long strings to this length
   -u --update       When processing a file this will write back to that file
                     overwriting the original contents.
-  -t --test         Show full paths for each element
+     --test         Show full paths for each element
+  -p --path[=]regex
+                    Output only keys matching this path
+  -P --path-only    Output only the key paths not the data
+  -a --array-sort[=]key
+                    For any arrays of objects sort the objects in the array
+                    based on key
+  -s --sort[=](normal|insensitive|alphanum)
+                    Key sorting algorithm (Default insensitive)
 
   -v --verbose      Show more detailed option
      --version      Prints the version information
