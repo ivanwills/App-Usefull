@@ -119,6 +119,7 @@ This documentation refers to duhs version 0.1.
   -r --reverse  Reverse the order of the output
   -s --sort[=](num|alpha)
                 Sort the directories by size (num) or name (alpha) (Default num)
+  -t --total    Show the total sizes for all files
   -x --one-file-system
                 Only show usage for one filesystem, don't switch to other filesystems
 
