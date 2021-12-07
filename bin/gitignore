@@ -54,6 +54,8 @@ sub main {
         'out|o=s',
         'append|a',
         'auto-complete',
+        'list|l',
+        'max|m=i',
         'verbose|v+',
         'man',
         'help',
@@ -76,6 +78,32 @@ sub main {
 
     # do stuff here
     my $url = 'https://www.gitignore.io/api/'; # node%2Cvim
+    if ( $option{list} ) {
+        if ( ! defined $option{max} ) {
+            require Term::Size::Perl;
+            no strict qw/subs/;
+            ($option{max}) = Term::Size::Perl::chars(*STDOUT{IO});
+            $option{max} ||= 80;
+        }
+
+        $mech->get("${url}list");
+        my @list = split /,|\r?\n/, $mech->content();
+        my $line = '';
+        my $match = shift @ARGV;
+        for my $type (@list) {
+            next if $match && $type !~ /$match/;
+
+            if (length "$line, $type" > $option{max}) {
+                print "$line\n";
+                $line = $type;
+            } else {
+                $line = $line ? "$line, $type" : $type;
+            }
+        }
+
+        exit 0;
+    }
+
     $url .= join '%2C', @ARGV;
 
     $mech->get($url);
@@ -117,10 +145,16 @@ This documentation refers to gitignore version 0.0.1
 
 =head1 SYNOPSIS
 
-   gitignore [option]
+   gitignore [option] (types...)
+   gitignore --list [(-m|--max) int) [type-match]
 
  OPTIONS:
+  type-match        When listing shows only types matching this regex
+
   -o --out[=]file   Output to file
+  -a --append       Append to current .gitignore file
+  -a --list         List the available .gititnore types
+  -a --max[=]int    When listing use this as screen width
 
   -v --verbose      Show more detailed option
      --version      Prints the version information
