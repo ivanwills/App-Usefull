@@ -38,6 +38,7 @@ sub main {
     GetOptions(
         \%option,
         'line|n=i',
+        'blame|b',
         'column|c=i',
         'position|p=i',
         'before|BEFORE|B=i',
@@ -88,6 +89,9 @@ sub main {
 
         if ($file eq '-') {
             $fh = \*STDIN;
+        }
+        elsif ( $option{blame} ) {
+            open $fh, '|-', qq{git blame "$file"} or die "Can't git blame '$file': $!\n";
         }
         else {
             open $fh, '<', $file or die "Can't open '$file' for reading! $!\n";
