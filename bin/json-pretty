@@ -19,7 +19,7 @@ use JSON::XS;
 use App::Useful::Coder qw/get_coders/;
 
 our $VERSION = version->new('0.0.1');
-my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+my ($name) = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 my $coder;
 
 my %option = (
@@ -39,30 +39,18 @@ exit 0;
 sub main {
     Getopt::Long::Configure('bundling');
     GetOptions(
-        \%option,
-        'array_sort|array-sort|a=s',
-        'clean|c',
-        'depth|d=i',
-        'decode_html|h',
-        'encode_html|encode-htnl|e',
-        'exclude|E=s@',
-        'include|I=s@',
-        'indent|i=s',
-        'level|l=i',
-        'newline|n=s',
-        'update|u',
-        'jsonp|j=s',
-        'path|p=s',
-        'path_only|path-only|P',
-        'quote|q=s',
-        'sort|s=s',
-        'string_length|string-length|S=i',
-        'store|t',
-        'test!',
-        'verbose|v+',
-        'man',
-        'help',
-        'VERSION!',
+        \%option,                'array_sort|array-sort|a=s',
+        'clean|c',               'depth|d=i',
+        'decode_html|h',         'encode_html|encode-htnl|e',
+        'exclude|E=s@',          'include|I=s@',
+        'indent|i=s',            'level|l=i',
+        'newline|n=s',           'update|u',
+        'jsonp|j=s',             'path|p=s',
+        'path_only|path-only|P', 'quote|q=s',
+        'sort|s=s',              'string_length|string-length|S=i',
+        'store|t',               'test!',
+        'verbose|v+',            'man',
+        'help',                  'VERSION!',
     ) or pod2usage(2);
 
     if ( $option{'VERSION'} ) {
@@ -83,42 +71,43 @@ sub main {
     if ( $option{newline} eq '\n' ) {
         $option{newline} = "\n";
     }
-    if ( ! $option{sort} ) {
+    if ( !$option{sort} ) {
         $option{sort} = 'insensitive';
     }
-    elsif ( $option{sort} && ! main->can($option{sort}) ) {
-        die "--sort must be one of normal, insensitive or alphanum\n"
+    elsif ( $option{sort} && !main->can( $option{sort} ) ) {
+        die "--sort must be one of normal, insensitive or alphanum\n";
     }
 
-    my $file = @ARGV ? path($ARGV[0]) : '';
+    my $file = @ARGV ? path( $ARGV[0] ) : '';
     eval {
         my $text = $file ? $file->slurp : join '', <ARGV>;
         if ( $option{jsonp} ) {
-            # need to remove the JSONP function call so that the result is just JSON
+
+      # need to remove the JSONP function call so that the result is just JSON
             $text =~ s/\A\s*$option{jsonp}\s*[(]\s*//xms;
             $text =~ s/\s*[)]\s*;\s*\Z//xms;
         }
         if ( $option{clean} ) {
-            warn $text =~ /\A(.{40})/xms, '...', $text =~ /(.{40})\Z/xms, "\n" if $option{verbose} > 1;
+            warn $text =~ /\A(.{40})/xms, '...', $text =~ /(.{40})\Z/xms, "\n"
+                if $option{verbose} > 1;
             $text =~ s/(\A[^{]+?\{)/{/xms;
             $text =~ s/(\}[^}]+?\Z)/}/xms;
-            warn $text =~ /\A(.{40})/xms, '...', $text =~ /(.{40})\Z/xms, "\n" if $option{verbose} > 1;
+            warn $text =~ /\A(.{40})/xms, '...', $text =~ /(.{40})\Z/xms, "\n"
+                if $option{verbose} > 1;
         }
         if ( $option{decode_html} ) {
-            my %coders = get_coders(\%option);
+            my %coders = get_coders( \%option );
             $text = $coders{html}{decode}->($text);
         }
 
         my $json = decode_json($text);
         $coder = JSON::XS->new->ascii->pretty->allow_nonref;
 
-        # assuming that the input is from sessionStorage or localStorage, so decoding the data
-        if ($option{store}) {
+# assuming that the input is from sessionStorage or localStorage, so decoding the data
+        if ( $option{store} ) {
             for my $key ( keys %$json ) {
                 if ( $json->{$key} =~ /^[\[{]/ ) {
-                    eval {
-                        $json->{$key} = decode_json($json->{$key});
-                    }
+                    eval { $json->{$key} = decode_json( $json->{$key} ); }
                 }
             }
         }
@@ -127,10 +116,10 @@ sub main {
             while ( my ($item) = $option{path} =~ /(^\w+|^\[[^\]]+\])[.]?/ ) {
                 $option{path} =~ s/(^\w+|^\[[^\]]+\])[.]?//xms;
                 $item =~ s/^['"]|['"]$//;
-                if (ref $json eq 'HASH') {
+                if ( ref $json eq 'HASH' ) {
                     $json = $json->{$item};
                 }
-                elsif (ref $json eq 'ARRAY') {
+                elsif ( ref $json eq 'ARRAY' ) {
                     $json = $json->[$item];
                 }
                 else {
@@ -139,10 +128,10 @@ sub main {
                 }
             }
         }
-        my $fh = $option{update} && $file ? $file->openw : \*STDOUT;
+        my $fh  = $option{update} && $file ? $file->openw : \*STDOUT;
         my $out = out($json);
         if ( $option{encode_html} ) {
-            my %coders = get_coders(\%option);
+            my %coders = get_coders( \%option );
             $out = $coders{html}{encode}->($out);
         }
         else {
@@ -151,7 +140,7 @@ sub main {
         print {$fh} $out;
         1;
     } or do {
-        die 'Error in parsing ' . ($file ? $file : 'STDIN') . "!:\n $@";
+        die 'Error in parsing ' . ( $file ? $file : 'STDIN' ) . "!:\n $@";
     };
 
     return;
@@ -160,9 +149,11 @@ sub main {
 sub normal {
     return $a cmp $b;
 }
+
 sub insensitive {
     return lc $a cmp lc $b;
 }
+
 sub alphanum {
     my $a1 = ref $a ? $a->{name} : $a;
     my $b1 = ref $b ? $b->{name} : $b;
@@ -172,64 +163,86 @@ sub alphanum {
 }
 
 sub out {
-    my ($json, $indent, $depth, $path) = @_;
+    my ( $json, $indent, $depth, $path ) = @_;
     my $out = '';
     $indent ||= '';
-    $depth ||= 0;
-    $path ||= '';
+    $depth  ||= 0;
+    $path   ||= '';
     my $sort = $option{sort} || 'normal';
 
-    return '...' if $option{depth} && $depth >= $option{depth};
-    return '...' if $option{exclude} && grep {$_ eq $path} @{ $option{exclude} };
-    return '...' if $option{include} && $path && !grep {$_ =~ /^$path/} @{ $option{include} };
+    if ( $option{depth} && $depth >= $option{depth} ) {
+        my $brief = ref $json ? '...' : $coder->encode($json);
+        chomp $brief;
+        return $brief;
+    }
+    return '...'
+        if $option{exclude} && grep { $_ eq $path } @{ $option{exclude} };
+    return '...'
+        if $option{include} && $path && !grep { $_ =~ /^$path/ }
+        @{ $option{include} };
 
     if ( !ref $json ) {
         my $js = $coder->encode($json);
         if ( $option{string_length} && length $js > $option{string_length} ) {
-            my $first = int($option{string_length}/2) - 2;
-            my $last = int($option{string_length}/2 + 0.5) - 1;
-            $js = substr($js, 0, $first) . '...' . substr($js, -$last, length $js);
+            my $first = int( $option{string_length} / 2 ) - 2;
+            my $last  = int( $option{string_length} / 2 + 0.5 ) - 1;
+            $js = substr( $js, 0, $first ) . '...'
+                . substr( $js, -$last, length $js );
         }
-        $out .= "//$path$option{newline}" if ( $option{test} && $option{verbose} || $option{path_only} ) && $path;
+        $out .= "//$path$option{newline}"
+            if ( $option{test} && $option{verbose} || $option{path_only} )
+            && $path;
         $out .= $js if !$option{path_only};
     }
-    elsif (ref $json eq 'HASH') {
-        if ( %$json ) {
+    elsif ( ref $json eq 'HASH' ) {
+        if (%$json) {
             $out .= "{$option{newline}" if !$option{path_only};
-            $out .= "//$path$option{newline}" if ( $option{test} || $option{path_only} ) && $path;
+            $out .= "//$path$option{newline}"
+                if ( $option{test} || $option{path_only} ) && $path;
             $path &&= "$path.";
-            my @out_keys = $option{sort} eq 'insensitive' ? sort insensitive keys %$json
-                : $option{sort} eq 'alphanum'             ? sort alphanum keys %$json
-                :                                           sort keys %$json;
+            my @out_keys
+                = $option{sort} eq 'insensitive' ? sort insensitive
+                keys %$json
+                : $option{sort} eq 'alphanum' ? sort alphanum keys %$json
+                :                               sort keys %$json;
             for my $key (@out_keys) {
-                $out .= qq/$indent$option{indent}"$key": / if !$option{path_only};
-                $out .= out($json->{$key}, "$indent$option{indent}", $depth + 1, "$path$key");
+                $out .= qq/$indent$option{indent}"$key": /
+                    if !$option{path_only};
+                $out .= out( $json->{$key}, "$indent$option{indent}",
+                    $depth + 1, "$path$key" );
                 $out .= ",$option{newline}" if !$option{path_only};
             }
-            chop $out if !$option{path_only};
-            chop $out if !$option{path_only};
+            chop $out                          if !$option{path_only};
+            chop $out                          if !$option{path_only};
             $out .= "$option{newline}$indent}" if !$option{path_only};
         }
         else {
             $out .= "{}" if !$option{path_only};
         }
     }
-    elsif (ref $json eq 'ARRAY') {
+    elsif ( ref $json eq 'ARRAY' ) {
         if (@$json) {
             $out .= "[$option{newline}" if !$option{path_only};
-            $out .= "//$path$option{newline}" if ( $option{test} || $option{path_only} ) && $path;
-            if ($option{array_sort} && ref $json->[0] eq 'HASH' && exists $json->[0]{$option{array_sort}}) {
-                @$json = sort {$a->{$option{array_sort}} cmp $b->{$option{array_sort}}} @$json;
+            $out .= "//$path$option{newline}"
+                if ( $option{test} || $option{path_only} ) && $path;
+            if (   $option{array_sort}
+                && ref $json->[0] eq 'HASH'
+                && exists $json->[0]{ $option{array_sort} } ) {
+                @$json = sort {
+                    $a->{ $option{array_sort} }
+                        cmp $b->{ $option{array_sort} }
+                } @$json;
             }
 
-            for my $i (0 .. @$json - 1) {
+            for my $i ( 0 .. @$json - 1 ) {
                 my $val = $json->[$i];
                 $out .= qq/$indent$option{indent}/ if !$option{path_only};
-                $out .= out($val, "$indent$option{indent}", $depth + 1, "$path\[$i]");
+                $out .= out( $val, "$indent$option{indent}", $depth + 1,
+                    "$path\[$i]" );
                 $out .= ",$option{newline}" if !$option{path_only};
             }
-            chop $out if !$option{path_only};
-            chop $out if !$option{path_only};
+            chop $out                          if !$option{path_only};
+            chop $out                          if !$option{path_only};
             $out .= "$option{newline}$indent]" if !$option{path_only};
         }
         else {
