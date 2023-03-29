@@ -76,6 +76,7 @@ sub main {
     if ( $new_config ne $orig_config ) {
         $orig->move(path($ENV{HOME}, '.ssh', "config-$now"));
         $orig->spew($new_config);
+        $orig->chmod('go-rw');
     }
 
     return;
