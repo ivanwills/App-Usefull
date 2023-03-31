@@ -106,11 +106,14 @@ sub simplify {
         }
         push @out,
           {
-            a_url   => $entry->{request}{url},
-            b_query => $query,
+            a_start => $entry->{startedDateTime},
+            b_time  => $entry->{time},
+            c_url   => $entry->{request}{url},
+            d_query => $query,
             post    => $entry->{request}{postData}{json}
               || $entry->{request}{postData}{text},
             response => $entry->{response}{content}{json}
+              || eval { decode_json( $entry->{response}{content}{text} ) }
               || $entry->{response}{content}{text},
           };
     }
@@ -122,9 +125,9 @@ sub expand_responce {
     my ($json) = @_;
 
     if ( !$json || ref $json ne 'HASH' ) {
-        confess Dumper $json;
+        return $json;
     }
-    warn $json;
+
     if ( !ref $json->{log} ) {
         confess Dumper $json;
     }
@@ -173,7 +176,6 @@ sub sort_kv {
                     && $json->{$key}[0]{name}
                     && $json->{$key}[0]{value} )
                 {
-                    warn "$path/$key nave/value\n";
                     my $i = -1;
                     $json->{$key} = [
                         map { $i++; sort_kv( $_, "$path/$key\[$i]" ) }
@@ -190,7 +192,6 @@ sub sort_kv {
                     && $json->{$key}[0]{value}
                     && $json->{$key}[0]{valueForDisplay} )
                 {
-                    warn "$path/$key value/valueForDisplay\n";
                     my $i = -1;
                     $json->{$key} = [
                         map { $i++; sort_kv( $_, "$path/$key\[$i]" ) }
@@ -202,7 +203,7 @@ sub sort_kv {
                             $a1 cmp $b1;
                           } @{ $json->{$key} }
                     ];
-                    warn join ', ', map { $_->{value} } @{ $json->{$key} };
+
                 }
                 else {
                     $json->{$key} = sort_kv( $json->{$key}, "$path/$key" );
