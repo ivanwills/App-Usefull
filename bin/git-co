@@ -25,7 +25,7 @@ if (@ARGV) {
 
         if ( -f "$root/package.json" ) {
             $file = "$root/package.json";
-            require JSON::XS;
+            require JSON;
             $original = sortDeps($file);
         }
     }
@@ -37,7 +37,13 @@ exit $error >> 8 if $error;
 if ( $file && -f $file ) {
     my $new = sortDeps($file);
     if ($new ne $original) {
-        system qw/npm install/;
+        open my $new_fh, '>', '.new-branch.txt' || die "Can't write to .new-branch.txt!\n";
+        open my $old_fh, '>', '.old-branch.txt' || die "Can't write to .old-branch.txt!\n";
+        print {$new_fh} "$new\n";
+        print {$old_fh} "$original\n";
+        warn "WARNING: Testing not switching (see .new-branch.txt vs .old-branch.txt)\n";
+
+        #system qw/npm install/;
     }
 }
 
@@ -45,7 +51,7 @@ sub sortDeps {
     my ($file) = @_;
     open my $fs, '<', $file;
     my $json = do { local $/; <$fs> };
-    my $package = JSON::XS::decode_json($json);
+    my $package = JSON::decode_json($json);
 
     return join "\n",
         "dependencies:"     , (join "\n", map {" $_, $package->{dependencies}{$_}"     } sort keys %{$package->{dependencies}     } ),

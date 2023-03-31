@@ -8,16 +8,6 @@ editor:
     eg:
       - some-file.eg
 name: useful
-start:
-  ctags: -R
-  ctags-exclude:
-    - perl
-    - tmp/
-  ctags-excludes:
-    perl:
-      - blib
-      - _build
-      - Build
 terminals:
   1a:
     command: ./Build && ./Build testcover

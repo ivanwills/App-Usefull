@@ -42,9 +42,11 @@ exit 0;
 
 sub main {
     Getopt::Long::Configure('bundling');
-    GetOptions( \%option, 'out|o=s', 'simplify|s!', 'filter|f=s', 'verbose|v+',
-        'man', 'help', 'VERSION!', )
-      or pod2usage(2);
+    GetOptions(
+        \%option,      'out|o=s',    'simplify|s!', 'filter|f=s',
+        'multiple|m!', 'verbose|v+', 'man',         'help',
+        'VERSION!',
+    ) or pod2usage(2);
 
     if ( $option{'VERSION'} ) {
         print "$name Version = $VERSION\n";
@@ -58,18 +60,39 @@ sub main {
     }
 
     # do stuff here
-    my $file = shift @ARGV;
-    my $har =
-      sort_kv( expand_responce( decode_json( scalar path($file)->slurp ) ) );
+    $option{multiple} //= @ARGV > 1;
 
-    if ( $option{filter} ) {
-        $har = filter( $har, $option{filter} );
+    for my $file (@ARGV) {
+        $file = path($file);
+        my $har =
+          sort_kv( expand_responce( decode_json( scalar $file->slurp ) ) );
+
+        if ( $option{filter} ) {
+            $har = filter( $har, $option{filter} );
+        }
+
+        my $json = encode_json( $option{simplify} ? simplify($har) : $har );
+
+        my $fh;
+        my $tidy;
+        if ( $option{multiple} ) {
+            my $parent = $file->parent;
+            my $base   = $option{out} . '-' . $file->basename;
+            $tidy = path( $parent, $base );
+            $fh   = $tidy->openw;
+        }
+        elsif ( $option{out} ) {
+            $tidy = path( $option{out} );
+            $fh   = $tidy->openw;
+        }
+        else {
+            $fh = \*STDOUT;
+        }
+        print {$fh} $json;
+        if ($tidy) {
+            system 'json-pretty', '-u', $tidy;
+        }
     }
-
-    my $json = encode_json( $option{simplify} ? simplify($har) : $har );
-
-    open my $fh, '|-', 'json-pretty' || die "Could not open json-pretty! $!\n";
-    print {$fh} $json;
 
     return;
 }
