@@ -10,13 +10,13 @@ use strict;
 use warnings;
 use Getopt::Long;
 use Pod::Usage;
-use Data::Dumper qw/Dumper/;
-use English qw/ -no_match_vars /;
-use FindBin qw/$Bin/;
+use Data::Dumper    qw/Dumper/;
+use English         qw/ -no_match_vars /;
+use FindBin         qw/$Bin/;
 use Term::ANSIColor qw/colored/;
 
 our $VERSION = 0.001;
-my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+my ($name) = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
     colour_char => 1,
@@ -36,22 +36,14 @@ exit 0;
 sub main {
     Getopt::Long::Configure('bundling');
     GetOptions(
-        \%option,
-        'line|n=i',
-        'blame|b',
-        'column|c=i',
-        'position|p=i',
-        'before|BEFORE|B=i',
-        'after|AFTER|A=i',
-        'context|CONTEXT|C=i',
-        'colour_char|colour-char|P=i',
-        'line_no|lines|l',
-        'ends|e',
-        'quiet|silent|q',
-        'verbose|v+',
-        'man',
-        'help',
-        'VERSION!',
+        \%option,                      'line|n=i',
+        'blame|b',                     'column|c=i',
+        'position|p=i',                'before|BEFORE|B=i',
+        'after|AFTER|A=i',             'context|CONTEXT|C=i',
+        'colour_char|colour-char|P=i', 'line_no|lines|l',
+        'ends|e',                      'quiet|silent|q',
+        'verbose|v+',                  'man',
+        'help',                        'VERSION!',
     ) or pod2usage(2);
 
     if ( $option{'VERSION'} ) {
@@ -68,13 +60,13 @@ sub main {
     # do stuff here
     if ( $option{position} ) {
         $option{before} ||= $option{context} || 10;
-        $option{after} ||= $option{context} || 10;
+        $option{after}  ||= $option{context} || 10;
     }
-    elsif ( ! defined $option{line} ) {
+    elsif ( !defined $option{line} ) {
         $option{line} = shift @ARGV // pod2usage( -verbose => 1 );
     }
 
-    if (!@ARGV) {
+    if ( !@ARGV ) {
         push @ARGV, '-';
     }
     my $file_count = 0;
@@ -82,69 +74,96 @@ sub main {
     for my $file (@ARGV) {
         my $fh;
 
-        if ( ( @ARGV > 1 || $option{verbose} ) && ! $option{quiet} ) {
+        if ( ( @ARGV > 1 || $option{verbose} ) && !$option{quiet} ) {
             print "\n" if $file_count++ > 0;
             print "==> $file <==\n";
         }
 
-        if ($file eq '-') {
+        if ( $file eq '-' ) {
             $fh = \*STDIN;
         }
         elsif ( $option{blame} ) {
-            open $fh, '|-', qq{git blame "$file"} or die "Can't git blame '$file': $!\n";
+            open $fh, '|-', qq{git blame "$file"}
+              or die "Can't git blame '$file': $!\n";
         }
         else {
             open $fh, '<', $file or die "Can't open '$file' for reading! $!\n";
         }
 
-        about($fh, %option);
+        about( $fh, %option );
     }
 
     return;
 }
 
+sub coloured {
+    my ( $colours, $string ) = @_;
+    if ( $option{quiet} ) {
+        return $string;
+    }
+    return colored( $colours, $string );
+}
+
 sub about {
-    my ($fh, %option) = @_;
+    my ( $fh, %option ) = @_;
     if ( $option{position} ) {
         local $/ = undef;
-        my $text = <$fh>;
+        my $text   = <$fh>;
         my $length = $option{before} + $option{after} + 1;
-        my $start = $option{position} - $option{before};
-        if ($start < 0) {
+        my $start  = $option{position} - $option{before};
+        if ( $start < 0 ) {
             $start = 0;
         }
-        my $before = $option{before} > $option{position} ? $option{before} : $option{position};
+        my $before =
+            $option{before} > $option{position}
+          ? $option{before}
+          : $option{position};
 
         my $selection = substr $text, $start, $length;
-        printf "%s-%s-%s-%s-%s\n", (substr $selection, 0, $option{before} - $option{colour_char}),
-            colored( ['on_green'], substr $selection, $option{before} - $option{colour_char}, $option{colour_char}),
-            colored( ['on_red'], substr $selection, $option{before} + 0, 1),
-            colored( ['on_green'], substr $selection, $option{before} + $option{colour_char}, $option{colour_char}),
-            (substr $selection, $option{before} + $option{colour_char} + 1);
+        printf "%s-%s-%s-%s-%s\n",
+          ( substr $selection, 0, $option{before} - $option{colour_char} ),
+          coloured(
+            ['on_green'],
+            substr $selection,
+            $option{before} - $option{colour_char},
+            $option{colour_char}
+          ),
+          coloured( ['on_red'], substr $selection, $option{before} + 0, 1 ),
+          coloured(
+            ['on_green'],
+            substr $selection,
+            $option{before} + $option{colour_char},
+            $option{colour_char}
+          ),
+          ( substr $selection, $option{before} + $option{colour_char} + 1 );
         return;
     }
 
-    my $start     = ( $option{column} || $option{line} ) - ( $option{before} || $option{context} || 0 );
-    my $end       = ( $option{column} || $option{line} ) + ( $option{after}  || $option{context} || 0 );
+    my $start = ( $option{column} || $option{line} ) -
+      ( $option{before} || $option{context} || 0 );
+    my $end = ( $option{column} || $option{line} ) +
+      ( $option{after} || $option{context} || 0 );
     my $line_no   = 0;
     my $last_line = $option{column} ? $option{line} : $end;
     my $max       = length $end;
     my @end;
 
-    while (my $line = <$fh>) {
+    while ( my $line = <$fh> ) {
         $line_no++;
 
-        if ( $line_no == $option{line} && ( $start != $option{line} || $end != $option{line} ) ) {
-            $line = colored ['bold'], $line;
+        if ( $line_no == $option{line}
+            && ( $start != $option{line} || $end != $option{line} ) )
+        {
+            $line = coloured ['bold'], $line;
         }
         elsif ( $option{ends} && $line_no <= $start ) {
             print $line;
         }
 
-        if ($option{ends}) {
+        if ( $option{ends} ) {
             push @end, $line;
-            if (@end > $end * 2) {
-                @end = @end[@end - $end -1 .. @end - 1];
+            if ( @end > $end * 2 ) {
+                @end = @end[ @end - $end - 1 .. @end - 1 ];
             }
         }
         else {
@@ -157,8 +176,8 @@ sub about {
         }
         else {
             # is the line in the range to display?
-            if ($start <= $line_no && $line_no <= $end) {
-                if ($option{line_no}) {
+            if ( $start <= $line_no && $line_no <= $end ) {
+                if ( $option{line_no} ) {
                     printf "%${max}d: %s", $line_no, $line;
                 }
                 else {
@@ -167,15 +186,15 @@ sub about {
             }
         }
     }
-    if ($option{ends}) {
+    if ( $option{ends} ) {
         if ( abs($start) + $end + ( $option{line} ? 1 : 0 ) >= $line_no ) {
             $end = $line_no - abs($start) - ( $option{line} ? 1 : 0 );
         }
         else {
             print "...\n";
         }
-        if (@end > $end) {
-            @end = @end[@end - $end .. @end - 1];
+        if ( @end > $end ) {
+            @end = @end[ @end - $end .. @end - 1 ];
         }
         print @end;
     }
