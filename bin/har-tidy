@@ -43,9 +43,9 @@ exit 0;
 sub main {
     Getopt::Long::Configure('bundling');
     GetOptions(
-        \%option,      'out|o=s',    'simplify|s!', 'filter|f=s',
-        'multiple|m!', 'verbose|v+', 'man',         'help',
-        'VERSION!',
+        \%option,     'out|o=s',     'exclude|e=s', 'simplify|s!',
+        'filter|f=s', 'multiple|m!', 'verbose|v+',  'man',
+        'help',       'VERSION!',
     ) or pod2usage(2);
 
     if ( $option{'VERSION'} ) {
@@ -69,6 +69,10 @@ sub main {
 
         if ( $option{filter} ) {
             $har = filter( $har, $option{filter} );
+        }
+
+        if ( $option{exclude} ) {
+            $har = exclude( $har, $option{exclude} );
         }
 
         my $json = encode_json( $option{simplify} ? simplify($har) : $har );
@@ -103,6 +107,19 @@ sub filter {
 
     for my $entry ( @{ $json->{log}{entries} } ) {
         if ( $entry->{request}{url} =~ /$filter/ ) {
+            push @out, $entry;
+        }
+    }
+
+    return { %$json, log => { entries => \@out } };
+}
+
+sub exclude {
+    my ( $json, $exclude ) = @_;
+    my @out;
+
+    for my $entry ( @{ $json->{log}{entries} } ) {
+        if ( $entry->{request}{url} !~ /$exclude/ ) {
             push @out, $entry;
         }
     }
@@ -258,13 +275,17 @@ This documentation refers to bin/har-tidy version 0.0.1
 
 =head1 SYNOPSIS
 
-   bin/har-tidy [option]
+   bin/har-tidy [option] json.har
 
  OPTIONS:
   -o --out[=]str    Output file (Defaults to STDOUT)
   -f --filter[=]regexp
                     Filter urls by this regexp
   -s --simplify     Produce a simplified (shorter) har file
+  -e --exclude[=str]
+                    Exclude urls matching this
+  -m --multiple     Processing multiple har files
+     --no-multiple  Don't treat as processing multiple files
 
   -v --verbose       Show more detailed option
      --version       Prints the version information
