@@ -3,11 +3,11 @@ use warnings;
 use Module::Build;
 
 my $builder = Module::Build->new(
-    module_name       => 'App::Useful',
-    license           => 'perl',
-    dist_author       => 'Ivan Wills <ivan.wills@gmail.com>',
-    dist_version      => '0.001',
-    requires          => {
+    module_name  => 'App::Useful',
+    license      => 'perl',
+    dist_author  => 'Ivan Wills <ivan.wills@gmail.com>',
+    dist_version => '0.001',
+    requires     => {
         'perl'                            => 'v5.14',
         'App::used'                       => 0,
         'CHI'                             => 0,
@@ -21,14 +21,10 @@ my $builder = Module::Build->new(
         'DateTime'                        => 0,
         'File::TypeCategories'            => 0,
         'File::Slurp'                     => 0,
-        'File::Touch'                     => 0,
         'File::CodeSearch'                => '0.7.5',
         'File::chdir'                     => 0,
         'Getopt::Alt'                     => '0.1.5',
         'HTTP::Cookies'                   => 0,
-        'HTTP::Proxy'                     => 0,
-        'HTTP::Proxy::HeaderFilter'       => 0,
-        'HTTP::Recorder'                  => 0,
         'HTTP::Tiny::Mech'                => 0,
         'Hash::Merge'                     => 0,
         'IO::Socket::SSL'                 => 0,
@@ -49,7 +45,6 @@ my $builder = Module::Build->new(
         'VCS::Which'                      => 0,
         'WWW::Mechanize'                  => 0,
         'WWW::Mechanize::Cached'          => 0,
-        'X11::Protocol::Ext::DPMS'        => 0,
         'YAML::XS'                        => 0,
     },
     configure_requires => {
@@ -59,20 +54,26 @@ my $builder = Module::Build->new(
         'Test::More'     => '0.88',
         'Test::Warnings' => '0.026',
     },
-    recommends  => {
-        'Gtk3::Notify'                    => 0,
-        'Image::Resize'                   => 0,
-        'Net::DBus'                       => 0,
-        'Net::DBus::Reactor'              => 0,
-        'Tidy'                            => 0,
-        'Tidy::STDIN'                     => 0,
+    recommends => {
+        'File::Touch'               => 0,
+        'Gtk3::Notify'              => 0,
+        'HTTP::Proxy'               => 0,
+        'HTTP::Proxy::HeaderFilter' => 0,
+        'HTTP::Recorder'            => 0,
+        'Image::Resize'             => 0,
+        'Net::DBus'                 => 0,
+        'Net::DBus::Reactor'        => 0,
+        'Tidy'                      => 0,
+        'Tidy::STDIN'               => 0,
+        'X11::Protocol::Ext::DPMS'  => 0,
     },
-    add_to_cleanup     => [ 'App-Useful-*' ],
-    create_license     => 1,
-    meta_merge         => {
+    add_to_cleanup => ['App-Useful-*'],
+    create_license => 1,
+    meta_merge     => {
         resources => {
             repository => 'git://github.com/ivanwills/App-Useful.git',
-            bugtracker => 'http://rt.cpan.org/NoAuth/Bugs.html?Dist=App::Useful',
+            bugtracker =>
+              'http://rt.cpan.org/NoAuth/Bugs.html?Dist=App::Useful',
         },
     },
     dist_abstract => 'A bunch of useful scripts'
