@@ -60,6 +60,9 @@ sub main {
         push @out, $line;
     }
 
+    if ( $out[$#out] !~ /\n$/ ) {
+        $out[$#out] .= "\n";
+    }
     print reverse @out;
 
     return;
