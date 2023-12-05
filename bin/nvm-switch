@@ -1,0 +1,21 @@
+#!/bin/bash
+
+version="${1}"
+old="$(node --version)"
+
+nvm use ${version}
+
+if [ ! "${version}" ]; then
+    echo 'nvm-switch [version]' >&2
+    exit 1
+fi
+
+if [ -d node_modules ]; then
+    mv node_modules node_modules-"${old}";
+fi
+
+if [ -d "node_modules-${version}" ]; then
+    mv "node_modules-${version}" node_modules
+else
+    npm install
+fi
