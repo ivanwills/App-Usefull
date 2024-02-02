@@ -1,0 +1,184 @@
+#!/usr/bin/perl
+
+# $Id$
+# $Revision$, $HeadURL$, $Date$
+# $Revision$, $Source$, $Date$
+
+use strict;
+use warnings;
+use version;
+use Scalar::Util;
+use List::Util;
+
+#use List::MoreUtils qw/zip/;
+use Getopt::Alt qw/get_options/;
+use Pod::Usage;
+use Data::Dumper qw/Dumper/;
+use English      qw/ -no_match_vars /;
+use FindBin      qw/$Bin/;
+use Path::Tiny;
+use Text::CSV_XS qw/csv/;
+use JSON::XS     qw/decode_json encode_json/;
+
+our $VERSION = version->new('0.0.1');
+my ($name) = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+
+my %option = (
+    verbose => 0,
+    man     => 0,
+    help    => 0,
+    VERSION => 0,
+);
+
+if ( !@ARGV ) {
+    pod2usage( -verbose => 1 );
+}
+
+main();
+exit 0;
+
+sub main {
+    my $opt = get_options(
+        {
+            default => \%option,
+            helper  => 1,
+        },
+        [
+            'out|o=s',                     'verbose|v+',
+            'by_headers|by-headers|h',     'columns|c=s@',
+            'filter|f=s%',                 'max|m=i',
+            'show_headers|show-headers|H', 'first_line|f',
+            'uniq|u',
+        ],
+    );
+
+    # do stuff here
+    my $file = shift @ARGV;
+    my $csv  = Text::CSV_XS->new( { binary => 1 } );
+    my $fh   = path($file)->openr;
+    my $headers;
+    my $map;
+
+    $headers = $csv->getline($fh);
+    my $i = 0;
+    $map = { map { $_ => $i++ } @$headers };
+    if ( $opt->{show_headers} ) {
+        my $max = length scalar @$headers;
+        print "Headers:\n";
+        for my $header ( @{$headers} ) {
+            printf "%${max}i  %s\n", $map->{$header}, $header;
+        }
+        exit;
+    }
+    my @json;
+
+    my $count = 0;
+  LINE:
+    while ( my $line = $csv->getline($fh) ) {
+        push @json, zip( $headers, $line );
+    }
+
+    print encode_json( \@json );
+
+    return;
+}
+
+sub zip {
+    my ( $columns, $data ) = @_;
+
+    my %row;
+    for my $i ( 0 .. scalar @$columns ) {
+        $row{ $columns->[$i] } = $data->[$i];
+    }
+
+    return \%row;
+}
+
+my $last;
+
+__DATA__
+
+=head1 NAME
+
+csv-tool - Manipulate CVS files
+
+=head1 VERSION
+
+This documentation refers to v version 0.1.
+
+=head1 SYNOPSIS
+
+   csv-tool [option] (csv-file)
+
+ OPTIONS:
+
+  -t --test     Show the command that will be run
+  -v --verbose  Show more detailed option
+     --version  Prints the version information
+     --help     Prints this help information
+     --man      Prints the full documentation for v
+
+=head1 DESCRIPTION
+
+The purpose of the C<v> script is to make opening bunches of files easier by
+being able to store the lists of files in a configuration or by using the
+predefined lists.
+
+=head1 SUBROUTINES/METHODS
+
+=head1 DIAGNOSTICS
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+If you create a configuration file (either vrc.yml or .vrc.yml) in the current
+directory, your home directory and/or /etc you can create your own lists of
+files to open.
+
+eg vrc.yml
+
+    ----
+    bin:
+        - bin/one
+        - bin/two
+        - t/bin-one.t
+    dist:
+        - Changes
+        - MANIFEST*
+        - Build.PL
+
+If you ran C<v bin> with this config vim would be run as
+
+    vim bin/one bin/two t/bin-one.t
+
+or C<v dist> would probably produce:
+
+    vim Changes MANIFEST MANIFEST.SKIP Build.PL
+
+=head1 DEPENDENCIES
+
+=head1 INCOMPATIBILITIES
+
+=head1 BUGS AND LIMITATIONS
+
+There are no known bugs in this module.
+
+Please report problems to Ivan Wills (ivan.wills@gmail.com).
+
+Patches are welcome.
+
+=head1 AUTHOR
+
+Ivan Wills - (ivan.wills@gmail.com)
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2022 Ivan Wills (14 Mullion Close, Hornsby Heights, NSW Australia 2077).
+All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself. See L<perlartistic>.  This program is
+distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+=cut
