@@ -1,0 +1,62 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use Pod::Usage;
+use Data::Dumper    qw/Dumper/;
+use English         qw/ -no_match_vars /;
+use FindBin         qw/$Bin/;
+use Term::ANSIColor qw/colored/;
+
+our $VERSION = 0.001;
+my ($name) = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+
+my %option = (
+    colour_char => 1,
+    verbose     => 0,
+    man         => 0,
+    help        => 0,
+    VERSION     => 0,
+);
+
+main();
+exit 0;
+
+sub main {
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,                      'line|n=i',
+        'blame|b',                     'column|c=i',
+        'position|p=i',                'before|BEFORE|B=i',
+        'after|AFTER|A=i',             'context|CONTEXT|C=i',
+        'colour_char|colour-char|P=i', 'line_no|lines|l',
+        'ends|e',                      'quiet|silent|q',
+        'verbose|v+',                  'man',
+        'help',                        'VERSION!',
+    ) or pod2usage(2);
+
+    if ( $option{'VERSION'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
+
+    my $status = `git status --long --branch`;
+    my ($branch) = $status =~ /^On \s branch \s ([^\n]+)$/xms;
+    my ($remote) =
+      $status =~
+      /^Your \s branch \s is \s up \s to \s date \s with \s '([^']+)'[.]$/xms;
+
+    if ( $option{verbose} ) {
+        print "$branch -> $remote\n";
+    }
+    else {
+        print "$branch\n";
+    }
+}
