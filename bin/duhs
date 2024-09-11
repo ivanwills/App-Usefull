@@ -37,9 +37,11 @@ sub main {
 
     Getopt::Long::Configure('bundling');
     GetOptions(
-        \%option,   'one-file-system|x', 'sort|s=s', 'reverse|r',
-        'total|t!', 'verbose|v+',        'man',      'help',
-        'version',
+        \%option,     'one-file-system|x',
+        'sort|s=s',   'reverse|r',
+        'files|f',    'total|t!',
+        'verbose|v+', 'man',
+        'help',       'version',
     ) or pod2usage(2);
 
     if ( $option{'version'} ) {
@@ -54,27 +56,43 @@ sub main {
     }
 
     # do stuff here
-    my @dirs = map { "\"$_\"" } ( @ARGV ? @ARGV : ('.') );
+    my @dirs = map {"\"$_\""} ( @ARGV ? @ARGV : ('.') );
     my $cmd  = 'du -ks';
     $cmd .= ' --one-file-system' if $option{'one-file-system'};
 
     warn "$cmd " . ( join ' ', @dirs ) . "\n" if $option{verbose};
-    my @stats = map { [ split /\s+/, $_, 2 ] } map { `$cmd $_` } @dirs;
+    my @stats = map { [ split /\s+/, $_, 2 ] } map {`$cmd $_`} @dirs;
+
+    if ( $option{files} ) {
+        for my $detail (@stats) {
+            my $a = $detail->[1];
+            chomp $a;
+            my $files = `find "$a" -type f | wc -l`;
+            chomp $files;
+            push @$detail, $files;
+        }
+    }
 
     @stats = sort {
-            $option{sort} eq 'alpha' ? $a->[1] cmp $b->[1]
-          : $option{sort} eq 'num'   ? $a->[0] <=> $b->[0]
-          : 0
+              $option{sort} eq 'alpha' ? $a->[1] cmp $b->[1]
+            : $option{sort} eq 'num'   ? $a->[0] <=> $b->[0]
+            : 0
     } @stats;
 
     @stats = reverse @stats if $option{reverse};
 
     my $total = 0;
     for (@stats) {
-        my ( $number, $dir ) = @$_;
+        my ( $number, $dir, $files ) = @$_;
         $total += $number;
 
-        print size( $number * 1024 ) . "\t$dir";
+        if ( $option{files} ) {
+            print size( $number * 1024 ) . "\t$files\t$dir";
+        }
+        else {
+
+            print size( $number * 1024 ) . "\t$dir";
+        }
     }
 
     if ( $option{total} ) {
@@ -88,12 +106,12 @@ sub size {
     my ($number) = @_;
 
     return
-        $number < 1000          ? $number
-      : $number < 100_000       ? sprintf( "%.1fK", $number / 1000 )
-      : $number < 1_000_000     ? sprintf( "%.0fK", $number / 1000 )
-      : $number < 100_000_000   ? sprintf( "%.1fM", $number / 1_000_000 )
-      : $number < 1_000_000_000 ? sprintf( "%.0fM", $number / 1_000_000 )
-      :                           sprintf( "%.1fG", $number / 1_000_000_000 );
+          $number < 1000          ? $number
+        : $number < 100_000       ? sprintf( "%.1fK", $number / 1000 )
+        : $number < 1_000_000     ? sprintf( "%.0fK", $number / 1000 )
+        : $number < 100_000_000   ? sprintf( "%.1fM", $number / 1_000_000 )
+        : $number < 1_000_000_000 ? sprintf( "%.0fM", $number / 1_000_000 )
+        :   sprintf( "%.1fG", $number / 1_000_000_000 );
 }
 
 __DATA__
