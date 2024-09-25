@@ -49,8 +49,9 @@ sub main {
         'path|p=s',                         'path_only|path-only|p',
         'quote|q=s',                        'sort|S=s',
         'string_length|string-length|s=i',  'test|t!',
-        'verbose|v+',                       'man',
-        'help',                             'VERSION!',
+        'vim|V',                            'verbose|v+',
+        'man',                              'help',
+        'VERSION!',
     ) or pod2usage(2);
 
     if ( $option{'VERSION'} ) {
@@ -78,68 +79,85 @@ sub main {
         die "--sort must be one of normal, insensitive or alphanum\n";
     }
 
-    my $file = @ARGV ? path( $ARGV[0] ) : '';
-    eval {
-        my $text = $file ? $file->slurp : join '', <ARGV>;
-        if ( $option{jsonp} ) {
+    if ( !@ARGV ) {
+        push @ARGV, '';
+    }
+    for my $file (@ARGV) {
+        $file = $file ? path($file) : $file;
+        if ( $option{verbose} ) {
+            warn "$file\n";
+        }
+
+        eval {
+            my $text = $file ? $file->slurp : join '', <ARGV>;
+            if ( $option{jsonp} ) {
 
         # need to remove the JSONP function call so that the result is just JSON
-            $text =~ s/\A\s*$option{jsonp}\s*[(]\s*//xms;
-            $text =~ s/\s*[)]\s*;\s*\Z//xms;
-        }
-        if ( $option{clean} ) {
-            warn $text =~ /\A(.{40})/xms, '...', $text =~ /(.{40})\Z/xms, "\n"
-              if $option{verbose} > 1;
-            $text =~ s/(\A[^{]+?\{)/{/xms;
-            $text =~ s/(\}[^}]+?\Z)/}/xms;
-            warn $text =~ /\A(.{40})/xms, '...', $text =~ /(.{40})\Z/xms, "\n"
-              if $option{verbose} > 1;
-        }
-        if ( $option{decode_html} ) {
-            my %coders = get_coders( \%option );
-            $text = $coders{html}{decode}->($text);
-        }
-
-        my $json = decode_json($text);
-        $coder = JSON::XS->new->ascii->pretty->allow_nonref;
-
-        if ( $option{decode_storage} ) {
-            for my $key ( keys %$json ) {
-                $json->{$key} =
-                  eval { decode_json( $json->{$key} ) } || $json->{$key};
+                $text =~ s/\A\s*$option{jsonp}\s*[(]\s*//xms;
+                $text =~ s/\s*[)]\s*;\s*\Z//xms;
             }
-        }
+            if ( $option{clean} ) {
+                warn $text =~ /\A(.{40})/xms, '...', $text =~ /(.{40})\Z/xms,
+                  "\n"
+                  if $option{verbose} > 1;
+                $text =~ s/(\A[^{]+?\{)/{/xms;
+                $text =~ s/(\}[^}]+?\Z)/}/xms;
+                warn $text =~ /\A(.{40})/xms, '...', $text =~ /(.{40})\Z/xms,
+                  "\n"
+                  if $option{verbose} > 1;
+            }
+            if ( $option{decode_html} ) {
+                my %coders = get_coders( \%option );
+                $text = $coders{html}{decode}->($text);
+            }
 
-        if ( $option{path} ) {
-            while ( my ($item) = $option{path} =~ /(^\w+|^\[[^\]]+\])[.]?/ ) {
-                $option{path} =~ s/(^\w+|^\[[^\]]+\])[.]?//xms;
-                $item =~ s/^['"]|['"]$//;
-                if ( ref $json eq 'HASH' ) {
-                    $json = $json->{$item};
-                }
-                elsif ( ref $json eq 'ARRAY' ) {
-                    $json = $json->[$item];
-                }
-                else {
-                    $json = undef;
-                    last;
+            my $json = decode_json($text);
+            $coder = JSON::XS->new->ascii->pretty->allow_nonref;
+
+            if ( $option{decode_storage} ) {
+                for my $key ( keys %$json ) {
+                    $json->{$key} =
+                      eval { decode_json( $json->{$key} ) } || $json->{$key};
                 }
             }
-        }
-        my $fh  = $option{update} && $file ? $file->openw : \*STDOUT;
-        my $out = out($json);
-        if ( $option{encode_html} ) {
-            my %coders = get_coders( \%option );
-            $out = $coders{html}{encode}->($out);
-        }
-        else {
-            $out = "$out\n";
-        }
-        print {$fh} $out;
-        1;
-    } or do {
-        die 'Error in parsing ' . ( $file ? $file : 'STDIN' ) . "!:\n $@";
-    };
+
+            if ( $option{path} ) {
+                while ( my ($item) = $option{path} =~ /(^\w+|^\[[^\]]+\])[.]?/ )
+                {
+                    $option{path} =~ s/(^\w+|^\[[^\]]+\])[.]?//xms;
+                    $item =~ s/^['"]|['"]$//;
+                    if ( ref $json eq 'HASH' ) {
+                        $json = $json->{$item};
+                    }
+                    elsif ( ref $json eq 'ARRAY' ) {
+                        $json = $json->[$item];
+                    }
+                    else {
+                        $json = undef;
+                        last;
+                    }
+                }
+            }
+            my $fh  = $option{update} && $file ? $file->openw : \*STDOUT;
+            my $out = out($json);
+            if ( $option{encode_html} ) {
+                my %coders = get_coders( \%option );
+                $out = $coders{html}{encode}->($out);
+            }
+            else {
+                $out = "$out\n";
+            }
+            print {$fh} $out;
+
+            if ( $option{vim} ) {
+                system 'vim', $file;
+            }
+
+            1;
+        } or do {
+            die 'Error in parsing ' . ( $file ? $file : 'STDIN' ) . "!:\n $@";
+        };
+    }
 
     return;
 }
