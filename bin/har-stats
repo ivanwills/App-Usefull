@@ -45,9 +45,9 @@ exit 0;
 sub main {
     Getopt::Long::Configure('bundling');
     GetOptions(
-        \%option,     'out|o=s',  'exclude|e=s', 'simplify|s!',
-        'filter|f=s', 'type|t=s', 'verbose|v+',  'man',
-        'help',       'VERSION!',
+        \%option,      'out|o=s',    'urls|u',   'exclude|e=s',
+        'simplify|s!', 'filter|f=s', 'type|t=s', 'verbose|v+',
+        'man',         'help',       'VERSION!',
     ) or pod2usage(2);
 
     if ( $option{'VERSION'} ) {
@@ -73,21 +73,33 @@ sub main {
         my $count = @{ $har->{log}{entries} };
         my $total = 0;
         my $time  = 0;
+
+        if ( $option{urls} ) {
+            print "\n$file\n";
+        }
+
         my %stats;
         for my $entry ( @{ $har->{log}{entries} } ) {
+            if ( $option{urls} ) {
+                print $entry->{request}{url}, "\n";
+            }
             my $length = length(
-                ( $entry->{response}{content}{encoding} || '' ) eq 'base64'
-                ? decode_base64( $entry->{response}{content}{text} )
-                : $entry->{response}{content}{text} || ''
+                (
+                    ( $entry->{response}{content}{encoding} || '' ) eq 'base64'
+                    ? decode_base64( $entry->{response}{content}{text} )
+                    : $entry->{response}{content}{text}
+                )
+                  || ''
             );
             $length = $entry->{response}{content}{size};
-            $stats{ $entry->{response}{content}{mimeType} }{size} ||= 0;
-            $stats{ $entry->{response}{content}{mimeType} }{size} += $length;
-            $stats{ $entry->{response}{content}{mimeType} }{time} +=
+            $stats{ $entry->{response}{content}{mimeType} || '' }{size} ||= 0;
+            $stats{ $entry->{response}{content}{mimeType} || '' }{size} +=
+              $length || 0;
+            $stats{ $entry->{response}{content}{mimeType} || '' }{time} +=
               int( $entry->{time} * 1000 );
-            $total += $length;
+            $total += $length || 0;
             $time  += int( $entry->{time} * 1000 );
-            $stats{ $entry->{response}{content}{mimeType} }{count}++;
+            $stats{ $entry->{response}{content}{mimeType} || '' }{count}++;
 
             #if ($option{type
         }
@@ -114,6 +126,9 @@ sub main {
         $average{_file}{count} += $count;
     }
 
+    if ( $option{urls} ) {
+        return;
+    }
     for my $file (@stats) {
         for my $type ( keys %{ $file->{types} } ) {
             $average{$type}{number}++;
@@ -256,6 +271,7 @@ This documentation refers to bin/har-tidy version 0.0.1
                     Exclude urls matching this
   -m --multiple     Processing multiple har files
      --no-multiple  Don't treat as processing multiple files
+  -u --urls         Show all the urls found in the HAR file(s)
 
   -v --verbose       Show more detailed option
      --version       Prints the version information
