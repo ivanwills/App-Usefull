@@ -80,6 +80,11 @@ sub main {
 
         my %stats;
         for my $entry ( @{ $har->{log}{entries} } ) {
+            if (   $option{type}
+                && $option{type} ne $entry->{response}{content}{mimeType} )
+            {
+                next;
+            }
             if ( $option{urls} ) {
                 print $entry->{request}{url}, "\n";
             }
@@ -100,8 +105,6 @@ sub main {
             $total += $length || 0;
             $time  += int( $entry->{time} * 1000 );
             $stats{ $entry->{response}{content}{mimeType} || '' }{count}++;
-
-            #if ($option{type
         }
         $har->{log}{entries}[0]{response}{content}{text} ||= '';
         my @components =
@@ -272,6 +275,7 @@ This documentation refers to bin/har-tidy version 0.0.1
   -m --multiple     Processing multiple har files
      --no-multiple  Don't treat as processing multiple files
   -u --urls         Show all the urls found in the HAR file(s)
+  -t --type[=]type  Only results for mime type
 
   -v --verbose       Show more detailed option
      --version       Prints the version information
