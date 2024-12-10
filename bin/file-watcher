@@ -41,9 +41,11 @@ exit 0;
 
 sub main {
     Getopt::Long::Configure('bundling');
-    GetOptions( \%option, 'file|f=s@', 'first-run|r!', 'period|p=i',
-        'verbose|v+', 'man', 'help', 'VERSION!', )
-      or pod2usage(2);
+    GetOptions(
+        \%option,  'file|f=s@',  'first-run|r!', 'period|p=i',
+        'clear|c', 'verbose|v+', 'man',          'help',
+        'VERSION!',
+    ) or pod2usage(2);
 
     if ( $option{'VERSION'} ) {
         print "$name Version = $VERSION\n";
@@ -68,6 +70,10 @@ sub main {
             if ( $option{verbose} ) {
                 warn "Running: $run\n";
             }
+            if ( $option{clear} ) {
+                print "\n" x 20;
+                system 'clear';
+            }
             system $run;
         }
         sleep $option{period};
@@ -83,6 +89,7 @@ sub changes {
     my $changed = 0;
 
     for my $file (@$files) {
+        next if !-f $file;
         my $contents = path($file)->slurp;
         if ( $contents ne ( $state{$file} || '' ) ) {
             $changed++;
@@ -97,7 +104,7 @@ __DATA__
 
 =head1 NAME
 
-bin/file-watcher - <One-line description of commands purpose>
+file-watcher - Run command when file changes
 
 =head1 VERSION
 
@@ -105,10 +112,12 @@ This documentation refers to bin/file-watcher version
 
 =head1 SYNOPSIS
 
-   bin/file-watcher [option]
+   file-watcher (-f|--file file)+ [-p|--period seconds] command
 
  OPTIONS:
-  -o --other         other option
+  -c --clear    Clear the screen before re-running the command
+  -f --file     File(s) to watch
+  -p --period   Period between checkes (default 2s)
 
   -v --verbose       Show more detailed option
      --version       Prints the version information
