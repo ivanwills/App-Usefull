@@ -90,13 +90,12 @@ sub main {
             print size( $number * 1024 ) . "\t$files\t$dir";
         }
         else {
-
             print size( $number * 1024 ) . "\t$dir";
         }
     }
 
     if ( $option{total} ) {
-        print "\n" . size($total) . "\tTOTAL\n";
+        print "\n" . size( $total * 1024 ) . "\tTOTAL\n";
     }
 
     return;
