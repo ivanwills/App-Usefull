@@ -27,6 +27,7 @@ my ($name) = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
 
 my %option = (
     retry_max => 1,
+    sleep     => 1,
     verbose   => 0,
     man       => 0,
     help      => 0,
@@ -42,9 +43,13 @@ exit 0;
 
 sub main {
     Getopt::Long::Configure('bundling');
-    GetOptions( \%option, 'after|a=s', 'retry|r', 'retry_max|retry-max|m=i',
-        'verbose|v+', 'test|t!', 'man', 'help', 'VERSION!', )
-        or pod2usage(2);
+    GetOptions(
+        \%option,    'after|a=s',
+        'retry|r',   'retry_max|retry-max|m=i',
+        'sleep|s=i', 'verbose|v+',
+        'test|t!',   'man',
+        'help',      'VERSION!',
+    ) or pod2usage(2);
 
     if ( $option{'VERSION'} ) {
         print "$name Version = $VERSION\n";
@@ -104,7 +109,7 @@ sub copy_date {
     }
     my $dest_name = path($location)->child( path($file)->basename );
     if ( -e $dest_name ) {
-        if ( -s $dest_name == 0 ) {
+        if ( -s $dest_name == 0 || -s $file != -s $dest_name ) {
             unlink $dest_name;
         }
         else {
@@ -118,7 +123,7 @@ sub copy_date {
         #my $error = system 'cp', '--preserve=all', $file, $location;
         if ($error) {
             if ( $option{retry} && $option{retry_max} >= $retries ) {
-                sleep 1;
+                sleep $option{sleep} * 2;
                 return copy_date( $file, $dest, $retries + 1 );
             }
             die "Error copying $file to $location\n";
@@ -133,7 +138,7 @@ sub copy_date {
     else {
         warn "File already exists in $location\n";
     }
-    sleep 1;
+    sleep $option{sleep};
 }
 
 sub mkdir_deep {
