@@ -1,0 +1,150 @@
+#!/usr/bin/perl
+
+# Created on: 2018-05-10 07:48:34
+# Create by:  Ivan Wills
+# $Id$
+# $Revision$, $HeadURL$, $Date$
+# $Revision$, $Source$, $Date$
+
+use strict;
+use warnings;
+use version;
+use Scalar::Util;
+use List::Util;
+#use List::MoreUtils;
+use Getopt::Long;
+use Pod::Usage;
+use Data::Dumper qw/Dumper/;
+use English qw/ -no_match_vars /;
+use FindBin qw/$Bin/;
+use Path::Tiny;
+
+our $VERSION = version->new('0.0.1');
+my ($name)   = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+
+my %option = (
+    number  => 10,
+    verbose => 0,
+    man     => 0,
+    help    => 0,
+    VERSION => 0,
+);
+
+main();
+exit 0;
+
+sub main {
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,
+        'number|n=i',
+        'uniq|u!',
+        'quiet|q',
+        'checkout|c=i',
+        'purge|p',
+        'remote|r',
+        'all|a',
+        'test|t!',
+        'verbose|v+',
+        'man',
+        'help',
+        'VERSION!',
+    ) or pod2usage(2);
+
+    if ( $option{'VERSION'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
+
+    # do stuff here
+    return has();
+}
+
+sub has {
+    my $modifier = $option{all} ? '-a' : $option{remote} ? '-r' : '';
+    my @branches = map {s/^[*]?\s+//; s/origin\/HEAD -> //; chomp; $_} `git branch $modifier`;
+
+    my @files = @ARGV;
+    BRANCH:
+    for my $branch (@branches) {
+        for my $file (@files) {
+            my $contents = `git show $branch:$file 2> /dev/null`;
+            if ($contents) {
+                print "  $branch\n";
+                next BRANCH;
+            }
+        }
+        if ($option{verbose}) {
+            warn "$branch not found!\n";
+        }
+    }
+}
+
+__DATA__
+
+=head1 NAME
+
+git-branch-has - Show branches that have specified files
+
+=head1 VERSION
+
+This documentation refers to git-branch-has version 0.0.1
+
+=head1 SYNOPSIS
+
+   git-branch-has [option] [file ...]
+
+ OPTIONS:
+  -a --all      Search all branches (remote and local)
+  -r --remote   Search only local branches
+
+  -v --verbose  Show more detailed information about branches
+     --version  Prints the version information
+     --help     Prints this help information
+     --man      Prints the full documentation for git-branch-has
+
+=head1 DESCRIPTION
+
+This script is useful for finding branches that have new files added when you
+don't know where to look but do know the file name(s).
+
+=head1 SUBROUTINES/METHODS
+
+=head1 DIAGNOSTICS
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+=head1 DEPENDENCIES
+
+=head1 INCOMPATIBILITIES
+
+=head1 BUGS AND LIMITATIONS
+
+There are no known bugs in this module.
+
+Please report problems to Ivan Wills (ivan.wills@gmail.com).
+
+Patches are welcome.
+
+=head1 AUTHOR
+
+Ivan Wills - (ivan.wills@gmail.com)
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2018 Ivan Wills (14 Mullion Close, Hornsby Heights, NSW Australia 2077).
+All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself. See L<perlartistic>.  This program is
+distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+=cut
