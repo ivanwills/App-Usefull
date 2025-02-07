@@ -23,6 +23,7 @@ sub main {
         'main|M=s',
         'remote|r=s',
         'protected|p=s@',
+        'no-verify|n',
         'test!',
         'verbose|v+',
         'man',
@@ -52,6 +53,7 @@ sub main {
         return;
     }
 
+    my $verify = $option{'no-verify'} ? '--no-verify' : '';
     for my $branch (@branches) {
         # skip the current HEAD
         next if $branch =~ /\s->\s/;
@@ -77,7 +79,7 @@ sub main {
             # don't delete from other remotes
             next if $remote ne $option{remote};
 
-            my $cmd = "git push --delete $remote '$name'";
+            my $cmd = "git push $verify --delete $remote '$name'";
             warn "$cmd\n" if $option{verbose} || $option{test};
             system $cmd if !$option{test};
         }
