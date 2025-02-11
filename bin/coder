@@ -89,15 +89,21 @@ sub main {
     }
     else {
         my $text = '';
+        my $shown = 0;
         while (my $line = <>) {
             if ( $style ne 'whole' || $line eq "-\n" ) {
                 local $_ = $text || $line;
                 print $sub->($text || $line);
                 $text = '';
+                $shown = 1;
             }
             else {
                 $text .= $line;
             }
+        }
+        if ($style eq 'whole' && !$shown) {
+                local $_ = $text;
+                print $sub->($text);
         }
     }
 
@@ -130,6 +136,7 @@ This documentation refers to coder version 0.1.
                     html             HTML entity encoding
                     http             HTTP encoding (dumb all non work characters % encoded)
                     url              HTTP encoding smarter eg spaces to +
+                    json             Encode or decode JSON strings
 
   -D --direction=str
                  Direction for codeing (encode|decode) if called as coder the

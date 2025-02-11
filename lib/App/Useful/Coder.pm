@@ -14,6 +14,7 @@ use Data::Dumper qw/Dumper/;
 use English qw/ -no_match_vars /;
 use MIME::Base64 qw/encode_base64 decode_base64/;
 use MIME::QuotedPrint qw/encode_qp decode_qp/;
+use JSON::XS qw/decode_json encode_json/;
 use base qw/Exporter/;
 
 our $VERSION     = version->new('0.0.1');
@@ -114,6 +115,12 @@ sub get_coders {
             decode    => \&colour,
             decode_on => 'whole',
         },
+        json => {
+            encode => \&encode_json,
+            encode_on => 'whole',
+            decode => \&decode_json,
+            decode_on => 'whole',
+        }
     );
 }
 
