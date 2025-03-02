@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+since="${1:-2024-01-01}"
+dir="${2:-.}"
+
+echo "Checking repos in $dir for changes since $since"
+
+for dir in "${dir}"/*; do
+    if [ ! -d $dir ]; then
+        continue;
+    fi
+    if [ ! -d "${dir}/.git" ]; then
+        continue;
+    fi
+
+    pushd $dir >/dev/null 2>&1
+
+    count="$(git rev-list --all --since "${since}" | wc -l)"
+    echo "$count	$dir"
+
+    popd >/dev/null 2>&1
+done
