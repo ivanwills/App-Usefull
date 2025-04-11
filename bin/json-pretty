@@ -89,7 +89,7 @@ sub main {
         }
 
         eval {
-            my $text = $file ? $file->slurp : join '', <ARGV>;
+            my $text = $file ? $file->slurp : join '', <STDIN>;
             if ( $option{jsonp} ) {
 
         # need to remove the JSONP function call so that the result is just JSON
