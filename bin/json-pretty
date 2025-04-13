@@ -80,7 +80,7 @@ sub main {
     }
 
     if ( !@ARGV ) {
-        push @ARGV, '';
+        push @ARGV, '-';
     }
     for my $file (@ARGV) {
         $file = $file ? path($file) : $file;
@@ -89,10 +89,10 @@ sub main {
         }
 
         eval {
-            my $text = $file ? $file->slurp : join '', <STDIN>;
+            my $text = $file && $file ne '-' ? $file->slurp : join '', <STDIN>;
             if ( $option{jsonp} ) {
 
-        # need to remove the JSONP function call so that the result is just JSON
+                # need to remove the JSONP function call so that the result is just JSON
                 $text =~ s/\A\s*$option{jsonp}\s*[(]\s*//xms;
                 $text =~ s/\s*[)]\s*;\s*\Z//xms;
             }
