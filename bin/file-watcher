@@ -42,10 +42,11 @@ exit 0;
 sub main {
     Getopt::Long::Configure('bundling');
     GetOptions(
-        \%option,  'file|f=s@',  'first-run|r!', 'period|p=i',
-        'clear|c', 'verbose|v+', 'man',          'help',
+        \%option,  'command|c=s',  'first-run|r!', 'period|p=i',
+        'clear|C', 'verbose|v+', 'man',          'help',
         'VERSION!',
     ) or pod2usage(2);
+    my @files = @ARGV;
 
     if ( $option{'VERSION'} ) {
         print "$name Version = $VERSION\n";
@@ -54,7 +55,7 @@ sub main {
     elsif ( $option{'man'} ) {
         pod2usage( -verbose => 2 );
     }
-    elsif ( $option{'help'} || !@{ $option{file} } ) {
+    elsif ( $option{'help'} || !@files ) {
         pod2usage( -verbose => 1 );
     }
 
@@ -64,9 +65,9 @@ sub main {
         changes( $option{file} );
     }
 
-    my $run = @ARGV > 1 ? join ' ', @ARGV : $ARGV[0];
+    my $run = $option{command};
     while (1) {
-        if ( changes( $option{file} ) ) {
+        if ( changes( @files ) ) {
             if ( $option{verbose} ) {
                 warn "Running: $run\n";
             }
@@ -85,10 +86,10 @@ sub main {
 my %state = {};
 
 sub changes {
-    my ($files) = @_;
+    my (@files) = @_;
     my $changed = 0;
 
-    for my $file (@$files) {
+    for my $file (@files) {
         next if !-f $file;
         my $contents = path($file)->slurp;
         if ( $contents ne ( $state{$file} || '' ) ) {
@@ -112,11 +113,11 @@ This documentation refers to bin/file-watcher version
 
 =head1 SYNOPSIS
 
-   file-watcher (-f|--file file)+ [-p|--period seconds] command
+   file-watcher [-p|--period seconds] ([-c|--command] command) file(s)
 
  OPTIONS:
-  -c --clear    Clear the screen before re-running the command
-  -f --file     File(s) to watch
+  -C --clear    Clear the screen before re-running the command
+  -c --command  Command to run
   -p --period   Period between checkes (default 2s)
 
   -v --verbose       Show more detailed option
