@@ -222,9 +222,9 @@ This documentation refers to about version 0.001
   file          The file (or files) to show the about line. If not file is
                 passed STDIN is assumed and a file of '-' explicitly looks
                 at STDIN.
-  -l --line[=]int
+  -n --line[=]int
                 The line number of interest
-  -n --lines    Show the line numbers of each line
+  -l --lines    Show the line numbers of each line
   -c --column[=]int
                 Show characters about this column
   -p --position[=]int
