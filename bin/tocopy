@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+pbcopy="$(which pbcopy)"
+xclip="$(which xclip)"
+if [ "${pbcopy}" ]; then
+    copy="${pbcopy}"
+elif [ "${xclip}" ]; then
+    copy="${xclip} -selection clipboard"
+else
+    copy="echo No command found"
+fi
+
+#echo echo -n "${@}" '|' ${copy}
+echo -n "${@}" | ${copy}
