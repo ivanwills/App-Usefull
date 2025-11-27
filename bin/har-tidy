@@ -43,7 +43,7 @@ exit 0;
 sub main {
     Getopt::Long::Configure('bundling');
     GetOptions(
-        \%option,     'out|o=s',     'exclude|e=s', 'simplify|s!',
+        \%option,     'out|o=s',     'exclude|e=s', 'simplify|s!', 'sort-urls|sort|S!',
         'filter|f=s', 'multiple|m!', 'verbose|v+',  'man',
         'help',       'VERSION!',
     ) or pod2usage(2);
@@ -155,10 +155,11 @@ sub simplify {
             response => $entry->{response}{content}{json}
               || eval { decode_json( $entry->{response}{content}{text} ) }
               || $entry->{response}{content}{text},
+              size => $entry->{response}{content}{size},
           };
     }
 
-    return \@out;
+    return [ $option{'sort-urls'} ? sort { $a->{c_url} cmp $b->{c_url} } @out : @out ];
 }
 
 sub expand_responce {
