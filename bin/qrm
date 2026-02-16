@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+tmp_dir=$(mktemp -d)
+
+for file in "$@"; do
+    mv $file $tmp_dir/
+done
+
+rm -rf $tmp_dir/ &
+
