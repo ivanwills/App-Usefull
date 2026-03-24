@@ -182,6 +182,9 @@ This documentation refers to git-branch-history version 0.0.1
 
    git-branch-history [option]
 
+   # checkout the branch used two switches ago
+   git-branch-history (-c|--checkout) 2
+
  OPTIONS:
   -n --number[=]int
                 Limit shown history to this number of branches
