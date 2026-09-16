@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+if [ "$(git status --porcelain)" ]; then
+
+    # set temp direcory
+    #remote_url="$(git remote get-url origin 2>/dev/null || echo "origin")"
+    #remote="$(echo $remote_url | sed -E 's#\.git$##; s#^git@##; s#^https?://##')"
+
+    #tmp_index="${HOME}/git-backup/$remote"
+    #mkdir -p "${tmp_index}"
+
+    #export GIT_INDEX_FILE="$tmp_index"
+
+    # Start a temporary index from the current commit
+    git read-tree HEAD
+
+    # Include tracked, modified, deleted, and untracked files
+    git add -A
+
+    # Create a tree from the temporary index
+    tree="$(git write-tree)"
+    parent="$(git rev-parse HEAD)"
+    timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
+
+    last="$(git for-each-ref refs/backups/ --format='%(refname)' | tail -n 1)"
+
+    if [ ! "$(git diff "${last}".."${tree}")" ]; then
+        echo "No changes to backup"
+        exit 0
+    fi
+
+    # Create a commit object, but do not move the current branch
+    commit="$(
+      printf 'Automatic backup: %s\n\n' "$timestamp" |
+      git commit-tree "$tree" -p "$parent"
+    )"
+
+    # Keep the commit reachable through a permanent backup ref
+    name="$(date '+%Y-%m-%d-%H-%M-%S')"
+    git update-ref "refs/backups/$name" "$commit"
+
+    echo "Created backup $name at $commit"
+fi
