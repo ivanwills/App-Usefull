@@ -1,0 +1,147 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use Pod::Usage;
+use Data::Dumper    qw/Dumper/;
+use English         qw/ -no_match_vars /;
+use FindBin         qw/$Bin/;
+use Term::ANSIColor qw/colored/;
+use List::MoreUtils qw/uniq/;
+
+our $VERSION = 0.001;
+my ($name) = $PROGRAM_NAME =~ m{^.*/(.*?)$}mxs;
+
+my %option = (
+    colour_char => 1,
+    verbose     => 0,
+    man         => 0,
+    help        => 0,
+    VERSION     => 0,
+);
+
+main();
+exit 0;
+
+sub main {
+    Getopt::Long::Configure('bundling');
+    GetOptions(
+        \%option,
+        'age|A=s',
+        'existance|e',
+        'remote|r',
+        'all|a',
+        'verbose|v+',                  'man',
+        'help',                        'VERSION!',
+    ) or pod2usage(2);
+
+    if ( $option{'VERSION'} ) {
+        print "$name Version = $VERSION\n";
+        exit 1;
+    }
+    elsif ( $option{'man'} ) {
+        pod2usage( -verbose => 2 );
+    }
+    elsif ( $option{'help'} ) {
+        pod2usage( -verbose => 1 );
+    }
+
+    my ($regex, @files) = @ARGV;
+    my $extra = $option{remote} ? '-r'
+        : $option{all}          ? '-a'
+        :                         '';
+    my @branches = uniq sort map {s/origin\/HEAD\s->\s|\s+|[*]//g; $_} `git branch $extra`;
+
+    if ($option{age}) {
+        warn "Not yet implemented";
+    }
+
+    if ($option{existance}) {
+        unshift @files, $regex;
+
+        $regex = qr/./;
+    }
+
+    for my $branch (@branches) {
+        my @files = check_files($branch, $regex, @files);
+        if (@files) {
+            print "$branch found ".(join ', ', @files)."\n";
+        }
+    }
+
+}
+
+sub check_files {
+    my ($branch, $regex, @files) = @_;
+    my @found;
+
+    for my $file (@files) {
+        my $txt = `git show $branch:$file 2> /dev/null`;
+        if ($txt =~ /$regex/) {
+            push @found, $file;
+        }
+    }
+
+    return @found;
+}
+
+__DATA__
+
+=head1 NAME
+
+git-grep-files - Grep files in other branches
+
+=head1 VERSION
+
+This documentation refers to git-grep-files version
+
+=head1 SYNOPSIS
+
+   git-grep-files [option] regex file...
+
+ PARMETERS
+  regex              Regex to search files
+  files              List of files to search
+
+ OPTIONS:
+  -A --age=date      Only check in branches older than this age (ISO Time)
+  -r --remote        remote branches only
+  -a --all           all branches
+  -e --existance     Only check if file exists in branch
+
+  -v --verbose       Show more detailed option
+     --version       Prints the version information
+     --help          Prints this help information
+     --man           Prints the full documentation for git-grep-files
+
+=head1 DESCRIPTION
+
+=head1 SUBROUTINES/METHODS
+
+=head1 DIAGNOSTICS
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+=head1 DEPENDENCIES
+
+=head1 INCOMPATIBILITIES
+
+=head1 BUGS AND LIMITATIONS
+
+=head1 AUTHOR
+
+ivanwills - (ivanwills@localhost)
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2026 ivanwills (123 Timbuc Too).
+All rights reserved.
+
+This module is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself. See L<perlartistic>.  This program is
+distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.
+
+=cut
