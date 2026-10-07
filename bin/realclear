@@ -18,6 +18,7 @@ use Pod::Usage;
 use Data::Dumper qw/Dumper/;
 use English      qw/ -no_match_vars /;
 use FindBin      qw/$Bin/;
+use Time::HiRes  qw/sleep/;
 use Path::Tiny;
 
 our $VERSION = 0.001;
@@ -36,8 +37,15 @@ exit 0;
 
 sub main {
     Getopt::Long::Configure('bundling');
-    GetOptions( \%option, 'wide|w', 'verbose|v+', 'man', 'help', 'VERSION!', )
-      or pod2usage(2);
+    GetOptions(
+        \%option,
+        'clean|c',
+        'wide|w',
+        'verbose|v+',
+        'man',
+        'help',
+        'VERSION!',
+    ) or pod2usage(2);
 
     if ( $option{'VERSION'} ) {
         print "$name Version = $VERSION\n";
@@ -51,6 +59,16 @@ sub main {
     }
 
     # do stuff here
+    if ($option{clean}) {
+        require Term::Size::Perl;
+        my ($w, $h) = Term::Size::Perl::chars();
+
+        for my $i ( 0 .. $h ) {
+            print "." x $w, "\n";
+            sleep 0.01;
+        }
+    }
+
     my $line = $option{wide} ? q{ } x 280 : q{ };
     print "$line\n" for 0 .. 999;
 
